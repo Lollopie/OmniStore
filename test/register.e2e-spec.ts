@@ -4,6 +4,7 @@ import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { ValidationPipe } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 
 describe('RegisterController (e2e)', () => {
   let app: NestExpressApplication;
@@ -149,6 +150,45 @@ describe('RegisterController (e2e)', () => {
     expect(body.message).toContain(
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
+  });
+  it('/register (POST) - password should not be stored in plain text', async () => {
+    const userData = {
+      username: 'test',
+      password: 'password1',
+    };
+
+    await request(app.getHttpServer())
+      .post('/register')
+      .send(userData)
+      .expect(201);
+    const user = await dataSource
+      .getRepository('user')
+      .findOneBy({ username: 'test' });
+    expect(user).toBeDefined();
+    if (user) {
+      expect(user.password).not.toBe('password1');
+    }
+  });
+  it('/register (POST) - password should be verifiable', async () => {
+    const userData = {
+      username: 'test',
+      password: 'password1',
+    };
+
+    await request(app.getHttpServer())
+      .post('/register')
+      .send(userData)
+      .expect(201);
+    const user = await dataSource
+      .getRepository('user')
+      .findOneBy({ username: 'test' });
+    expect(user).toBeDefined();
+    if (user && typeof user['password'] === 'string') {
+      const isMatch = await bcrypt.compare('password1', user.password);
+      expect(isMatch).toBe(true);
+    } else {
+      expect(true).toBe(false);
+    }
   });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;
