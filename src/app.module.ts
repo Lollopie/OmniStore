@@ -1,22 +1,22 @@
 import { Module } from '@nestjs/common';
-import { RegisterController} from "./register.controller";
-import { RegisterService } from "./register.service";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { User } from "./user.entity";
-import { UsersModule } from "./users.module";
+import { RegisterController } from './register/register.controller';
+import { RegisterService } from './register/register.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './user/user.entity';
+import { UsersModule } from './user/users.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '2Qk#@tDg5FNRCsGta',
-      database: 'postgres',
+      host: process.env.DATABASE_HOST,
+      port: Number(process.env.DATABASE_PORT),
+      username: process.env.DATABASE_USER,
+      password: process.env.DATABASE_PASSWORD,
+      database: process.env.DATABASE_NAME,
       entities: [User],
       synchronize: true,
     }),
-      UsersModule
+    UsersModule,
   ],
   controllers: [RegisterController],
   providers: [RegisterService],
