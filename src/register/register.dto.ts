@@ -10,5 +10,14 @@ export class RegisterDto {
   })
   username: string;
   @IsString()
+  @MinLength(8, { message: 'Password is too short (minimum 8 characters)' })
+  @MaxLength(64, { message: 'Password is too long (maximum 64 characters)' })
+  @Matches(
+    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d\s!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]{8,}$/,
+    {
+      message:
+        'Password must contain a letter, a number, and can include spaces and special characters',
+    },
+  )
   password: string;
 }
