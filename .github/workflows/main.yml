@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm' # Change to 'yarn' or 'pnpm' if applicable
-
+          cache-dependency-path: backend
       - name: Install dependencies
         run: npm ci
         working-directory: backend
