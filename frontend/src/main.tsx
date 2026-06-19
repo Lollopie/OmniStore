@@ -1,12 +1,11 @@
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-
-import Register from './Register.tsx'
-
-createRoot(document.getElementById('root')!).render(
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import App from './App'
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <div className="min-h-screen">
-      <Register />
-    </div>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </StrictMode>,
-)
+);
