@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  test_backend:
     runs-on: ubuntu-latest
 
     # Spin up a PostgreSQL service container
@@ -39,10 +39,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
+        working-directory: backend
       - name: Run Unit Tests
         run: npm run test
-
+        working-directory: backend
       # Optional: If you use an ORM like TypeORM or Prisma, run migrations here
       # - name: Run Database Migrations
       #   run: npm run migration:run
@@ -50,6 +50,7 @@ jobs:
       #     DATABASE_URL: postgres://test_user:test_password@localhost:5432/nestjs_test
 
       - name: Run E2E Tests
+        working-directory: backend
         run: npm run test:e2e
         env:
           # Inject variables so NestJS knows how to connect to the containerized DB
