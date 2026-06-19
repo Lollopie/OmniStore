@@ -34,7 +34,7 @@ describe('RegisterService (Unit Test)', () => {
   describe('register', () => {
     it('should throw an error if provided with an existing username', async () => {
       usersServiceMock.findByUsername.mockResolvedValue({
-        id: 1,
+        id: '123e4567-e89b-12d3-a456-426614174000',
         username: 'test',
         password: 'password1',
       });
@@ -51,7 +51,7 @@ describe('RegisterService (Unit Test)', () => {
       // Program the mock to simulate a successful DB insertion
       usersServiceMock.findByUsername.mockResolvedValue(null); // No user found, email is free
       usersServiceMock.createUser.mockResolvedValue({
-        id: 2,
+        id: '123e4567-e89b-12d3-a456-426614174000',
         username: 'test',
         password: 'password1',
       });

@@ -13,12 +13,7 @@ export class RegisterService {
         if (user) {
           throw new BadRequestException('Username already exists');
         }
-        const userObject = {
-          id: 1,
-          username: registerData.username,
-          password: registerData.password,
-        };
-        return this.usersService.createUser(userObject);
+        return this.usersService.createUser(registerData);
       });
   }
 }
