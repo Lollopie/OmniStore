@@ -2,10 +2,13 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from '../user/user.entity';
 import { UsersService } from '../user/users.service';
 import { RegisterDto } from './register.dto';
-import * as bcrypt from 'bcrypt';
+import { PasswordService } from '../password/password.service';
 @Injectable()
 export class RegisterService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly passwordService: PasswordService,
+  ) {}
   async register(registerData: RegisterDto): Promise<User> {
     return await this.usersService
       .findByUsername(registerData.username)
@@ -13,10 +16,8 @@ export class RegisterService {
         if (user) {
           throw new BadRequestException('Username already exists');
         }
-        const saltOrRounds = 10;
-        registerData.password = await bcrypt.hash(
+        registerData.password = await this.passwordService.hashPassword(
           registerData.password,
-          saltOrRounds,
         );
         return await this.usersService.createUser(registerData);
       });

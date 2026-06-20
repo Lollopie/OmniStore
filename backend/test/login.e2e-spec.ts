@@ -4,15 +4,13 @@ import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { ValidationPipe } from '@nestjs/common';
-import { PasswordService } from '../src/password/password.service';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
 
-describe('RegisterController (e2e)', () => {
+describe('LoginController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
-  let passwordService: PasswordService;
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -22,33 +20,38 @@ describe('RegisterController (e2e)', () => {
         }),
         AppModule,
       ],
-      providers: [PasswordService],
+      providers: [],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
-    passwordService = moduleFixture.get(PasswordService);
   });
-
-  // it('/register (GET)', () => {
-  //   return request(app.getHttpServer()).get('/register').expect(200);
-  // });
-  it('/register (POST)', () => {
+  it('/login (POST)', () => {
     return request(app.getHttpServer())
+      .post('/login')
+      .send({ username: 'test', password: 'password1' })
+      .expect(400);
+  });
+  it('/register /login (POST)', async () => {
+    await request(app.getHttpServer())
       .post('/register')
       .send({ username: 'test', password: 'password1' })
       .expect(201);
+    return request(app.getHttpServer())
+      .post('/login')
+      .send({ username: 'test', password: 'password1' })
+      .expect(200);
   });
-  it('/register (POST) - should reject username with a space', async () => {
+  it('/login (POST) - should reject username with a space', async () => {
     const invalidData = {
       username: 'te st',
       password: 'test1',
     };
 
     const response = await request(app.getHttpServer())
-      .post('/register')
+      .post('/login')
       .send(invalidData)
       .expect(400);
     const body = response.body as { message: string | string[] };
@@ -56,14 +59,14 @@ describe('RegisterController (e2e)', () => {
       'Username can only contain letters, numbers, underscores, dots, or dashes',
     );
   });
-  it('/register (POST) - should reject too short username', async () => {
+  it('/login (POST) - should reject too short username', async () => {
     const invalidData = {
       username: 'te',
       password: 'password1',
     };
 
     const response = await request(app.getHttpServer())
-      .post('/register')
+      .post('/login')
       .send(invalidData)
       .expect(400);
     const body = response.body as { message: string | string[] };
@@ -71,14 +74,14 @@ describe('RegisterController (e2e)', () => {
       'Username is too short (minimum 3 characters)',
     );
   });
-  it('/register (POST) - should reject too long username', async () => {
+  it('/login (POST) - should reject too long username', async () => {
     const invalidData = {
       username: 'testtesttesttesttesttesttesttest',
       password: 'password1',
     };
 
     const response = await request(app.getHttpServer())
-      .post('/register')
+      .post('/login')
       .send(invalidData)
       .expect(400);
     const body = response.body as { message: string | string[] };
@@ -86,14 +89,14 @@ describe('RegisterController (e2e)', () => {
       'Username is too long (maximum 30 characters)',
     );
   });
-  it('/register (POST) - should reject too short password', async () => {
+  it('/login (POST) - should reject too short password', async () => {
     const invalidData = {
       username: 'test',
       password: 'test1',
     };
 
     const response = await request(app.getHttpServer())
-      .post('/register')
+      .post('/login')
       .send(invalidData)
       .expect(400);
     const body = response.body as { message: string | string[] };
@@ -101,7 +104,7 @@ describe('RegisterController (e2e)', () => {
       'Password is too short (minimum 8 characters)',
     );
   });
-  it('/register (POST) - should reject too long password', async () => {
+  it('/login (POST) - should reject too long password', async () => {
     const invalidData = {
       username: 'test',
       password:
@@ -109,7 +112,7 @@ describe('RegisterController (e2e)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .post('/register')
+      .post('/login')
       .send(invalidData)
       .expect(400);
     const body = response.body as { message: string | string[] };
@@ -117,14 +120,14 @@ describe('RegisterController (e2e)', () => {
       'Password is too long (maximum 64 characters)',
     );
   });
-  it('/register (POST) - should reject password without letter', async () => {
+  it('/login (POST) - should reject password without letter', async () => {
     const invalidData = {
       username: 'test',
       password: '12345678',
     };
 
     const response = await request(app.getHttpServer())
-      .post('/register')
+      .post('/login')
       .send(invalidData)
       .expect(400);
     const body = response.body as { message: string | string[] };
@@ -132,14 +135,14 @@ describe('RegisterController (e2e)', () => {
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
   });
-  it('/register (POST) - should reject password without number', async () => {
+  it('/login (POST) - should reject password without number', async () => {
     const invalidData = {
       username: 'test',
       password: 'password',
     };
 
     const response = await request(app.getHttpServer())
-      .post('/register')
+      .post('/login')
       .send(invalidData)
       .expect(400);
     const body = response.body as { message: string | string[] };
@@ -147,62 +150,20 @@ describe('RegisterController (e2e)', () => {
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
   });
-  it('/register (POST) - should reject password with invalid character', async () => {
+  it('/login (POST) - should reject password with invalid character', async () => {
     const invalidData = {
       username: 'test',
       password: 'password1ç',
     };
 
     const response = await request(app.getHttpServer())
-      .post('/register')
+      .post('/login')
       .send(invalidData)
       .expect(400);
     const body = response.body as { message: string | string[] };
     expect(body.message).toContain(
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
-  });
-  it('/register (POST) - password should not be stored in plain text', async () => {
-    const userData = {
-      username: 'test',
-      password: 'password1',
-    };
-
-    await request(app.getHttpServer())
-      .post('/register')
-      .send(userData)
-      .expect(201);
-    const user = await dataSource
-      .getRepository('user')
-      .findOneBy({ username: 'test' });
-    expect(user).toBeDefined();
-    if (user) {
-      expect(user.password).not.toBe('password1');
-    }
-  });
-  it('/register (POST) - password should be verifiable', async () => {
-    const userData = {
-      username: 'test',
-      password: 'password1',
-    };
-
-    await request(app.getHttpServer())
-      .post('/register')
-      .send(userData)
-      .expect(201);
-    const user = await dataSource
-      .getRepository('user')
-      .findOneBy({ username: 'test' });
-    expect(user).toBeDefined();
-    if (user && typeof user['password'] === 'string') {
-      const isMatch = await passwordService.verifyPassword(
-        userData.password,
-        user.password,
-      );
-      expect(isMatch).toBe(true);
-    } else {
-      expect(true).toBe(false);
-    }
   });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;

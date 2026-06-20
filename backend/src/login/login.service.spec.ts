@@ -1,22 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RegisterService } from './register.service';
+import { LoginService } from './login.service';
 import { UsersService } from '../user/users.service';
 import { BadRequestException } from '@nestjs/common';
 import { PasswordService } from '../password/password.service';
 import { ConfigService } from '@nestjs/config';
+
 describe('LoginService (Unit Test)', () => {
-  let registerService: RegisterService;
+  let loginService: LoginService;
   let usersServiceMock: jest.Mocked<UsersService>;
   let passwordService: PasswordService;
   beforeEach(async () => {
     const mockUserService = {
-      createUser: jest.fn(),
       findByUsername: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        RegisterService,
         PasswordService,
         {
           provide: ConfigService,
@@ -28,6 +27,7 @@ describe('LoginService (Unit Test)', () => {
             }),
           },
         },
+        LoginService,
         {
           provide: UsersService,
           useValue: mockUserService,
@@ -35,17 +35,28 @@ describe('LoginService (Unit Test)', () => {
       ],
     }).compile();
 
-    registerService = module.get<RegisterService>(RegisterService);
+    loginService = module.get<LoginService>(LoginService);
     passwordService = module.get<PasswordService>(PasswordService);
     usersServiceMock = module.get(UsersService);
   });
 
   it('should be defined', () => {
-    expect(registerService).toBeDefined();
+    expect(loginService).toBeDefined();
   });
 
-  describe('register', () => {
-    it('should throw an error if provided with an existing username', async () => {
+  describe('login', () => {
+    it('should throw an error if provided with a wrong username', async () => {
+      usersServiceMock.findByUsername.mockResolvedValue(null);
+      const invalidData = {
+        username: 'test',
+        password: 'password1',
+      };
+      await expect(loginService.login(invalidData)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(usersServiceMock.findByUsername.mock.calls.length).toBe(1);
+    });
+    it('should throw an error if provided with a wrong password', async () => {
       usersServiceMock.findByUsername.mockResolvedValue({
         id: '123e4567-e89b-12d3-a456-426614174000',
         username: 'test',
@@ -53,28 +64,29 @@ describe('LoginService (Unit Test)', () => {
       });
       const invalidData = {
         username: 'test',
-        password: 'password1',
+        password: 'password2',
       };
-      await expect(registerService.register(invalidData)).rejects.toThrow(
+      await expect(loginService.login(invalidData)).rejects.toThrow(
         BadRequestException,
       );
-      expect(usersServiceMock.createUser.mock.calls.length).toBe(0);
+      expect(usersServiceMock.findByUsername.mock.calls.length).toBe(1);
     });
-    it('should successfully save a user if data is valid', async () => {
+    it('should successfully login user if data is valid', async () => {
       // Program the mock to simulate a successful DB insertion
-      usersServiceMock.findByUsername.mockResolvedValue(null); // No user found, email is free
-      usersServiceMock.createUser.mockResolvedValue({
+      usersServiceMock.findByUsername.mockResolvedValue({
         id: '123e4567-e89b-12d3-a456-426614174000',
         username: 'test',
         password: await passwordService.hashPassword('password1'),
       });
-
-      const validData = { username: 'test', password: 'password1' };
-      const result = await registerService.register(validData);
+      const validData = {
+        username: 'test',
+        password: 'password1',
+      };
+      const result = await loginService.login(validData);
 
       // Assertions
       expect(result).toBeDefined();
-      expect(usersServiceMock.createUser.mock.calls.length).toBe(1);
+      expect(usersServiceMock.findByUsername.mock.calls.length).toBe(1);
     });
   });
 });

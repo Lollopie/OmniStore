@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Register.css';
 import NavBar from './NavBar.tsx';
-export default function Register() {
+export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -10,7 +10,7 @@ export default function Register() {
     e.preventDefault();
     setError('');
     const trimmedUsername: string = username.trim();
-    const response = await fetch('http://localhost:3000/register', {
+    const response = await fetch('http://localhost:3000/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username:trimmedUsername, password:password }),
@@ -21,7 +21,7 @@ export default function Register() {
     if (!response.ok) {
       setError(Array.isArray(data.message) ? data.message[0] : data.message);
     } else {
-      alert('Registration successful!');
+      alert('Login successful!');
     }
   };
 
@@ -30,7 +30,7 @@ export default function Register() {
       <NavBar />
       <main className="flex flex-1 justify-center p-6">
         <form onSubmit={handleSubmit} className="w-full max-w-md translate-y-[10%] rounded-lg">
-          <h2 className="mb-6 text-2xl font-bold text-gray-800">Create an Account</h2>
+          <h2 className="mb-6 text-2xl font-bold text-gray-800">Login</h2>
 
           {error && <p className="mb-4 text-sm text-red-500 font-medium">{error}</p>}
 
@@ -55,7 +55,7 @@ export default function Register() {
           </div>
 
           <button type="submit" className="w-full rounded-md bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 transition">
-            Register
+            Login
           </button>
         </form>
       </main>
