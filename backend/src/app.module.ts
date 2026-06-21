@@ -11,6 +11,10 @@ import { PasswordService } from './password/password.service';
 import { LoginController } from './login/login.controller';
 import { LoginService } from './login/login.service';
 import { ConfigService } from '@nestjs/config';
+import { UserBaseEntity } from './user/user-base.entity';
+import { InventoryEntity } from './inventory/inventory.entity';
+import { CreateUserTable1782066103000 } from './migrations/1782066103000-CreateUserTable';
+import { CreateInventoryTable1782066151000 } from './migrations/1782066151000-CreateInventoryTable';
 
 @Module({
   imports: [
@@ -29,8 +33,13 @@ import { ConfigService } from '@nestjs/config';
           username: configService.get<string>('db.databaseUser'),
           password: configService.get<string>('db.databasePassword'),
           database: configService.get<string>('db.databaseName'),
-          entities: [User],
+          entities: [User, UserBaseEntity, InventoryEntity],
           synchronize: configService.get<boolean>('db.databaseSynchronize'),
+          migrations: [
+            CreateUserTable1782066103000,
+            CreateInventoryTable1782066151000,
+          ],
+          migrationsRun: true,
         };
       },
     }),
