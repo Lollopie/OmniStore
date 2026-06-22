@@ -20,8 +20,6 @@ jobs:
           POSTGRES_DB: test
         ports:
           - 5432:5432
-        volumes:
-          - ./backend/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
         # Wait until Postgres is healthy before starting the Node.js steps
         options: >-
           --health-cmd pg_isready
@@ -45,6 +43,10 @@ jobs:
       - name: Run Unit Tests
         run: npm run test
         working-directory: backend
+      - name: Initialize test database
+        run: psql -h localhost -U test_user -d test -f backend/init-test-db.sql
+        env:
+          PGPASSWORD: test_password
       # Optional: If you use an ORM like TypeORM or Prisma, run migrations here
       # - name: Run Database Migrations
       #   run: npm run migration:run
