@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoginService } from './login.service';
 import { UsersService } from '../user/users.service';
-import { BadRequestException } from '@nestjs/common';
-import { PasswordService } from '../password/password.service';
-import { ConfigService } from '@nestjs/config';
+import { UnauthorizedException } from '@nestjs/common';
+import { PasswordService } from '../auth/password.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import authConfig from '../config/auth.config';
+import dbConfig from '../config/db.config';
 
 describe('LoginService (Unit Test)', () => {
   let loginService: LoginService;
@@ -33,6 +36,21 @@ describe('LoginService (Unit Test)', () => {
           useValue: mockUserService,
         },
       ],
+      imports: [
+        ConfigModule.forRoot({
+          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
+          load: [authConfig, dbConfig],
+        }),
+        JwtModule.registerAsync({
+          global: true,
+          imports: [ConfigModule],
+          inject: [ConfigService],
+          useFactory: (configService: ConfigService) => ({
+            secret: configService.get<string>('auth.jwtSecret'), // 3. Dynamically fetch the secret
+            signOptions: { expiresIn: '1h' },
+          }),
+        }),
+      ],
     }).compile();
 
     loginService = module.get<LoginService>(LoginService);
@@ -52,13 +70,13 @@ describe('LoginService (Unit Test)', () => {
         password: 'password1',
       };
       await expect(loginService.login(invalidData)).rejects.toThrow(
-        BadRequestException,
+        UnauthorizedException,
       );
       expect(usersServiceMock.findByUsername.mock.calls.length).toBe(1);
     });
-    it('should throw an error if provided with a wrong password', async () => {
+    it('should throw an error if provided with a wrong auth', async () => {
       usersServiceMock.findByUsername.mockResolvedValue({
-        id: '123e4567-e89b-12d3-a456-426614174000',
+        user_id: '123e4567-e89b-12d3-a456-426614174000',
         username: 'test',
         password: await passwordService.hashPassword('password1'),
       });
@@ -67,14 +85,14 @@ describe('LoginService (Unit Test)', () => {
         password: 'password2',
       };
       await expect(loginService.login(invalidData)).rejects.toThrow(
-        BadRequestException,
+        UnauthorizedException,
       );
       expect(usersServiceMock.findByUsername.mock.calls.length).toBe(1);
     });
     it('should successfully login user if data is valid', async () => {
       // Program the mock to simulate a successful DB insertion
       usersServiceMock.findByUsername.mockResolvedValue({
-        id: '123e4567-e89b-12d3-a456-426614174000',
+        user_id: '123e4567-e89b-12d3-a456-426614174000',
         username: 'test',
         password: await passwordService.hashPassword('password1'),
       });

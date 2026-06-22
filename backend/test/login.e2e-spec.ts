@@ -15,7 +15,7 @@ describe('LoginController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
-          envFilePath: `.env.${process.env.NODE_ENV || 'test'}`,
+          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
           load: [authConfig, dbConfig],
         }),
         AppModule,
@@ -28,11 +28,11 @@ describe('LoginController (e2e)', () => {
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
   });
-  it('/login (POST)', () => {
+  it('/login unauthorized (POST)', () => {
     return request(app.getHttpServer())
       .post('/login')
       .send({ username: 'test', password: 'password1' })
-      .expect(400);
+      .expect(401);
   });
   it('/register /login (POST)', async () => {
     await request(app.getHttpServer())
@@ -89,7 +89,7 @@ describe('LoginController (e2e)', () => {
       'Username is too long (maximum 30 characters)',
     );
   });
-  it('/login (POST) - should reject too short password', async () => {
+  it('/login (POST) - should reject too short auth', async () => {
     const invalidData = {
       username: 'test',
       password: 'test1',
@@ -104,7 +104,7 @@ describe('LoginController (e2e)', () => {
       'Password is too short (minimum 8 characters)',
     );
   });
-  it('/login (POST) - should reject too long password', async () => {
+  it('/login (POST) - should reject too long auth', async () => {
     const invalidData = {
       username: 'test',
       password:
@@ -120,7 +120,7 @@ describe('LoginController (e2e)', () => {
       'Password is too long (maximum 64 characters)',
     );
   });
-  it('/login (POST) - should reject password without letter', async () => {
+  it('/login (POST) - should reject auth without letter', async () => {
     const invalidData = {
       username: 'test',
       password: '12345678',
@@ -135,7 +135,7 @@ describe('LoginController (e2e)', () => {
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
   });
-  it('/login (POST) - should reject password without number', async () => {
+  it('/login (POST) - should reject auth without number', async () => {
     const invalidData = {
       username: 'test',
       password: 'password',
@@ -150,7 +150,7 @@ describe('LoginController (e2e)', () => {
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
   });
-  it('/login (POST) - should reject password with invalid character', async () => {
+  it('/login (POST) - should reject auth with invalid character', async () => {
     const invalidData = {
       username: 'test',
       password: 'password1ç',

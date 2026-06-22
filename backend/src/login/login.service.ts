@@ -1,15 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../user/users.service';
 import { RegisterDto } from '../register/register.dto';
-import { User } from '../user/user.entity';
-import { PasswordService } from '../password/password.service';
+import { PasswordService } from '../auth/password.service';
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class LoginService {
   constructor(
     private readonly usersService: UsersService,
     private readonly passwordService: PasswordService,
+    private readonly jwtService: JwtService,
   ) {}
-  async login(loginData: RegisterDto): Promise<User> {
+  async login(loginData: RegisterDto): Promise<{ access_token: string }> {
     return await this.usersService
       .findByUsername(loginData.username)
       .then(async (user) => {
@@ -20,10 +21,13 @@ export class LoginService {
               user.password,
             )
           ) {
-            return user;
+            const payload = { sub: user.user_id, username: user.username };
+            return {
+              access_token: await this.jwtService.signAsync(payload),
+            };
           }
         }
-        throw new BadRequestException('Wrong username or password');
+        throw new UnauthorizedException('Wrong username or auth');
       });
   }
 }

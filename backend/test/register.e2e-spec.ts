@@ -4,7 +4,7 @@ import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { ValidationPipe } from '@nestjs/common';
-import { PasswordService } from '../src/password/password.service';
+import { PasswordService } from '../src/auth/password.service';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
@@ -17,7 +17,7 @@ describe('RegisterController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
-          envFilePath: `.env.${process.env.NODE_ENV || 'test'}`,
+          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
           load: [authConfig, dbConfig],
         }),
         AppModule,
@@ -86,7 +86,7 @@ describe('RegisterController (e2e)', () => {
       'Username is too long (maximum 30 characters)',
     );
   });
-  it('/register (POST) - should reject too short password', async () => {
+  it('/register (POST) - should reject too short auth', async () => {
     const invalidData = {
       username: 'test',
       password: 'test1',
@@ -101,7 +101,7 @@ describe('RegisterController (e2e)', () => {
       'Password is too short (minimum 8 characters)',
     );
   });
-  it('/register (POST) - should reject too long password', async () => {
+  it('/register (POST) - should reject too long auth', async () => {
     const invalidData = {
       username: 'test',
       password:
@@ -117,7 +117,7 @@ describe('RegisterController (e2e)', () => {
       'Password is too long (maximum 64 characters)',
     );
   });
-  it('/register (POST) - should reject password without letter', async () => {
+  it('/register (POST) - should reject auth without letter', async () => {
     const invalidData = {
       username: 'test',
       password: '12345678',
@@ -132,7 +132,7 @@ describe('RegisterController (e2e)', () => {
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
   });
-  it('/register (POST) - should reject password without number', async () => {
+  it('/register (POST) - should reject auth without number', async () => {
     const invalidData = {
       username: 'test',
       password: 'password',
@@ -147,7 +147,7 @@ describe('RegisterController (e2e)', () => {
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
   });
-  it('/register (POST) - should reject password with invalid character', async () => {
+  it('/register (POST) - should reject auth with invalid character', async () => {
     const invalidData = {
       username: 'test',
       password: 'password1ç',
@@ -162,7 +162,7 @@ describe('RegisterController (e2e)', () => {
       'Password must contain a letter, a number, and can include spaces and special characters',
     );
   });
-  it('/register (POST) - password should not be stored in plain text', async () => {
+  it('/register (POST) - auth should not be stored in plain text', async () => {
     const userData = {
       username: 'test',
       password: 'password1',
@@ -180,7 +180,7 @@ describe('RegisterController (e2e)', () => {
       expect(user.password).not.toBe('password1');
     }
   });
-  it('/register (POST) - password should be verifiable', async () => {
+  it('/register (POST) - auth should be verifiable', async () => {
     const userData = {
       username: 'test',
       password: 'password1',

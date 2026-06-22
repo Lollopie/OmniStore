@@ -7,9 +7,8 @@ import { UsersModule } from './user/users.module';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from './config/auth.config';
 import dbConfig from './config/db.config';
-import { PasswordService } from './password/password.service';
-import { LoginController } from './login/login.controller';
-import { LoginService } from './login/login.service';
+import { PasswordService } from './auth/password.service';
+import { LoginModule } from './login/login.module';
 import { ConfigService } from '@nestjs/config';
 import { UserBaseEntity } from './user/user-base.entity';
 import { InventoryEntity } from './inventory/inventory.entity';
@@ -20,7 +19,7 @@ import { CreateInventoryTable1782066151000 } from './migrations/1782066151000-Cr
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'dev'}`,
+      envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'dev'}`],
       load: [authConfig, dbConfig],
     }),
     TypeOrmModule.forRootAsync({
@@ -44,8 +43,9 @@ import { CreateInventoryTable1782066151000 } from './migrations/1782066151000-Cr
       },
     }),
     UsersModule,
+    LoginModule,
   ],
-  controllers: [RegisterController, LoginController],
-  providers: [RegisterService, LoginService, PasswordService],
+  controllers: [RegisterController],
+  providers: [RegisterService, PasswordService],
 })
 export class AppModule {}
