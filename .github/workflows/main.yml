@@ -40,13 +40,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: backend
-      - name: Run Unit Tests
-        run: npm run test
-        working-directory: backend
       - name: Initialize test database
         run: psql -h localhost -U test_user -d test -f backend/init-test-db.sql
         env:
           PGPASSWORD: test_password
+      - name: Run Unit Tests
+        run: npm run test
+        working-directory: backend
       # Optional: If you use an ORM like TypeORM or Prisma, run migrations here
       # - name: Run Database Migrations
       #   run: npm run migration:run
