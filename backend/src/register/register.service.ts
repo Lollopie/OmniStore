@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { User } from '../user/user.entity';
+import { UserEntity } from '../user/user.entity';
 import { UsersService } from '../user/users.service';
 import { RegisterDto } from './register.dto';
 import { PasswordService } from '../auth/password.service';
@@ -9,7 +9,7 @@ export class RegisterService {
     private readonly usersService: UsersService,
     private readonly passwordService: PasswordService,
   ) {}
-  async register(registerData: RegisterDto): Promise<User> {
+  async register(registerData: RegisterDto): Promise<UserEntity> {
     return await this.usersService
       .findByUsername(registerData.username)
       .then(async (user) => {

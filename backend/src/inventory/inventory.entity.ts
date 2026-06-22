@@ -3,8 +3,8 @@ import { UserBaseEntity } from '../user/user-base.entity';
 
 @Entity('inventory')
 export class InventoryEntity extends UserBaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   name: string;

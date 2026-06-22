@@ -10,7 +10,7 @@ export class LoginController {
   async register(@Body() user: RegisterDto) {
     const response = await this.loginService.login(user);
     if (response) {
-      return { success: true };
+      return response;
     }
     return { error: 'Login failed' };
   }
