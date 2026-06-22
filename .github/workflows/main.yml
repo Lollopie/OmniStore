@@ -41,7 +41,7 @@ jobs:
         run: npm ci
         working-directory: backend
       - name: Initialize test database
-        run: psql -h localhost -U test_user -d test -f backend/init-test-db.sql
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U test_user -d test -f backend/init-test-db.sql
         env:
           PGPASSWORD: test_password
       - name: Run Unit Tests
