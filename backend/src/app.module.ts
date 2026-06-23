@@ -15,6 +15,7 @@ import { InventoryEntity } from './inventory/inventory.entity';
 import { InventoryModule } from './inventory/inventory.module';
 import { CreateUserTable1782066103000 } from './migrations/1782066103000-CreateUserTable';
 import { CreateInventoryTable1782066151000 } from './migrations/1782066151000-CreateInventoryTable';
+import { AuthController } from './auth/auth.controller';
 
 @Module({
   imports: [
@@ -47,7 +48,7 @@ import { CreateInventoryTable1782066151000 } from './migrations/1782066151000-Cr
     LoginModule,
     InventoryModule,
   ],
-  controllers: [RegisterController],
+  controllers: [RegisterController, AuthController],
   providers: [RegisterService, PasswordService],
 })
 export class AppModule {}

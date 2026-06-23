@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Auth.css';
+import '../assets/Auth.css';
 import NavBar from './NavBar.tsx';
 import InputField from './InputField.tsx';
 
@@ -8,9 +8,10 @@ interface AuthFormProps {
   buttonText: string;
   endpoint: string;
   successMessage: string;
+  onSuccess?: () => void;
 }
 
-export default function AuthForm({ title, buttonText, endpoint, successMessage }: AuthFormProps) {
+export default function AuthForm({ title, buttonText, endpoint, successMessage, onSuccess }: AuthFormProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -28,6 +29,7 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: trimmedUsername, password }),
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -36,6 +38,7 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage }
         setError(Array.isArray(data.message) ? data.message[0] : data.message);
       } else {
         setSuccess(successMessage);
+        if (onSuccess) onSuccess();
       }
     } catch {
       setError('Something went wrong. Please try again.');

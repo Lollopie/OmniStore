@@ -10,7 +10,7 @@ export class LoginService {
     private readonly passwordService: PasswordService,
     private readonly jwtService: JwtService,
   ) {}
-  async login(loginData: RegisterDto): Promise<{ access_token: string }> {
+  async login(loginData: RegisterDto): Promise<{ Authorization: string }> {
     return await this.usersService
       .findByUsername(loginData.username)
       .then(async (user) => {
@@ -23,11 +23,12 @@ export class LoginService {
           ) {
             const payload = { user_id: user.user_id, username: user.username };
             return {
-              access_token: await this.jwtService.signAsync(payload),
+              Authorization: await this.jwtService.signAsync(payload),
             };
           }
+          throw new UnauthorizedException('Wrong or expired token');
         }
-        throw new UnauthorizedException('Wrong username or auth');
+        throw new UnauthorizedException('Wrong username or password');
       });
   }
 }

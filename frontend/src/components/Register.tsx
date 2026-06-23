@@ -7,6 +7,7 @@ export default function Register() {
       buttonText="Register"
       endpoint="register"
       successMessage="Registration successful! You can now log in."
+      responseCallback={() => {return}}
     />
   );
 }
