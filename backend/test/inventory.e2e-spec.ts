@@ -7,11 +7,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
-
-type LoginResponse = {
-  access_token: string;
-};
-
+import cookieParser from 'cookie-parser';
 async function registerAndLogin(
   app: NestExpressApplication,
   username: string,
@@ -26,8 +22,7 @@ async function registerAndLogin(
     .post('/login')
     .send({ username, password })
     .expect(200);
-
-  return (response.body as LoginResponse).access_token;
+  return response.headers['set-cookie'][0].split(';')[0];
 }
 
 describe('InventoryController (e2e)', () => {
@@ -48,6 +43,7 @@ describe('InventoryController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
+    app.use(cookieParser());
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
     // await dataSource.query(
@@ -83,7 +79,7 @@ describe('InventoryController (e2e)', () => {
 
     const createResponse = await request(app.getHttpServer())
       .post('/inventory')
-      .set('Authorization', `Bearer ${aliceToken}`)
+      .set('Cookie', `${aliceToken}`)
       .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
@@ -94,7 +90,7 @@ describe('InventoryController (e2e)', () => {
 
     const listResponse = await request(app.getHttpServer())
       .get('/inventory')
-      .set('Authorization', `Bearer ${aliceToken}`)
+      .set('Cookie', `${aliceToken}`)
       .expect(200);
 
     expect(listResponse.body).toHaveLength(1);
@@ -119,29 +115,28 @@ describe('InventoryController (e2e)', () => {
       'bob.inventory.rls',
       'Password123',
     );
-
     await request(app.getHttpServer())
       .post('/inventory')
-      .set('Authorization', `Bearer ${aliceToken}`)
+      .set('Cookie', aliceToken)
       .send({ itemName: 'Alice item', amount: '1' })
       .expect(201);
 
     await request(app.getHttpServer())
       .post('/inventory')
-      .set('Authorization', `Bearer ${bobToken}`)
+      .set('Cookie', bobToken)
       .send({ itemName: 'Bob item', amount: '2' })
       .expect(201);
 
     const aliceList = await request(app.getHttpServer())
       .get('/inventory')
-      .set('Authorization', `Bearer ${aliceToken}`)
+      .set('Cookie', aliceToken)
       .expect(200);
 
     expect(aliceList.body).toHaveLength(1);
 
     const bobList = await request(app.getHttpServer())
       .get('/inventory')
-      .set('Authorization', `Bearer ${bobToken}`)
+      .set('Cookie', bobToken)
       .expect(200);
 
     expect(bobList.body).toHaveLength(1);
