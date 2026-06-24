@@ -33,7 +33,16 @@ export class InventoryService {
       return repo.find();
     });
   }
-
+  async getInventory(userToken: UserToken): Promise<InventoryEntity[]> {
+    return this.runInRlsContext(userToken.user_id, (repo) => {
+      return repo.find({
+        select: {
+          name: true,
+          amount: true,
+        },
+      });
+    });
+  }
   async createItem(
     item: InventoryDto,
     userToken: UserToken,
@@ -42,7 +51,7 @@ export class InventoryService {
       throw new Error('User not found');
     }
     const newItem = {
-      name: item.itemName,
+      name: item.name,
       amount: parseInt(item.amount, 10),
       user_id: userToken.user_id,
     };

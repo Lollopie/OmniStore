@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 import Register from './components/Register';
 import Login from './components/Login';
+import Inventory from './components/Inventory.tsx';
 
 function ProtectedRoute({ isAuthenticated }) {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
@@ -38,7 +39,7 @@ export default function App() {
     };
 
     checkAuthStatus();
-  }, []);
+  }, [isAuthenticated]);
 
   if (loading) {
     return (
@@ -58,7 +59,7 @@ export default function App() {
 
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
         {/* Your Root Page / Dashboard goes here */}
-        <Route path="/" element={<div className="p-10">Welcome to the Root/Dashboard Page!</div>} />
+        <Route path="/" element={<Inventory />} />
 
         {/* You can easily add more protected routes here later:
         <Route path="/dashboard" element={<Dashboard />} />

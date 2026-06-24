@@ -80,7 +80,7 @@ describe('InventoryController (e2e)', () => {
     const createResponse = await request(app.getHttpServer())
       .post('/inventory')
       .set('Cookie', `${aliceToken}`)
-      .send({ itemName: 'Apples', amount: '5' })
+      .send({ name: 'Apples', amount: '5' })
       .expect(201);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -98,10 +98,6 @@ describe('InventoryController (e2e)', () => {
     expect(listResponse.body[0].name).toBe('Apples');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(listResponse.body[0].amount)).toBe('5');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(listResponse.body[0].user_id).toBeDefined();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(listResponse.body[0].user_id).toBe(createResponse.body.user_id);
   });
 
   it('should enforce RLS isolation between two users', async () => {
@@ -118,13 +114,13 @@ describe('InventoryController (e2e)', () => {
     await request(app.getHttpServer())
       .post('/inventory')
       .set('Cookie', aliceToken)
-      .send({ itemName: 'Alice item', amount: '1' })
+      .send({ name: 'Alice item', amount: '1' })
       .expect(201);
 
     await request(app.getHttpServer())
       .post('/inventory')
       .set('Cookie', bobToken)
-      .send({ itemName: 'Bob item', amount: '2' })
+      .send({ name: 'Bob item', amount: '2' })
       .expect(201);
 
     const aliceList = await request(app.getHttpServer())

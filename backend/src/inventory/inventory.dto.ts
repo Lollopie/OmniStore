@@ -3,8 +3,9 @@ import {
   Matches,
   MinLength,
   MaxLength,
-  IsNumberString,
+  IsInt,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class InventoryDto {
   @IsString()
@@ -13,7 +14,8 @@ export class InventoryDto {
   @Matches(/^[A-Za-z\d\s!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]+$/, {
     message: 'Illegal Item name',
   })
-  itemName: string;
-  @IsNumberString(undefined, { message: 'Amount must be numeric' })
+  name: string;
+  @Type(() => Number)
+  @IsInt()
   amount: string;
 }

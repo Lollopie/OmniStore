@@ -9,7 +9,7 @@ export class InventoryController {
   @Get()
   @UseGuards(AuthGuard)
   getInventory(@userDecorator.User() userToken: userDecorator.UserToken) {
-    return this.inventoryService.findAll(userToken);
+    return this.inventoryService.getInventory(userToken);
   }
   @Post()
   @UseGuards(AuthGuard)
