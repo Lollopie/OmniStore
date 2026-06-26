@@ -1,6 +1,6 @@
 interface InputFieldProps {
   label: string;
-  type: 'text' | 'password';
+  type: 'text' | 'password' | 'number';
   value: string;
   onChange: (value: string) => void;
 }

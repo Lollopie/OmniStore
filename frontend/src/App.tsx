@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-
-import Register from './components/Register';
-import Login from './components/Login';
-import Inventory from './components/Inventory.tsx';
+import Register from './features/auth/Register';
+import Login from './features/auth/Login';
+import Inventory from './features/inventory/Inventory.tsx';
 import NavBar from './components/NavBar.tsx';
+import './assets/index.css';
 function ProtectedRoute({ isAuthenticated }) {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }

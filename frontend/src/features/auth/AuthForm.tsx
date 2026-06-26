@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import '../assets/Auth.css';
-import InputField from './InputField.tsx';
+import InputField from '../../components/InputField.tsx';
 
 interface AuthFormProps {
   title: string;
