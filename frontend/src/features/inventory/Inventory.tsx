@@ -3,9 +3,12 @@ import {fetchInventory} from './hooks/fetchInventory'
 import { handleAddItem } from './hooks/handleAddInventory.ts';
 import InputField from '../../components/InputField.tsx';
 import Button from '../../components/Button.tsx';
+import { generatePagination } from './hooks/generatePagination.ts';
+import { useSearchParams } from 'react-router-dom';
 const InventoryManager = () => {
   // State for inventory items and form inputs
   const [inventory, setInventory] = useState([]);
+  const [totalInventory, setTotalInventory] = useState(0);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(true);
@@ -13,13 +16,20 @@ const InventoryManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef(null);
   const [isMounted, setMounted] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState(Number(searchParams.get('page')));
+  const [pages, setPages] = useState([]);
+  const itemsPerPage = 10;
   // Base API URL - replace with your actual API endpoint
 // 1. Set your initial loading state to true right away
   useEffect(() => {
     // Use an abort controller to safely handle cleanup if the component unmounts
     if (isMounted) {
-      fetchInventory(setMounted, setInventory, setError, setLoading );
+      fetchInventory(page, setMounted, setInventory, setTotalInventory, setError, setLoading );
     }
+    generatePagination(page, Math.ceil(totalInventory / itemsPerPage), setPages);
+  }, [isMounted, page, totalInventory, inventory]);
+  useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
@@ -28,7 +38,7 @@ const InventoryManager = () => {
     } else {
       dialog.close();
     }
-  }, [isOpen, isMounted]); // Empty dependency array ensures this runs once on mount
+  }, [isOpen]);
   return (
     <div className={"flex flex-col items-center min-h-screen bg-gray-100 p-4"}>
       <div className="flex flex-col overflow-hidden">
@@ -94,8 +104,27 @@ const InventoryManager = () => {
           </table>
         )}
       </div>
+      <footer>
+        <div className={"flex justify-center gap-2 mt-4"}>
+          <Button id="prevButton"
+            children={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                           fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                           strokeWidth="2" className="feather feather-arrow-left icon size-6" viewBox="0 0 24 24">
+              <path d="M19 12H5m7 7-7-7 7-7"></path>
+            </svg>} size={'sm'} disabled={page === 1} onClick={() => {setPage(page - 1); setSearchParams({ page: (page - 1).toString() }); setMounted(true)}} />
+          {pages.map((pageNumber) => (
+            <Button id={"pageButton-" + pageNumber} children={pageNumber} key={pageNumber} size={'sm'} disabled={pageNumber === "..." || pageNumber == page} onClick={() => {setPage(pageNumber); setSearchParams({ page: pageNumber.toString() }); setMounted(true)}} />
+          ))}
+          <Button id="nextButton"
+            children={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                           fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                           strokeWidth="2" className="feather feather-arrow-right icon size-6" viewBox="0 0 24 24"
+            >
+              <path d="M5 12h14m-7-7 7 7-7 7"></path>
+            </svg>} size={"sm"} disabled={page == Math.ceil(totalInventory / itemsPerPage)} onClick={() => {setPage(page + 1); setSearchParams({ page: (page + 1).toString() }); setMounted(true)}}/>
+        </div>
+      </footer>
     </div>
-
   );
 };
 

@@ -93,11 +93,13 @@ describe('InventoryController (e2e)', () => {
       .set('Cookie', `${aliceToken}`)
       .expect(200);
 
-    expect(listResponse.body).toHaveLength(1);
+    expect(listResponse.body).toHaveLength(2);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(listResponse.body[0].name).toBe('Apples');
+    expect(listResponse.body[0]).toHaveLength(1);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(String(listResponse.body[0].amount)).toBe('5');
+    expect(listResponse.body[0][0].name).toBe('Apples');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(String(listResponse.body[0][0].amount)).toBe('5');
   });
 
   it('should enforce RLS isolation between two users', async () => {
@@ -128,14 +130,20 @@ describe('InventoryController (e2e)', () => {
       .set('Cookie', aliceToken)
       .expect(200);
 
-    expect(aliceList.body).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(aliceList.body[0]).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(aliceList.body[1]).toBe(1);
 
     const bobList = await request(app.getHttpServer())
       .get('/inventory')
       .set('Cookie', bobToken)
       .expect(200);
 
-    expect(bobList.body).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(bobList.body[0]).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(bobList.body[1]).toBe(1);
   });
 
   afterEach(async () => {

@@ -33,13 +33,19 @@ export class InventoryService {
       return repo.find();
     });
   }
-  async getInventory(userToken: UserToken): Promise<InventoryEntity[]> {
+  async getInventory(
+    userToken: UserToken,
+    page: number,
+  ): Promise<[InventoryEntity[], number]> {
+    const itemsPerPage = 10;
     return this.runInRlsContext(userToken.user_id, (repo) => {
-      return repo.find({
+      return repo.findAndCount({
         select: {
           name: true,
           amount: true,
         },
+        skip: (page - 1) * itemsPerPage,
+        take: itemsPerPage,
       });
     });
   }

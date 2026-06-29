@@ -1,5 +1,5 @@
 const VARIANTS = {
-  primary: "border-slate-300 bg-white text-slate-900 hover:bg-slate-200 focus-visible:outline-slate-500",
+  primary: "border-slate-300 bg-white text-slate-900 hover:bg-slate-200 focus-visible:outline-slate-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none",
   danger: "bg-red-600 hover:bg-red-700 text-white shadow-sm",
   add: "bg-green-500 text-white hover:bg-green-400 focus-visible:outline-green-600",
 }
