@@ -1,10 +1,11 @@
-export const fetchInventory = async (page, setMounted, setInventory, setTotalInventory, setError, setLoading) => {
+export const fetchInventory = async (page, sort, setMounted, setInventory, setTotalInventory, setError, setLoading) => {
   setMounted(false);
   const params = new URLSearchParams();
   if (!page || page < 1) {
     page = 1;
   }
   params.append("page", page);
+  params.append("sort", sort);
   try {
     const response = await fetch(`http://localhost:3000/inventory?${params}`, {method: 'GET', credentials: 'include'});
     if (!response.ok) throw new Error('Failed to fetch inventory.');

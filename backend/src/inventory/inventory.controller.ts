@@ -11,11 +11,15 @@ export class InventoryController {
   getInventory(
     @userDecorator.User() userToken: userDecorator.UserToken,
     @Query('page') page: number,
+    @Query('sort') sort: string,
   ) {
     if (!page) {
       page = 1;
     }
-    return this.inventoryService.getInventory(userToken, page);
+    if (!sort) {
+      sort = 'new';
+    }
+    return this.inventoryService.getInventory(userToken, page, sort);
   }
   @Post()
   @UseGuards(AuthGuard)

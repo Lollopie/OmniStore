@@ -17,18 +17,19 @@ const InventoryManager = () => {
   const dialogRef = useRef(null);
   const [isMounted, setMounted] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [page, setPage] = useState(Number(searchParams.get('page')));
+  const [page, setPage] = useState(Number(searchParams.get('page') || 1));
   const [pages, setPages] = useState([]);
+  const [sort, setSort] = useState('new');
   const itemsPerPage = 10;
   // Base API URL - replace with your actual API endpoint
 // 1. Set your initial loading state to true right away
   useEffect(() => {
     // Use an abort controller to safely handle cleanup if the component unmounts
     if (isMounted) {
-      fetchInventory(page, setMounted, setInventory, setTotalInventory, setError, setLoading );
+      fetchInventory(page, sort, setMounted, setInventory, setTotalInventory, setError, setLoading );
     }
     generatePagination(page, Math.ceil(totalInventory / itemsPerPage), setPages);
-  }, [isMounted, page, totalInventory, inventory]);
+  }, [isMounted, page, sort, totalInventory, inventory]);
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -71,7 +72,21 @@ const InventoryManager = () => {
         </dialog>
       </div>
       <div className="w-full max-w-100 m-1 font-sans flex flex-col">
-        <Button children={"+"} variant={"add"} size={"md"} onClick={() => setIsOpen(true)} />
+        <div className="flex flex-col">
+          <label className="block text-sm font-semibold text-gray-800">Sort by:</label>
+          <div className={"flex justify-between items-center mb-4"}>
+            <select className="bg-slate-300 border rounded-md text-base h-10" name="sort" id="sort" onChange={(e) => {setSort(e.target.value); setMounted(true)}}>
+              <option value="new">New</option>
+              <option value="old">Old</option>
+              <option value="name asc">Name Ascending</option>
+              <option value="name desc">Name Descending</option>
+              <option value="amount asc">Amount Ascending</option>
+              <option value="amount desc">Amount Descending</option>
+            </select>
+            <Button children={"+"} variant={"add"} size={"md"} onClick={() => setIsOpen(true)} />
+          </div>
+        </div>
+
         {/* Status Messages */}
         {loading && <p>Loading inventory...</p>}
         {error && <p className="text-red-500">Error: {error}</p>}
