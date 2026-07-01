@@ -14,7 +14,9 @@ import { PasswordService } from '../auth/password.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('auth.jwtSecret'), // 3. Dynamically fetch the secret
-        signOptions: { expiresIn: '1h' },
+        signOptions: {
+          expiresIn: configService.get<number>('auth.jwtExpiresIn'),
+        },
       }),
     }),
   ],

@@ -9,10 +9,14 @@ import {
 import express from 'express';
 import { LoginService } from './login.service';
 import { RegisterDto } from '../register/register.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('login')
 export class LoginController {
-  constructor(private readonly loginService: LoginService) {}
+  constructor(
+    private readonly loginService: LoginService,
+    private readonly configService: ConfigService,
+  ) {}
   @Post()
   @HttpCode(HttpStatus.OK)
   async register(
@@ -24,7 +28,7 @@ export class LoginController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 1 * 60 * 60 * 1000, // Cookie expiry in milliseconds (e.g., 1 hour)
+      maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
     });
 
     return { message: 'Authentication successful' };
