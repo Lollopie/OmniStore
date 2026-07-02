@@ -1,4 +1,4 @@
-# OmniStore: A Multi-User Isolated Web Application
+# OmniStore: A Multi-User Isolated Web Inventory System
 ## Key Features
 
 - **Multi-User Isolation**: Complete data separation at the database level using PostgreSQL Row-Level Security (RLS). Each user interacts only with their own data context.
