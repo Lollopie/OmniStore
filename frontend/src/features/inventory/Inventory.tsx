@@ -15,9 +15,8 @@ const InventoryManager = () => {
   const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef(null);
-  const [isMounted, setMounted] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [page, setPage] = useState(Number(searchParams.get('page') || 1));
+  const page = Number(searchParams.get('page')) || 1;
   const [pages, setPages] = useState([]);
   const [sort, setSort] = useState('new');
   const itemsPerPage = 10;
@@ -25,11 +24,11 @@ const InventoryManager = () => {
 // 1. Set your initial loading state to true right away
   useEffect(() => {
     // Use an abort controller to safely handle cleanup if the component unmounts
-    if (isMounted) {
-      fetchInventory(page, sort, setMounted, setInventory, setTotalInventory, setError, setLoading );
-    }
-    generatePagination(page, Math.ceil(totalInventory / itemsPerPage), setPages);
-  }, [isMounted, page, sort, totalInventory, inventory]);
+    fetchInventory(Number(page), sort, setInventory, setTotalInventory, setError, setLoading );
+  }, [page, sort]);
+  useEffect(() => {
+    generatePagination(Number(page), Math.ceil(totalInventory / itemsPerPage), setPages);
+  }, [page, sort, totalInventory]);
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -75,7 +74,7 @@ const InventoryManager = () => {
         <div className="flex flex-col">
           <label className="block text-sm font-semibold text-gray-800">Sort by:</label>
           <div className={"flex justify-between items-center mb-4"}>
-            <select className="bg-slate-300 border rounded-md text-base h-10" name="sort" id="sort" onChange={(e) => {setSort(e.target.value); setMounted(true)}}>
+            <select className="bg-slate-300 border rounded-md text-base h-10" name="sort" id="sort" onChange={(e) => {setSort(e.target.value)}}>
               <option value="new">New</option>
               <option value="old">Old</option>
               <option value="name asc">Name Ascending</option>
@@ -126,9 +125,9 @@ const InventoryManager = () => {
                            fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
                            strokeWidth="2" className="feather feather-arrow-left icon size-6" viewBox="0 0 24 24">
               <path d="M19 12H5m7 7-7-7 7-7"></path>
-            </svg>} size={'sm'} disabled={page === 1} onClick={() => {setPage(page - 1); setSearchParams({ page: (page - 1).toString() }); setMounted(true)}} />
+            </svg>} size={'sm'} disabled={Number(page) === 1} onClick={() => {searchParams.set("page", (Number(page) - 1).toString()); setSearchParams({ page: (Number(page) - 1).toString() })}} />
           {pages.map((pageNumber) => (
-            <Button id={"pageButton-" + pageNumber} children={pageNumber} key={pageNumber} size={'sm'} disabled={pageNumber === "..." || pageNumber == page} onClick={() => {setPage(pageNumber); setSearchParams({ page: pageNumber.toString() }); setMounted(true)}} />
+            <Button id={"pageButton-" + pageNumber} children={pageNumber} key={pageNumber} size={'sm'} disabled={pageNumber === "..." || pageNumber == page} onClick={() => {searchParams.set("page", pageNumber); setSearchParams({ page: pageNumber.toString() })}} />
           ))}
           <Button id="nextButton"
             children={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -136,7 +135,7 @@ const InventoryManager = () => {
                            strokeWidth="2" className="feather feather-arrow-right icon size-6" viewBox="0 0 24 24"
             >
               <path d="M5 12h14m-7-7 7 7-7 7"></path>
-            </svg>} size={"sm"} disabled={page == Math.ceil(totalInventory / itemsPerPage)} onClick={() => {setPage(page + 1); setSearchParams({ page: (page + 1).toString() }); setMounted(true)}}/>
+            </svg>} size={"sm"} disabled={Number(page) == Math.ceil(totalInventory / itemsPerPage)} onClick={() => {searchParams.set("page", (Number(page) + 1).toString()); setSearchParams({page: (Number(page) + 1).toString()})}}/>
         </div>
       </footer>
     </div>

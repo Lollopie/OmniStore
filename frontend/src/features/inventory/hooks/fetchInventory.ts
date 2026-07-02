@@ -1,5 +1,4 @@
-export const fetchInventory = async (page, sort, setMounted, setInventory, setTotalInventory, setError, setLoading) => {
-  setMounted(false);
+export const fetchInventory = async (page, sort, setInventory, setTotalInventory, setError, setLoading) => {
   const params = new URLSearchParams();
   if (!page || page < 1) {
     page = 1;
