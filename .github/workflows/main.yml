@@ -80,7 +80,7 @@ jobs:
           echo "Commencing Health Check on $APP_URL"
           
           for i in $(seq 1 $MAX_RETRIES); do
-            STATUS=$(curl -s -o --max-time 5 /dev/null -w "%{http_code}" "$APP_URL" || true)
+            STATUS=$(curl -s --max-time 5 -o /dev/null -w "%{http_code}" "$APP_URL" || true)
             if [ "$STATUS" -eq 200 ]; then
               echo "Success! Application is live and healthy (HTTP 200)."
               exit 0
