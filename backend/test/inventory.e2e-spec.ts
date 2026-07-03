@@ -145,7 +145,360 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(bobList.body[1]).toBe(1);
   });
+  it('should only return 10 items', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 15;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: 1 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe('1');
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
 
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+  });
+  it('default sort by new', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 10;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: 1 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe('1');
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+    for (let i = 0; i < 10; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0][i].name).toBe(
+        (numberOfItems - i - 1).toString(),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(listResponse.body[0][i].amount)).toBe('1');
+    }
+  });
+  it('sort by old', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 10;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: 1 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe('1');
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory?sort=old')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+    for (let i = 0; i < 10; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0][i].name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(listResponse.body[0][i].amount)).toBe('1');
+    }
+  });
+  it('sort by name asc', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 10;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: 1 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe('1');
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory?sort=name asc')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+    for (let i = 0; i < 10; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0][i].name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(listResponse.body[0][i].amount)).toBe('1');
+    }
+  });
+  it('sort by name desc', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 10;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: 1 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe('1');
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory?sort=name desc')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+    for (let i = 0; i < 10; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0][i].name).toBe(
+        (numberOfItems - i - 1).toString(),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(listResponse.body[0][i].amount)).toBe('1');
+    }
+  });
+  it('sort by amount asc', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 10;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: i })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe(i.toString());
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory?sort=amount asc')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+    for (let i = 0; i < 10; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0][i].name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(listResponse.body[0][i].amount)).toBe(i.toString());
+    }
+  });
+  it('sort by amount desc', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 10;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: i })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe(i.toString());
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory?sort=amount desc')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+    for (let i = 0; i < 10; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0][i].name).toBe(
+        (numberOfItems - i - 1).toString(),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(listResponse.body[0][i].amount)).toBe(
+        (numberOfItems - i - 1).toString(),
+      );
+    }
+  });
+  it('sort by amount asc tiebreaker', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 10;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: 1 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe('1');
+
+      const createResponse2 = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: (numberOfItems + i).toString(), amount: 2 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse2.body.name).toBe((numberOfItems + i).toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse2.body.amount)).toBe('2');
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory?sort=amount asc')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+    for (let i = 0; i < 10; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0][i].name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(listResponse.body[0][i].amount)).toBe('1');
+    }
+  });
+  it('sort by amount desc tiebreaker', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 10;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: 1 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe('1');
+
+      const createResponse2 = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: (numberOfItems + i).toString(), amount: 2 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse2.body.name).toBe((numberOfItems + i).toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse2.body.amount)).toBe('2');
+    }
+    const listResponse = await request(app.getHttpServer())
+      .get('/inventory?sort=amount desc')
+      .set('Cookie', `${aliceToken}`)
+      .expect(200);
+
+    expect(listResponse.body).toHaveLength(2);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(listResponse.body[0]).toHaveLength(10);
+    for (let i = 0; i < 10; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0][i].name).toBe((i + numberOfItems).toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(listResponse.body[0][i].amount)).toBe('2');
+    }
+  });
+  it('pagination', async () => {
+    const aliceToken = await registerAndLogin(
+      app,
+      'alice.inventory.test',
+      'Password123',
+    );
+    const numberOfItems = 100;
+    for (let i = 0; i < numberOfItems; i++) {
+      const createResponse = await request(app.getHttpServer())
+        .post('/inventory')
+        .set('Cookie', `${aliceToken}`)
+        .send({ name: i.toString(), amount: 1 })
+        .expect(201);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(createResponse.body.name).toBe(i.toString());
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(String(createResponse.body.amount)).toBe('1');
+    }
+    for (let i = 0; i < Math.ceil(numberOfItems / 10); i++) {
+      const listResponse = await request(app.getHttpServer())
+        .get('/inventory?page=' + (i + 1))
+        .set('Cookie', `${aliceToken}`)
+        .expect(200);
+      expect(listResponse.body).toHaveLength(2);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(listResponse.body[0]).toHaveLength(10);
+      for (let j = 0; j < 10; j++) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(listResponse.body[0][j].name).toBe(
+          (numberOfItems - (i * 10 + j + 1)).toString(),
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(String(listResponse.body[0][j].amount)).toBe('1');
+      }
+    }
+  });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;
     const tableNames = entities
