@@ -17,6 +17,7 @@ import { CreateUserTable1782066103000 } from './migrations/1782066103000-CreateU
 import { CreateInventoryTable1782066151000 } from './migrations/1782066151000-CreateInventoryTable';
 import { AuthController } from './auth/auth.controller';
 import { LogoutController } from './logout/logout.controller';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -49,7 +50,12 @@ import { LogoutController } from './logout/logout.controller';
     LoginModule,
     InventoryModule,
   ],
-  controllers: [RegisterController, AuthController, LogoutController],
+  controllers: [
+    RegisterController,
+    AuthController,
+    LogoutController,
+    HealthController,
+  ],
   providers: [RegisterService, PasswordService],
 })
 export class AppModule {}

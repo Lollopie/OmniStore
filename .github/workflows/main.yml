@@ -47,20 +47,48 @@ jobs:
       - name: Run Unit Tests
         run: npm run test
         working-directory: backend
-      # Optional: If you use an ORM like TypeORM or Prisma, run migrations here
-      # - name: Run Database Migrations
-      #   run: npm run migration:run
-      #   env:
-      #     DATABASE_URL: postgres://test_user:test_password@localhost:5432/nestjs_test
 
       - name: Run E2E Tests
         working-directory: backend
         run: npm run test:e2e
         env:
-          # Inject variables so NestJS knows how to connect to the containerized DB
           DATABASE_HOST: localhost
           DATABASE_PORT: 5432
           DATABASE_USER: app_test_user
           DATABASE_PASSWORD: apppassword
           DATABASE_NAME: test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  cd-deploy:
+    name: Deploy to Production
+    needs: test_backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deployment
+        run: |
+          echo "Triggering deployment on Render..."
+          curl -s "${{secrets.RENDER_DEPLOY_HOOK_URL}}" > /dev/null
+      - name: Wait for Deployment to Complete
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 60  # Adjust the sleep duration as needed
+      - name: Post Deployment Health Check
+        run: |
+          APP_URL="https://omnistore-rxy6.onrender.com/healthz"
+          MAX_RETRIES=5
+          RETRY_INTERVAL=15
+          
+          echo "Commencing Health Check on $APP_URL"
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL" || true)
+            if [ "$STATUS" -eq 200 ]; then
+              echo "Success! Application is live and healthy (HTTP 200)."
+              exit 0
+            else
+              echo "Attempt $i failed (HTTP Status: $STATUS). Retrying in $RETRY_INTERVAL seconds..."
+              sleep $RETRY_INTERVAL
+            fi
+          done
+          
+          echo "CRITICAL: Health check timed out or failed. Production may be broken!"
+          exit 1
