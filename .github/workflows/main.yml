@@ -73,7 +73,7 @@ jobs:
           sleep 60  # Adjust the sleep duration as needed
       - name: Post Deployment Health Check
         run: |
-          APP_URL="https://omnistore-rxy6.onrender.com/healthz"
+          APP_URL="https://omnistore-cqds.onrender.com/healthz"
           MAX_RETRIES=5
           RETRY_INTERVAL=15
           
