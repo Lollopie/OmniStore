@@ -23,7 +23,7 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
     const trimmedUsername = username.trim();
 
     try {
-      const response = await fetch(`http://localhost:3000/${endpoint}`, {
+      const response = await fetch(`${process.env.NESTJS_HOST_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: trimmedUsername, password }),

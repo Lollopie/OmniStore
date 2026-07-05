@@ -1,4 +1,6 @@
-export function generatePagination(currentPage: number, totalPages: number, setPages) {
+import React from 'react';
+
+export function generatePagination(currentPage: number, totalPages: number, setPages: React.Dispatch<React.SetStateAction<(number | string)[]>>) {
   const SIBLINGS = 1; // How many numbers to show on either side of current page
 
   // If total pages is small, just return a range from 1 to totalPages

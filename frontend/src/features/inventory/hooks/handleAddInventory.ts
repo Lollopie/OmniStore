@@ -1,5 +1,7 @@
 // Handle POST request for new item
-export const handleAddItem = async (name, amount, inventory, setName, setAmount, setInventory) => {
+import React from 'react';
+
+export const handleAddItem = async (name: string, amount: string, inventory: ({name: string, amount: string})[], setName: React.Dispatch<React.SetStateAction<string>>, setAmount: React.Dispatch<React.SetStateAction<string>>, setInventory: React.Dispatch<React.SetStateAction<({name: string, amount: string})[]>>) => {
 
   // Basic validation
   if (!name.trim() || !amount) {
@@ -13,7 +15,7 @@ export const handleAddItem = async (name, amount, inventory, setName, setAmount,
   };
 
   try {
-    const response = await fetch('http://localhost:3000/inventory', {
+    const response = await fetch(`${process.env.NESTJS_HOST_URL}/inventory`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -25,13 +27,15 @@ export const handleAddItem = async (name, amount, inventory, setName, setAmount,
     if (!response.ok) throw new Error('Failed to add item.');
 
     // Refresh the list or append the returned item
-    const addedItem = await response.json();
+    const addedItem: {name:string, amount: string} = await response.json();
     setInventory([...inventory, addedItem]);
 
     // Reset form fields
     setName('');
     setAmount('');
-  } catch (err) {
-    alert(`Error adding item: ${err.message}`);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      alert(`Error adding item: ${err.message}`);
+    }
   }
 };

@@ -5,11 +5,11 @@ import Login from './features/auth/Login';
 import Inventory from './features/inventory/Inventory.tsx';
 import NavBar from './components/NavBar.tsx';
 import './assets/index.css';
-function ProtectedRoute({ isAuthenticated }) {
+function ProtectedRoute({ isAuthenticated } : {isAuthenticated: boolean}) {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-function GuestRoute({ isAuthenticated }) {
+function GuestRoute({ isAuthenticated } : {isAuthenticated: boolean}) {
   return !isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
 }
 
@@ -20,7 +20,7 @@ export default function App() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await fetch('http://localhost:3000/auth/status', {
+        const response = await fetch(`${process.env.NESTJS_HOST_URL}/auth/status`, {
           method: 'GET',
           credentials: 'include',
         });

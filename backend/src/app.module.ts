@@ -23,7 +23,11 @@ import { HealthController } from './health/health.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'dev'}`],
+      envFilePath: [
+        `.env`,
+        `.env.${process.env.NODE_ENV || 'dev'}`,
+        '/etc/secrets/.env',
+      ],
       load: [authConfig, dbConfig],
     }),
     TypeOrmModule.forRootAsync({

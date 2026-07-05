@@ -7,7 +7,7 @@ export default function NavBar({isAuthenticated, setIsAuthenticated}: NavBarProp
   const handleLogout= async () => {
     if (isAuthenticated) {
       try {
-        const response = await fetch('http://localhost:3000/logout', {
+        const response = await fetch(`${process.env.NESTJS_HOST_URL}/logout`, {
           method: 'POST',
           credentials: 'include'
         });
