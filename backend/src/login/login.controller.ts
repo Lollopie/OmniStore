@@ -27,7 +27,7 @@ export class LoginController {
     res.cookie('token', token.Authorization, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
     });
 
