@@ -9,7 +9,7 @@ export const fetchInventory = async (page: number, sort: string, setInventory: R
   params.append("page", page.toString());
   params.append("sort", sort);
   try {
-    const response = await fetch(`${process.env.NESTJS_HOST_URL}/inventory?${params}`, {method: 'GET', credentials: 'include'});
+    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/inventory?${params}`, {method: 'GET', credentials: 'include'});
     if (!response.ok) throw new Error('Failed to fetch inventory.');
     const data = await response.json();
 

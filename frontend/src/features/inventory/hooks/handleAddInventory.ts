@@ -15,7 +15,7 @@ export const handleAddItem = async (name: string, amount: string, inventory: ({n
   };
 
   try {
-    const response = await fetch(`${process.env.NESTJS_HOST_URL}/inventory`, {
+    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/inventory`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -20,7 +20,7 @@ export default function App() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await fetch(`${process.env.NESTJS_HOST_URL}/auth/status`, {
+        const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/auth/status`, {
           method: 'GET',
           credentials: 'include',
         });
