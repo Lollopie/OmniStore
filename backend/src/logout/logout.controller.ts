@@ -23,7 +23,7 @@ export class LogoutController {
     res.cookie('token', req['user'], {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       expires: new Date(1970, 1, 1),
     });
 
