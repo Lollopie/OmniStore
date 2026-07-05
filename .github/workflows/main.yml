@@ -54,8 +54,8 @@ jobs:
         env:
           DATABASE_HOST: localhost
           DATABASE_PORT: 5432
-          DATABASE_USER: app_test_user
-          DATABASE_PASSWORD: apppassword
+          APP_USER: app_test_user
+          APP_PASSWORD: apppassword
           DATABASE_NAME: test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
   cd-deploy:
