@@ -5,19 +5,23 @@ import InputField from '../../components/InputField.tsx';
 import Button from '../../components/Button.tsx';
 import { generatePagination } from './hooks/generatePagination.ts';
 import { useSearchParams } from 'react-router-dom';
+export interface InventoryItem {
+  name: string;
+  amount: string;
+}
 const InventoryManager = () => {
   // State for inventory items and form inputs
-  const [inventory, setInventory] = useState([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [totalInventory, setTotalInventory] = useState(0);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const dialogRef = useRef(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const page: number = Number(searchParams.get('page')) || 1;
-  const [pages, setPages] = useState([]);
+  const [pages, setPages] = useState<(number | string)[]>([]);
   const [sort, setSort] = useState('new');
   const itemsPerPage = 10;
   // Base API URL - replace with your actual API endpoint
@@ -30,11 +34,13 @@ const InventoryManager = () => {
     generatePagination(Number(page), Math.max(Math.ceil(totalInventory / itemsPerPage), 1), setPages);
   }, [page, sort, totalInventory]);
   useEffect(() => {
-    const dialog: HTMLDialogElement = dialogRef.current;
-    if (!dialog) return;
+    const dialog: HTMLDialogElement | null = dialogRef.current;
+    if (!dialog){
+      return;
+    }
 
     if (isOpen) {
-      dialog.showModal(); // Opens it as a true modal with a backdrop
+      dialog.showModal();
     } else {
       dialog.close();
     }
@@ -106,8 +112,8 @@ const InventoryManager = () => {
                 </td>
               </tr>
             ) : (
-              inventory.map((item: {id: string | undefined, name: string, amount: string}, index) => (
-                <tr key={item.id || index} className="border-b border-b-slate-200">
+              inventory.map((item: InventoryItem, index) => (
+                <tr key={index} className="border-b border-b-slate-200">
                   <td className="p-3">{item.name}</td>
                   <td className="p-3">{item.amount}</td>
                 </tr>

@@ -1,4 +1,5 @@
 import AuthForm from './AuthForm.tsx';
+import React from 'react';
 interface LoginProps {
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
 }

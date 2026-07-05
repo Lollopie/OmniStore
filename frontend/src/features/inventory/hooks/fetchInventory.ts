@@ -1,6 +1,7 @@
 import React from 'react';
+import type { InventoryItem } from '../Inventory.tsx';
 
-export const fetchInventory = async (page: number, sort: string, setInventory: React.Dispatch<React.SetStateAction<string[]>>, setTotalInventory: React.Dispatch<React.SetStateAction<number>>, setError: React.Dispatch<React.SetStateAction<string>>, setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
+export const fetchInventory = async (page: number, sort: string, setInventory: React.Dispatch<React.SetStateAction<InventoryItem[]>>, setTotalInventory: React.Dispatch<React.SetStateAction<number>>, setError: React.Dispatch<React.SetStateAction<string | null>>, setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
   const params = new URLSearchParams();
   if (!page || page < 1) {
     page = 1;
