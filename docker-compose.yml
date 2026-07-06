@@ -38,6 +38,9 @@ services:
       DATABASE_NAME: ${DB_NAME}
       APP_USER: nestjs_app_user
       APP_PASSWORD: ${APP_PASSWORD}
+      REDIS_URL: redis://localhost:6379
+      RATE_LIMIT: 10
+      RATE_TIMEOUT: 60000
     depends_on:
       - postgres
     networks:

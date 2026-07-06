@@ -3,11 +3,12 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
-import { ValidationPipe } from '@nestjs/common';
+import { CanActivate, Injectable, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
 import cookieParser from 'cookie-parser';
+import { ThrottlerGuard } from '@nestjs/throttler';
 async function registerAndLogin(
   app: NestExpressApplication,
   username: string,
@@ -24,7 +25,12 @@ async function registerAndLogin(
     .expect(200);
   return response.headers['set-cookie'][0].split(';')[0];
 }
-
+@Injectable()
+class MockThrottlerGuard implements CanActivate {
+  canActivate(): boolean {
+    return true;
+  }
+}
 describe('InventoryController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
@@ -39,7 +45,10 @@ describe('InventoryController (e2e)', () => {
         AppModule,
       ],
       providers: [],
-    }).compile();
+    })
+      .overrideProvider(ThrottlerGuard)
+      .useClass(MockThrottlerGuard)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());

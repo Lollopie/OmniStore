@@ -3,12 +3,18 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
-import { ValidationPipe } from '@nestjs/common';
+import { CanActivate, Injectable, ValidationPipe } from '@nestjs/common';
 import { PasswordService } from '../src/auth/password.service';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
-
+import { ThrottlerGuard } from '@nestjs/throttler';
+@Injectable()
+class MockThrottlerGuard implements CanActivate {
+  canActivate(): boolean {
+    return true;
+  }
+}
 describe('RegisterController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
@@ -23,7 +29,10 @@ describe('RegisterController (e2e)', () => {
         AppModule,
       ],
       providers: [PasswordService],
-    }).compile();
+    })
+      .overrideProvider(ThrottlerGuard)
+      .useClass(MockThrottlerGuard)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());

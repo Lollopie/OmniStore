@@ -26,7 +26,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -58,6 +66,7 @@ jobs:
           APP_PASSWORD: apppassword
           DATABASE_NAME: test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          REDIS_URL: redis://localhost:6379
   cd-deploy:
     name: Deploy to Production
     needs: test_backend
@@ -66,7 +75,8 @@ jobs:
       - name: Trigger Render Deployment
         run: |
           echo "Triggering deployment on Render..."
-          curl -s "${{secrets.RENDER_DEPLOY_HOOK_URL}}" > /dev/null
+          curl -s "${{secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL}}" > /dev/null
+          curl -s "${{secrets.RENDER_BACKEND_DEPLOY_HOOK_URL}}" > /dev/null
       - name: Wait for Deployment to Complete
         run: |
           echo "Waiting for deployment to complete..."

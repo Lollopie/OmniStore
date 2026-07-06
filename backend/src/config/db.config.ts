@@ -7,4 +7,7 @@ export default registerAs('db', () => ({
   databaseUser: process.env.APP_USER || 'postgres',
   databasePassword: process.env.APP_PASSWORD || 'postgres',
   databaseSynchronize: (process.env.DATABASE_SYNCHRONIZE || 'false') === 'true',
+  redisURL: process.env.REDIS_URL || 'localhost',
+  rateLimit: parseInt(process.env.RATE_LIMIT!, 10) || 10,
+  rateTimeout: parseInt(process.env.RATE_TIMEOUT!, 10) || 60000,
 }));

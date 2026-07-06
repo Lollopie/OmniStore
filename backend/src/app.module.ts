@@ -18,6 +18,9 @@ import { CreateInventoryTable1782066151000 } from './migrations/1782066151000-Cr
 import { AuthController } from './auth/auth.controller';
 import { LogoutController } from './logout/logout.controller';
 import { HealthController } from './health/health.controller';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -50,6 +53,21 @@ import { HealthController } from './health/health.controller';
         };
       },
     }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: config.get<number>('db.rateTimeout')!,
+            limit: config.get<number>('db.rateLimit')!,
+          },
+        ],
+        storage: new ThrottlerStorageRedisService(
+          config.get<string>('db.redisUrl'),
+        ),
+      }),
+    }),
     UsersModule,
     LoginModule,
     InventoryModule,
@@ -60,6 +78,11 @@ import { HealthController } from './health/health.controller';
     LogoutController,
     HealthController,
   ],
-  providers: [RegisterService, PasswordService],
+  providers: [
+    RegisterService,
+    PasswordService,
+    ThrottlerGuard,
+    { provide: APP_GUARD, useExisting: ThrottlerGuard },
+  ],
 })
 export class AppModule {}
