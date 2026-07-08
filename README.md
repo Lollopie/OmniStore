@@ -122,7 +122,7 @@ The configuration can be inspected in .github/workflows/main.yml.
 
 ## RoadMap & Future Scope (TODOs)
 - [X] Dockerization: Containerize both Front-End and Back-End applications utilizing Dockerfile configs and orchestrate multi-container deployment via docker-compose.
-- [ ] Enhanced Security: Implement additional security measures such as rate limiting and advanced logging for suspicious activities.
+- [X] Enhanced Security: Implement additional security measures such as rate limiting and advanced logging for suspicious activities.
 - [X] Automatic Cloud Deployment: Build continuous deployment (CD) pipelines through GitHub Actions to automatically roll out updates to a cloud provider (e.g., AWS, Render, DigitalOcean).
 - [ ] Advanced User Management: Introduce role-based access control (RBAC) to allow for different user permissions and administrative capabilities.
 

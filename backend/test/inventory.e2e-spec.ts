@@ -9,6 +9,7 @@ import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
 import cookieParser from 'cookie-parser';
 import { ThrottlerGuard } from '@nestjs/throttler';
+
 async function registerAndLogin(
   app: NestExpressApplication,
   username: string,
@@ -23,7 +24,12 @@ async function registerAndLogin(
     .post('/login')
     .send({ username, password })
     .expect(200);
-  return response.headers['set-cookie'][0].split(';')[0];
+  const response2 = await request(app.getHttpServer())
+    .post('/warehouse')
+    .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
+    .send({ name: 'Warehouse 1' })
+    .expect(201);
+  return response2.headers['set-cookie'][0].split(';')[0];
 }
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -55,24 +61,6 @@ describe('InventoryController (e2e)', () => {
     app.use(cookieParser());
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
-    // await dataSource.query(
-    //   `ALTER TABLE "inventory" FORCE ROW LEVEL SECURITY;`,
-    // );
-    // await dataSource.query(`
-    //   DO $$
-    //   BEGIN
-    //     CREATE ROLE inventory_rls_tester NOLOGIN;
-    //   EXCEPTION
-    //     WHEN duplicate_object THEN NULL;
-    //   END
-    //   $$;
-    // `);
-    // await dataSource.query(
-    //   `GRANT USAGE ON SCHEMA public TO inventory_rls_tester;`,
-    // );
-    // await dataSource.query(
-    //   `GRANT SELECT ON TABLE "inventory" TO inventory_rls_tester;`,
-    // );
   });
 
   it('/inventory unauthorized (GET)', () => {
@@ -85,7 +73,6 @@ describe('InventoryController (e2e)', () => {
       'alice.inventory.test',
       'Password123',
     );
-
     const createResponse = await request(app.getHttpServer())
       .post('/inventory')
       .set('Cookie', `${aliceToken}`)

@@ -4,9 +4,14 @@ import {
   Request,
 } from '@nestjs/common';
 
-export type UserToken = { username: string; user_id: string };
+export type UserToken = {
+  username: string;
+  user_id: string;
+  activeWarehouseId: string;
+  activeRole: string;
+};
 
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
   user: UserToken;
 }
 

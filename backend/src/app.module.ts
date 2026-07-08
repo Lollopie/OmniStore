@@ -21,6 +21,14 @@ import { HealthController } from './health/health.controller';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { APP_GUARD } from '@nestjs/core';
+import { ClsModule } from 'nestjs-cls';
+import { UserWarehouseRoleModule } from './userWarehouseRole/userWarehouseRole.module';
+import { WarehouseModule } from './warehouse/warehouse.module';
+import { WarehouseEntity } from './warehouse/warehouse.entity';
+import { UserWarehouseRoleEntity } from './userWarehouseRole/userWarehouseRole.entity';
+import { CreateWarehouseTable1783438313000 } from './migrations/1783438313000-CreateWarehouseTable';
+import { InventoryRefactoring1783438667000 } from './migrations/1783438667000-InventoryRefactoring';
+import { CreateUserWarehouseRoleTable1783439080000 } from './migrations/1783439080000-CreateUserWarehouseRoleTable';
 
 @Module({
   imports: [
@@ -43,11 +51,20 @@ import { APP_GUARD } from '@nestjs/core';
           username: configService.get<string>('db.databaseUser'),
           password: configService.get<string>('db.databasePassword'),
           database: configService.get<string>('db.databaseName'),
-          entities: [UserEntity, UserBaseEntity, InventoryEntity],
+          entities: [
+            UserEntity,
+            UserBaseEntity,
+            InventoryEntity,
+            WarehouseEntity,
+            UserWarehouseRoleEntity,
+          ],
           synchronize: configService.get<boolean>('db.databaseSynchronize'),
           migrations: [
             CreateUserTable1782066103000,
             CreateInventoryTable1782066151000,
+            CreateWarehouseTable1783438313000,
+            InventoryRefactoring1783438667000,
+            CreateUserWarehouseRoleTable1783439080000,
           ],
           migrationsRun: true,
         };
@@ -68,9 +85,15 @@ import { APP_GUARD } from '@nestjs/core';
         ),
       }),
     }),
+    ClsModule.forRoot({
+      global: true,
+      middleware: { mount: true }, // Automatically sets up storage per express request
+    }),
     UsersModule,
     LoginModule,
     InventoryModule,
+    UserWarehouseRoleModule,
+    WarehouseModule,
   ],
   controllers: [
     RegisterController,

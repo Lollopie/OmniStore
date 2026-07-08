@@ -5,9 +5,11 @@ import { UsersModule } from '../user/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PasswordService } from '../auth/password.service';
+import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.module';
 @Module({
   imports: [
     UsersModule,
+    UserWarehouseRoleModule,
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],

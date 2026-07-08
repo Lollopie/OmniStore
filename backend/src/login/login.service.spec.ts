@@ -7,16 +7,20 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import authConfig from '../config/auth.config';
 import dbConfig from '../config/db.config';
+import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 
 describe('LoginService (Unit Test)', () => {
   let loginService: LoginService;
   let usersServiceMock: jest.Mocked<UsersService>;
   let passwordService: PasswordService;
+  let userWarehouseRoleServiceMock: jest.Mocked<UserWarehouseRoleService>;
   beforeEach(async () => {
     const mockUserService = {
       findByUsername: jest.fn(),
     };
-
+    const mockUserWarehouseRoleService = {
+      findByUserId: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PasswordService,
@@ -34,6 +38,10 @@ describe('LoginService (Unit Test)', () => {
         {
           provide: UsersService,
           useValue: mockUserService,
+        },
+        {
+          provide: UserWarehouseRoleService,
+          useValue: mockUserWarehouseRoleService,
         },
       ],
       imports: [
@@ -56,6 +64,7 @@ describe('LoginService (Unit Test)', () => {
     loginService = module.get<LoginService>(LoginService);
     passwordService = module.get<PasswordService>(PasswordService);
     usersServiceMock = module.get(UsersService);
+    userWarehouseRoleServiceMock = module.get(UserWarehouseRoleService);
   });
 
   it('should be defined', () => {
@@ -80,6 +89,7 @@ describe('LoginService (Unit Test)', () => {
         username: 'test',
         password: await passwordService.hashPassword('password1'),
       });
+      userWarehouseRoleServiceMock.findByUserId.mockResolvedValue(null);
       const invalidData = {
         username: 'test',
         password: 'password2',
@@ -96,6 +106,7 @@ describe('LoginService (Unit Test)', () => {
         username: 'test',
         password: await passwordService.hashPassword('password1'),
       });
+      userWarehouseRoleServiceMock.findByUserId.mockResolvedValue(null);
       const validData = {
         username: 'test',
         password: 'password1',

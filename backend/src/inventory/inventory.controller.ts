@@ -19,7 +19,11 @@ export class InventoryController {
     if (!sort) {
       sort = 'new';
     }
-    return this.inventoryService.getInventory(userToken, page, sort);
+    return this.inventoryService.getInventory(
+      userToken.activeWarehouseId,
+      page,
+      sort,
+    );
   }
   @Post()
   @UseGuards(AuthGuard)
@@ -27,6 +31,6 @@ export class InventoryController {
     @userDecorator.User() userToken: userDecorator.UserToken,
     @Body() item: InventoryDto,
   ) {
-    return this.inventoryService.createItem(item, userToken);
+    return this.inventoryService.createItem(item, userToken.activeWarehouseId);
   }
 }

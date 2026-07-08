@@ -3,11 +3,13 @@ import { UsersService } from '../user/users.service';
 import { RegisterDto } from '../register/register.dto';
 import { PasswordService } from '../auth/password.service';
 import { JwtService } from '@nestjs/jwt';
+import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 @Injectable()
 export class LoginService {
   constructor(
     private readonly usersService: UsersService,
     private readonly passwordService: PasswordService,
+    private readonly userWarehouseRoleService: UserWarehouseRoleService,
     private readonly jwtService: JwtService,
   ) {}
   async login(loginData: RegisterDto): Promise<{ Authorization: string }> {
@@ -21,7 +23,16 @@ export class LoginService {
               user.password,
             )
           ) {
-            const payload = { user_id: user.user_id, username: user.username };
+            const warehouses = await this.userWarehouseRoleService.findByUserId(
+              user.user_id,
+            );
+            const payload = {
+              user_id: user.user_id,
+              username: user.username,
+              activeWarehouseId:
+                warehouses && warehouses[0] ? warehouses[0].warehouse_id : '',
+              activeRole: warehouses && warehouses[0] ? warehouses[0].role : '',
+            };
             return {
               Authorization: await this.jwtService.signAsync(payload),
             };

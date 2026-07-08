@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InventoryEntity } from './inventory.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InventoryDto } from './inventory.dto';
-import { UserToken } from '../user/user.decorator';
-import { UsersService } from '../user/users.service';
+import { WarehouseService } from '../warehouse/warehouse.service';
 // Define an enum for your sorting options
 export enum InventorySortOption {
   NEW = 'new',
@@ -17,17 +16,17 @@ export enum InventorySortOption {
 export class InventoryService {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly userService: UsersService,
+    private readonly warehouseService: WarehouseService,
   ) {}
 
   private async runInRlsContext<T>(
-    userId: string,
+    warehouse_id: string,
     callback: (repo: Repository<InventoryEntity>) => Promise<T>,
   ): Promise<T> {
     return this.dataSource.transaction(async (entityManager) => {
       await entityManager.query(
-        `SELECT set_config('app.current_user_id', $1, true)`,
-        [userId],
+        `SELECT set_config('app.current_warehouse_id', $1, true)`,
+        [warehouse_id],
       );
 
       const transactionalRepo = entityManager.getRepository(InventoryEntity);
@@ -36,14 +35,14 @@ export class InventoryService {
     });
   }
 
-  async findAll(userToken: UserToken): Promise<InventoryEntity[]> {
-    return this.runInRlsContext(userToken.user_id, (repo) => {
+  async findAll(warehouse_id: string): Promise<InventoryEntity[]> {
+    return this.runInRlsContext(warehouse_id, (repo) => {
       return repo.find();
     });
   }
 
   async getInventory(
-    userToken: UserToken,
+    warehouse_id: string,
     page: number,
     sort: string,
   ): Promise<[InventoryEntity[], number]> {
@@ -73,7 +72,7 @@ export class InventoryService {
         order = { id: 'DESC' };
         break;
     }
-    return this.runInRlsContext(userToken.user_id, (repo) => {
+    return this.runInRlsContext(warehouse_id, (repo) => {
       return repo.findAndCount({
         select: {
           name: true,
@@ -88,24 +87,24 @@ export class InventoryService {
   }
   async createItem(
     item: InventoryDto,
-    userToken: UserToken,
+    warehouse_id: string,
   ): Promise<InventoryEntity> {
-    if (!(await this.userService.findOne(userToken.user_id))) {
-      throw new Error('User not found');
+    if (!(await this.warehouseService.findOne(warehouse_id))) {
+      throw new Error('Warehouse not found');
     }
     const newItem = {
       name: item.name,
       amount: parseInt(item.amount, 10),
-      user_id: userToken.user_id,
+      warehouse: { warehouse_id: warehouse_id },
     };
-    return this.runInRlsContext(userToken.user_id, async (repo) => {
+    return this.runInRlsContext(warehouse_id, async (repo) => {
       const newItemPlusUUID = repo.create(newItem);
       return await repo.save(newItemPlusUUID);
     });
   }
 
-  async remove(id: number, userToken: UserToken): Promise<void> {
-    await this.runInRlsContext(userToken.user_id, async (repo) => {
+  async remove(id: number, warehouse_id: string): Promise<void> {
+    await this.runInRlsContext(warehouse_id, async (repo) => {
       await repo.delete(id);
     });
   }
