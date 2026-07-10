@@ -4,9 +4,6 @@ import Button from '../../components/Button.tsx';
 import { WarehouseSelector } from './components/warehouseSelector.tsx';
 import { handleAddWarehouse } from './hooks/handleAddWarehouse.ts';
 import { getUsers } from './hooks/getUsers.ts';
-export interface WarehouseProps {
-  name: string;
-}
 export interface WarehouseUser {
   user_id: string;
   username: string;
@@ -16,7 +13,7 @@ const WarehouseManager = () => {
   const [name, setName] = useState('');
   const [users, setUsers] = useState<WarehouseUser[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [warehouseId, setWarehouseId] = useState(JSON.parse(localStorage.getItem('activeWarehouse')) || '');
+  const [warehouseId, setWarehouseId] = useState(JSON.parse(localStorage.getItem('activeWarehouse') || '') || '');
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;

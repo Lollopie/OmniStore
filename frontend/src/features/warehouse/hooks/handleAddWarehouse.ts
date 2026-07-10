@@ -24,7 +24,7 @@ export const handleAddWarehouse = async (name: string,setName: React.Dispatch<Re
     if (!response.ok) throw new Error('Failed to add warehouse.');
 
     const addedItem: {name:string} = await response.json();
-    const currentWarehouses = JSON.parse(localStorage.getItem('user_warehouses'));
+    const currentWarehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');
     currentWarehouses.push(addedItem);
     localStorage.setItem('user_warehouses', JSON.stringify(currentWarehouses));
     setName('');

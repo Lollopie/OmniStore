@@ -9,7 +9,10 @@ interface WarehouseSelectorProps {
 }
 
 export const WarehouseSelector = ({ onChange }: WarehouseSelectorProps) => {
-  const [selectedWarehouse, setSelectedWarehouse] = useState<string>(JSON.parse(localStorage.getItem('activeWarehouse')) || '');
+  const stored = localStorage.getItem('activeWarehouse');
+  const [selectedWarehouse, setSelectedWarehouse] = useState<string>(
+    stored ? JSON.parse(stored) : ''
+  );
   const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const warehouseId = event.target.value;
     setSelectedWarehouse(warehouseId);
@@ -29,7 +32,7 @@ export const WarehouseSelector = ({ onChange }: WarehouseSelectorProps) => {
       onChange(warehouseId);
     }
   };
-  const warehouses = JSON.parse(localStorage.getItem('user_warehouses'));
+  const warehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');
   if (!warehouses || warehouses.length === 0) {
     return <p>No warehouses assigned.</p>;
   }

@@ -1,7 +1,7 @@
 import type { WarehouseUser } from '../warehouse.tsx';
 
 export const getUsers = async (setUsers: React.Dispatch<React.SetStateAction<WarehouseUser[]>>) => {
-  const activeRole = JSON.parse(localStorage.getItem('activeRole'));
+  const activeRole = JSON.parse(localStorage.getItem('activeRole') || '');
   if (activeRole == 'admin' || activeRole == 'manager') {
     try {
       const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
