@@ -12,7 +12,10 @@ export class LoginService {
     private readonly userWarehouseRoleService: UserWarehouseRoleService,
     private readonly jwtService: JwtService,
   ) {}
-  async login(loginData: RegisterDto): Promise<{ Authorization: string }> {
+  async login(loginData: RegisterDto): Promise<{
+    Authorization: string;
+    warehouses: { id: string; name: string; role: string }[] | null;
+  }> {
     return await this.usersService
       .findByUsername(loginData.username)
       .then(async (user) => {
@@ -23,18 +26,20 @@ export class LoginService {
               user.password,
             )
           ) {
-            const warehouses = await this.userWarehouseRoleService.findByUserId(
-              user.user_id,
-            );
+            const warehouses =
+              await this.userWarehouseRoleService.getUserWarehouses(
+                user.user_id,
+              );
             const payload = {
               user_id: user.user_id,
               username: user.username,
               activeWarehouseId:
-                warehouses && warehouses[0] ? warehouses[0].warehouse_id : '',
+                warehouses && warehouses[0] ? warehouses[0].id : '',
               activeRole: warehouses && warehouses[0] ? warehouses[0].role : '',
             };
             return {
               Authorization: await this.jwtService.signAsync(payload),
+              warehouses: warehouses,
             };
           }
           throw new UnauthorizedException('Wrong or expired token');

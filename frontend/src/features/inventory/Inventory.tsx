@@ -69,7 +69,7 @@ const InventoryManager = () => {
                 className="flex flex-col-reverse gap-3 border-t border-slate-200 px-4 py-4 sm:flex-row sm:justify-end sm:px-6"
               >
                 <Button children={"Cancel"} variant={"danger"} size={"sm"} onClick={() => setIsOpen(false)} type={"button"} />
-                <Button children={"Add Item"} variant={"add"} size={"sm"} type={"submit"} />
+                <Button children={"Add"} variant={"add"} size={"sm"} type={"submit"} />
               </footer>
             </form>
           </div>

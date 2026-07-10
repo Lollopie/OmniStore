@@ -7,9 +7,10 @@ interface AuthFormProps {
   endpoint: string;
   successMessage: string;
   onSuccess?: () => void;
+  handleResponse?: (data) => void;
 }
 
-export default function AuthForm({ title, buttonText, endpoint, successMessage, onSuccess }: AuthFormProps) {
+export default function AuthForm({ title, buttonText, endpoint, successMessage, onSuccess, handleResponse }: AuthFormProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +32,7 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
       });
 
       const data = await response.json();
-
+      handleResponse(data);
       if (!response.ok) {
         setError(Array.isArray(data.message) ? data.message[0] : data.message);
       } else {

@@ -10,6 +10,11 @@ export default function Login({ setIsAuthenticated }: LoginProps) {  return (
       endpoint="login"
       successMessage='Login successful!'
       onSuccess={() => setIsAuthenticated(true)}
+      handleResponse={(data) => {
+        localStorage.setItem('user_warehouses', JSON.stringify(data.warehouses));
+        localStorage.setItem('activeWarehouse', JSON.stringify(data.activeWarehouse));
+        localStorage.setItem('activeRole', JSON.stringify(data.activeRole));
+      }}
     />
   );
 }

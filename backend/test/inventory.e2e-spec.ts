@@ -67,6 +67,22 @@ describe('InventoryController (e2e)', () => {
     return request(app.getHttpServer()).get('/inventory').expect(401);
   });
 
+  it('/inventory without warehouse (GET)', async () => {
+    await request(app.getHttpServer())
+      .post('/register')
+      .send({ username: 'alice.inventory.test', password: 'Password123' })
+      .expect(201);
+
+    const response = await request(app.getHttpServer())
+      .post('/login')
+      .send({ username: 'alice.inventory.test', password: 'Password123' })
+      .expect(200);
+    await request(app.getHttpServer())
+      .get('/inventory')
+      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
+      .expect(400);
+  });
+
   it('should create and read inventory for the authenticated user only', async () => {
     const aliceToken = await registerAndLogin(
       app,

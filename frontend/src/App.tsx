@@ -5,6 +5,7 @@ import Login from './features/auth/Login';
 import Inventory from './features/inventory/Inventory.tsx';
 import NavBar from './components/NavBar.tsx';
 import './assets/index.css';
+import Warehouse from './features/warehouse/warehouse.tsx';
 function ProtectedRoute({ isAuthenticated } : {isAuthenticated: boolean}) {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
@@ -35,11 +36,10 @@ export default function App() {
       } finally {
         setLoading(false);
       }
-      console.log(`Authentication status: ${isAuthenticated}`);
     };
 
     checkAuthStatus();
-  }, [isAuthenticated]);
+  }, []);
 
   if (loading) {
     return (
@@ -62,7 +62,8 @@ export default function App() {
 
         <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
           {/* Your Root Page / Dashboard goes here */}
-          <Route path="/" element={<Inventory />} />
+          <Route path="/" element={<Warehouse />} />
+          <Route path="/inventory" element={<Inventory />} />
 
           {/* You can easily add more protected routes here later:
         <Route path="/dashboard" element={<Dashboard />} />

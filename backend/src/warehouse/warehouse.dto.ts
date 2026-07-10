@@ -1,4 +1,10 @@
-import { IsString, Matches, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  Matches,
+  MinLength,
+  MaxLength,
+  IsUUID,
+} from 'class-validator';
 
 export class WarehouseDto {
   @IsString()
@@ -12,4 +18,9 @@ export class WarehouseDto {
     message: 'Illegal Warehouse name',
   })
   name: string;
+}
+export class WarehouseIDDto {
+  @IsString()
+  @IsUUID(7, { message: 'Invalid Warehouse ID' })
+  id: string;
 }

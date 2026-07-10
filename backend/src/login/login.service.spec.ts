@@ -20,6 +20,7 @@ describe('LoginService (Unit Test)', () => {
     };
     const mockUserWarehouseRoleService = {
       findByUserId: jest.fn(),
+      getUserWarehouses: jest.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -107,6 +108,7 @@ describe('LoginService (Unit Test)', () => {
         password: await passwordService.hashPassword('password1'),
       });
       userWarehouseRoleServiceMock.findByUserId.mockResolvedValue(null);
+      userWarehouseRoleServiceMock.getUserWarehouses.mockResolvedValue(null);
       const validData = {
         username: 'test',
         password: 'password1',

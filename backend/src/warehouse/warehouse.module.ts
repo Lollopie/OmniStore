@@ -6,6 +6,7 @@ import { WarehouseController } from './warehouse.controller';
 import { UserWarehouseRoleEntity } from '../userWarehouseRole/userWarehouseRole.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
     }),
   ],
-  providers: [WarehouseService],
+  providers: [WarehouseService, UserWarehouseRoleService],
   exports: [TypeOrmModule, WarehouseService],
   controllers: [WarehouseController],
 })

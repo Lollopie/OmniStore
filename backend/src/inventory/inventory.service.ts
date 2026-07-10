@@ -3,7 +3,7 @@ import { InventoryEntity } from './inventory.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InventoryDto } from './inventory.dto';
 import { WarehouseService } from '../warehouse/warehouse.service';
-// Define an enum for your sorting options
+import { ClsService } from 'nestjs-cls';
 export enum InventorySortOption {
   NEW = 'new',
   OLD = 'old',
@@ -17,6 +17,7 @@ export class InventoryService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly warehouseService: WarehouseService,
+    private readonly clsService: ClsService,
   ) {}
 
   private async runInRlsContext<T>(
@@ -42,12 +43,11 @@ export class InventoryService {
   }
 
   async getInventory(
-    warehouse_id: string,
     page: number,
     sort: string,
   ): Promise<[InventoryEntity[], number]> {
     const itemsPerPage = 10;
-
+    const warehouse_id: string = this.clsService.get('warehouseId');
     // 1. Build the dynamic order object based on the sort string
     let order: Record<string, 'ASC' | 'DESC'> = { id: 'DESC' }; // Default fallback: New
 
@@ -85,10 +85,8 @@ export class InventoryService {
       });
     });
   }
-  async createItem(
-    item: InventoryDto,
-    warehouse_id: string,
-  ): Promise<InventoryEntity> {
+  async createItem(item: InventoryDto): Promise<InventoryEntity> {
+    const warehouse_id: string = this.clsService.get('warehouseId');
     if (!(await this.warehouseService.findOne(warehouse_id))) {
       throw new Error('Warehouse not found');
     }

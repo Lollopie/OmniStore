@@ -8,6 +8,7 @@ export default function Register() {
       endpoint="register"
       successMessage="Registration successful! You can now log in."
       onSuccess={() => {}}
+      handleResponse={() => {}}
     />
   );
 }

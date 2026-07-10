@@ -31,6 +31,17 @@ export class LoginController {
       maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
     });
 
-    return { message: 'Authentication successful' };
+    return {
+      message: 'Authentication successful',
+      warehouses: token.warehouses,
+      activeWarehouse:
+        token.warehouses && token.warehouses[0]
+          ? token.warehouses[0].name
+          : null,
+      activeRole:
+        token.warehouses && token.warehouses[0]
+          ? token.warehouses[0].role
+          : null,
+    };
   }
 }

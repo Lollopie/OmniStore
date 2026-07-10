@@ -2,6 +2,7 @@ import { Reflector } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
 import { Role } from './roles.enum';
 import {
+  BadRequestException,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
@@ -32,9 +33,10 @@ export class RolesGuard implements CanActivate {
       activeWarehouseId: string;
       activeRole: string;
     } = request['user'];
-
     if (!user) return false;
-
+    if (!user.activeWarehouseId) {
+      throw new BadRequestException('No active Warehouse found');
+    }
     // 1. Inject warehouse context into AsyncLocalStorage for downstream DB transactions
     this.cls.set('warehouseId', user.activeWarehouseId);
 
