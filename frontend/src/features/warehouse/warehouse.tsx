@@ -14,6 +14,7 @@ const WarehouseManager = () => {
   const [users, setUsers] = useState<WarehouseUser[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [warehouseId, setWarehouseId] = useState(JSON.parse(localStorage.getItem('activeWarehouse') || '') || '');
+  const [newUsername, setNewUsername] = useState('');
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;
@@ -61,10 +62,50 @@ const WarehouseManager = () => {
       <div className="w-full max-w-100 m-1 font-sans flex flex-col">
         <div className="flex flex-col">
           <div className={"flex justify-between items-center mb-4"}>
-            <WarehouseSelector onChange={(warehouseId: string) => {setWarehouseId(warehouseId)}} />
+            <WarehouseSelector onChange={(warehouseId: string) => {console.log("New Warehouse selected"); setWarehouseId(warehouseId)}} />
             <Button children={"+"} variant={"add"} size={"md"} onClick={() => setIsOpen(true)} />
           </div>
         </div>
+
+        {/* Add user by username (only visible to admins) */}
+        {(() => {
+          const activeRole = JSON.parse(localStorage.getItem('activeRole') || 'null');
+          if (activeRole === 'admin') {
+            return (
+              <div className="mb-4 flex gap-2 items-center">
+                <input
+                  className="border rounded p-2"
+                  placeholder="Username to add"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                />
+                <Button children={"Add user"} variant={"add"} size={"sm"} onClick={async () => {
+                  const username = newUsername || '';
+                  if (!username) return alert('Enter a username');
+                  try {
+                    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({ userId: username, role: 'staff' }),
+                    });
+                    if (!response.ok) {
+                      const txt = await response.text();
+                      throw new Error(txt || 'Failed to add user');
+                    }
+                    const newUser = await response.json();
+                    setUsers((prev) => [...prev, newUser]);
+                    setNewUsername('');
+                  } catch (err) {
+                    if (err instanceof Error) alert(err.message);
+                  }
+                }} />
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         <table className="w-full border-collapse mt-1">
           <thead>
           <tr className="border-b-2 border-b-slate-700">
@@ -85,7 +126,37 @@ const WarehouseManager = () => {
               <tr key={user.user_id} className="border-b border-b-slate-200">
                 <td className="p-3">{user.user_id}</td>
                 <td className="p-3">{user.username}</td>
-                <td className="p-3">{user.role}</td>
+                <td className="p-3">
+                  {JSON.parse(localStorage.getItem('activeRole') || 'null') === 'admin' ? (
+                    <select
+                      value={user.role}
+                      onChange={async (e) => {
+                        const newRole = e.target.value;
+                        try {
+                          const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
+                            method: 'PATCH',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: user.user_id, role: newRole }),
+                          });
+                          if (!response.ok) {
+                            const txt = await response.text();
+                            throw new Error(txt || 'Failed to update role');
+                          }
+                          setUsers((prev) => prev.map((u) => u.user_id === user.user_id ? { ...u, role: newRole } : u));
+                        } catch (err) {
+                          if (err instanceof Error) alert(err.message);
+                        }
+                      }}
+                    >
+                      <option value="admin">admin</option>
+                      <option value="manager">manager</option>
+                      <option value="staff">staff</option>
+                    </select>
+                  ) : (
+                    user.role
+                  )}
+                </td>
               </tr>
             ))
           )}
