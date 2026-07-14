@@ -1,6 +1,18 @@
-import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { WarehouseService } from './warehouse.service';
-import { WarehouseDto, WarehouseIDDto } from './warehouse.dto';
+import {
+  WarehouseDto,
+  WarehouseIDDto,
+  WarehouseUserRoleDto,
+} from './warehouse.dto';
 import { AuthGuard } from '../auth/auth.guard.js';
 import * as userDecorator from '../user/user.decorator';
 import express from 'express';
@@ -89,5 +101,27 @@ export class WarehouseController {
   @Roles(Role.ADMIN, Role.MANAGER)
   async get() {
     return await this.userWarehouseRoleService.getUsers();
+  }
+
+  @Post('/users')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  async addUserToWarehouse(
+    @Body() warehouseUserRoleData: WarehouseUserRoleDto,
+  ) {
+    return await this.userWarehouseRoleService.addUserToWarehouse(
+      warehouseUserRoleData.username,
+      warehouseUserRoleData.role,
+    );
+  }
+
+  @Patch('/users')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  async updateUserRole(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
+    return await this.userWarehouseRoleService.updateUserRole(
+      warehouseUserRoleData.username,
+      warehouseUserRoleData.role,
+    );
   }
 }

@@ -42,6 +42,8 @@ export class LoginController {
         token.warehouses && token.warehouses[0]
           ? token.warehouses[0].role
           : null,
+      user_id: token.user_id,
+      username: token.username,
     };
   }
 }

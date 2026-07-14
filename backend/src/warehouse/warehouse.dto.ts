@@ -4,7 +4,9 @@ import {
   MinLength,
   MaxLength,
   IsUUID,
+  IsEnum,
 } from 'class-validator';
+import { Role } from '../roles/roles.enum';
 
 export class WarehouseDto {
   @IsString()
@@ -23,4 +25,17 @@ export class WarehouseIDDto {
   @IsString()
   @IsUUID(7, { message: 'Invalid Warehouse ID' })
   id: string;
+}
+
+export class WarehouseUserRoleDto {
+  @IsString()
+  @MinLength(3, { message: 'Invalid Username' })
+  @MaxLength(30, { message: 'Invalid Username' })
+  @Matches(/^[a-zA-Z0-9._-]+$/, {
+    message: 'Invalid Username',
+  })
+  username: string;
+
+  @IsEnum(Role, { message: 'Invalid role' })
+  role: Role;
 }

@@ -46,8 +46,8 @@ export const WarehouseSelector = ({ onChange }: WarehouseSelectorProps) => {
         onChange={handleChange}
       >
         <option value="" disabled>-- Select a Warehouse --</option>
-        {warehouses.map((warehouse: { id: string, name: string }) => (
-          <option key={warehouse.id} value={warehouse.id}>
+        {warehouses.map((warehouse: { warehouse_id: string, name: string }) => (
+          <option key={warehouse.warehouse_id} value={warehouse.warehouse_id}>
             {warehouse.name}
           </option>
         ))}

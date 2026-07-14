@@ -14,7 +14,9 @@ export class LoginService {
   ) {}
   async login(loginData: RegisterDto): Promise<{
     Authorization: string;
-    warehouses: { id: string; name: string; role: string }[] | null;
+    warehouses: { warehouse_id: string; name: string; role: string }[] | null;
+    user_id: string;
+    username: string;
   }> {
     return await this.usersService
       .findByUsername(loginData.username)
@@ -34,12 +36,14 @@ export class LoginService {
               user_id: user.user_id,
               username: user.username,
               activeWarehouseId:
-                warehouses && warehouses[0] ? warehouses[0].id : '',
+                warehouses && warehouses[0] ? warehouses[0].warehouse_id : '',
               activeRole: warehouses && warehouses[0] ? warehouses[0].role : '',
             };
             return {
               Authorization: await this.jwtService.signAsync(payload),
               warehouses: warehouses,
+              user_id: user.user_id,
+              username: user.username,
             };
           }
           throw new UnauthorizedException('Wrong or expired token');

@@ -87,13 +87,14 @@ const WarehouseManager = () => {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       credentials: 'include',
-                      body: JSON.stringify({ userId: username, role: 'staff' }),
+                      body: JSON.stringify({ username: username, role: 'staff' }),
                     });
                     if (!response.ok) {
                       const txt = await response.text();
                       throw new Error(txt || 'Failed to add user');
                     }
                     const newUser = await response.json();
+                    newUser.username = username;
                     setUsers((prev) => [...prev, newUser]);
                     setNewUsername('');
                   } catch (err) {
@@ -137,7 +138,7 @@ const WarehouseManager = () => {
                             method: 'PATCH',
                             credentials: 'include',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ userId: user.user_id, role: newRole }),
+                            body: JSON.stringify({ username: user.username, role: newRole }),
                           });
                           if (!response.ok) {
                             const txt = await response.text();

@@ -7,7 +7,7 @@ interface AuthFormProps {
   endpoint: string;
   successMessage: string;
   onSuccess?: () => void;
-  handleResponse: (data : {warehouses?: string, activeWarehouse?: string, activeRole?: string, message?: string} ) => void;
+  handleResponse: (data : {warehouses?: string, activeWarehouse?: string, activeRole?: string, message?: string, user_id: string, username: string} ) => void;
 }
 
 export default function AuthForm({ title, buttonText, endpoint, successMessage, onSuccess, handleResponse }: AuthFormProps) {
@@ -31,7 +31,7 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
         credentials: 'include'
       });
 
-      const data: {warehouses?: string, activeWarehouse?: string, activeRole?: string, message?: string} = await response.json();
+      const data: {warehouses?: string, activeWarehouse?: string, activeRole?: string, message?: string, user_id: string, username: string} = await response.json();
       handleResponse(data);
       if (!response.ok) {
         if( data.message ){

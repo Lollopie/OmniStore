@@ -18,4 +18,7 @@ export const getUsers = async (setUsers: React.Dispatch<React.SetStateAction<War
       }
     }
   }
+  else {
+    setUsers([{user_id: JSON.parse(localStorage.getItem('user_id') || ''), username: JSON.parse(localStorage.getItem('username') || ''), role: JSON.parse(localStorage.getItem('activeRole') || '')}])
+  }
 };

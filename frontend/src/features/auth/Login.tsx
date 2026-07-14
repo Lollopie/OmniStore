@@ -14,6 +14,8 @@ export default function Login({ setIsAuthenticated }: LoginProps) {  return (
         localStorage.setItem('user_warehouses', JSON.stringify(data.warehouses));
         localStorage.setItem('activeWarehouse', JSON.stringify(data.activeWarehouse));
         localStorage.setItem('activeRole', JSON.stringify(data.activeRole));
+        localStorage.setItem('user_id', JSON.stringify(data.user_id));
+        localStorage.setItem('username', JSON.stringify(data.username));
       }}
     />
   );
