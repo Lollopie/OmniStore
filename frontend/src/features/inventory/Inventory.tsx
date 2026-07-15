@@ -5,6 +5,10 @@ import InputField from '../../components/InputField.tsx';
 import Button from '../../components/Button.tsx';
 import { generatePagination } from './hooks/generatePagination.ts';
 import { useSearchParams } from 'react-router-dom';
+import MainPage from '../../components/MainPage.tsx';
+import AddButton from '../../components/AddButton.tsx';
+import TableHead from '../../components/TableHead.tsx';
+import TableDataCell from '../../components/TableDataCell.tsx';
 export interface InventoryItem {
   name: string;
   amount: string;
@@ -46,7 +50,7 @@ const InventoryManager = () => {
     }
   }, [isOpen]);
   return (
-    <div className={"flex flex-col items-center min-h-screen bg-gray-100 p-4"}>
+    <MainPage>
       <div className="flex flex-col overflow-hidden">
         <dialog
           ref={dialogRef} onClose={() => setIsOpen(false)} className="m-auto h-fit w-full max-w-md rounded-lg bg-white p-0 shadow-lg backdrop:backdrop-blur-xs backdrop:bg-black/10 justify-center">
@@ -75,11 +79,11 @@ const InventoryManager = () => {
           </div>
         </dialog>
       </div>
-      <div className="w-full max-w-100 m-1 font-sans flex flex-col">
-        <div className="flex flex-col">
-          <label className="block text-sm font-semibold text-gray-800">Sort by:</label>
-          <div className={"flex justify-between items-center mb-4"}>
-            <select className="bg-slate-300 border rounded-md text-base h-10" name="sort" id="sort" onChange={(e) => {setSort(e.target.value)}}>
+      <div className="w-2xl mx-auto bg-white rounded-xl shadow-sm border border-slate-100 p-8">
+        <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-slate-700">Sort by:</label>
+            <select className="rounded-lg border border-slate-300 bg-white py-1.5 px-3 text-sm font-semibold text-slate-800 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500" name="sort" id="sort" onChange={(e) => {setSort(e.target.value)}}>
               <option value="new">New</option>
               <option value="old">Old</option>
               <option value="name asc">Name Ascending</option>
@@ -87,7 +91,7 @@ const InventoryManager = () => {
               <option value="amount asc">Amount Ascending</option>
               <option value="amount desc">Amount Descending</option>
             </select>
-            <Button children={"+"} variant={"add"} size={"md"} onClick={() => setIsOpen(true)} />
+            <AddButton onClick={() => setIsOpen(true)} />
           </div>
         </div>
 
@@ -97,30 +101,30 @@ const InventoryManager = () => {
 
         {/* Inventory Table */}
         {!loading && !error && (
-          <table className="w-full border-collapse mt-1">
-            <thead>
-            <tr className="border-b-2 border-b-slate-700">
-              <th className="text-left p-3">Name</th>
-              <th className="text-left p-3">Amount</th>
-            </tr>
-            </thead>
-            <tbody>
-            {inventory.length === 0 ? (
+          <div className="mt-8 overflow-hidden border border-slate-100 rounded-lg">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50">
               <tr>
-                <td colSpan={2} className="text-center p-3 text-slate-600">
-                  No items in inventory.
-                </td>
+                <TableHead children="Name" variant="first" />
+                <TableHead children="Amount" />
               </tr>
-            ) : (
-              inventory.map((item: InventoryItem, index) => (
-                <tr key={index} className="border-b border-b-slate-200">
-                  <td className="p-3">{item.name}</td>
-                  <td className="p-3">{item.amount}</td>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+              {inventory.length === 0 ? (
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <TableDataCell colSpan={2} children="No items in inventory." className="text-center p-3 text-slate-600"/>
                 </tr>
-              ))
-            )}
-            </tbody>
-          </table>
+              ) : (
+                inventory.map((item: InventoryItem, index) => (
+                  <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                    <TableDataCell children={item.name} className="text-slate-900"/>
+                    <TableDataCell children={item.amount} className="text-slate-900"/>
+                  </tr>
+                ))
+              )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
       <footer>
@@ -143,7 +147,7 @@ const InventoryManager = () => {
             </svg>} size={"sm"} disabled={Number(page) == Math.max(Math.ceil(totalInventory / itemsPerPage), 1)} onClick={() => {searchParams.set("page", (Number(page) + 1).toString()); setSearchParams({page: (Number(page) + 1).toString()})}}/>
         </div>
       </footer>
-    </div>
+    </MainPage>
   );
 };
 

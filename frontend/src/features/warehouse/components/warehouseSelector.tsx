@@ -5,7 +5,7 @@ export interface SelectResponse extends Response {
 }
 
 interface WarehouseSelectorProps {
-  onChange: (warehouseId: string) => void;
+  onChange: (warehouseId: string, activeRole: string) => void;
 }
 
 export const WarehouseSelector = ({ onChange }: WarehouseSelectorProps) => {
@@ -28,8 +28,9 @@ export const WarehouseSelector = ({ onChange }: WarehouseSelectorProps) => {
     }) as SelectResponse;
     if (response.ok) {
       localStorage.setItem('activeWarehouse', JSON.stringify(event.target.value));
-      localStorage.setItem('activeRole', JSON.stringify((await response.json()).activeRole));
-      onChange(warehouseId);
+      const { activeRole } = await response.json();
+      localStorage.setItem('activeRole', JSON.stringify(activeRole));
+      onChange(warehouseId, activeRole);
     }
   };
   const warehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');
@@ -39,8 +40,8 @@ export const WarehouseSelector = ({ onChange }: WarehouseSelectorProps) => {
 
   return (
     <div className="warehouse-selector">
-      <label htmlFor="warehouse-select">Active Warehouse: </label>
-      <select
+      <label className="text-sm font-medium text-slate-700" htmlFor="warehouse-select">Active Warehouse: </label>
+      <select className="rounded-lg border border-slate-300 bg-white py-1.5 px-3 text-sm font-semibold text-slate-800 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         id="warehouse-select"
         value={selectedWarehouse}
         onChange={handleChange}

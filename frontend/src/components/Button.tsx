@@ -3,7 +3,7 @@ import React from 'react';
 const VARIANTS = {
   primary: "border-slate-300 bg-white text-slate-900 hover:bg-slate-200 focus-visible:outline-slate-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none",
   danger: "bg-red-600 hover:bg-red-700 text-white shadow-sm",
-  add: "bg-green-500 text-white hover:bg-green-400 focus-visible:outline-green-600",
+  add: "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors",
 }
 const SIZES = {
   sm: "rounded px-3 py-1.5 text-sm",
