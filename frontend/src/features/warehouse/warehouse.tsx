@@ -8,6 +8,9 @@ import MainPage from '../../components/MainPage.tsx';
 import TableHead from '../../components/TableHead.tsx';
 import TableDataCell from '../../components/TableDataCell.tsx';
 import AddButton from '../../components/AddButton.tsx';
+import Pagination from '../../components/Pagination.tsx';
+import { useSearchParams } from 'react-router-dom';
+import { generatePagination } from '../../hooks/generatePagination.ts';
 export interface WarehouseUser {
   user_id: string;
   username: string;
@@ -20,11 +23,16 @@ const WarehouseManager = () => {
   };
   const [name, setName] = useState('');
   const [users, setUsers] = useState<WarehouseUser[]>([]);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
   const [isOpen, setIsOpen] = useState(false);
   const [warehouseId, setWarehouseId] = useState(JSON.parse(localStorage.getItem('activeWarehouse') || '') || '');
   const [activeRole, setActiveRole] = useState<string>(readStoredValue('activeRole'));
   const [newUsername, setNewUsername] = useState('');
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page: number = Number(searchParams.get('page')) || 1;
+  const [pages, setPages] = useState<(number | string)[]>([]);
+  const usersPerPage = 10;
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;
     if (!dialog){
@@ -37,11 +45,13 @@ const WarehouseManager = () => {
     }
   }, [isOpen]);
   useEffect(() => {
-    getUsers(setUsers);
+    getUsers({setUsers, setTotalUsers});
   }, [warehouseId, activeRole]);
+  useEffect(() => {
+    generatePagination(Number(page), Math.max(Math.ceil(totalUsers / usersPerPage), 1), setPages);
+  }, [page, totalUsers]);
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // Optional: Add a toast notification here
   };
   return (
     <MainPage children={
@@ -61,7 +71,7 @@ const WarehouseManager = () => {
               </header>
               <form onSubmit={(e) => {
                 e.preventDefault();
-                handleAddWarehouse(name, setName);
+                handleAddWarehouse({name, setName, setWarehouseId});
               }} className="flex flex-col">
                 <div className="w-4/5 flex flex-col items-center justify-center mt-3">
                   <InputField label={'Warehouse Name'} type={'text'} value={name} onChange={setName} />
@@ -81,8 +91,7 @@ const WarehouseManager = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between pb-6 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <WarehouseSelector onChange={(warehouseId: string, role: string) => {
-                  console.log('New Warehouse selected');
+                <WarehouseSelector selectedWarehouse={warehouseId} setSelectedWarehouse={setWarehouseId} onChange={(warehouseId: string, role: string) => {
                   setWarehouseId(warehouseId);
                   setActiveRole(role);
                 }} />
@@ -144,19 +153,19 @@ const WarehouseManager = () => {
                   <tr key={user.user_id} className="hover:bg-slate-50/50 transition-colors">
                     <TableDataCell className="font-mono text-slate-500" children={
                       <div className="flex items-center gap-2">
-                        <span className="max-w-[120px] truncate" title={user.user_id}>
-                            {user.user_id}
-                        </span>
-                      <Button
-                        onClick={() => copyToClipboard(user.user_id)}
-                        className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
-                        title="Copy Full ID"
-                        children={
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                        </svg>}
-                      />
+                      <span className="max-w-[120px] truncate" title={user.user_id}>
+                          {user.user_id}
+                      </span>
+                        <Button
+                          onClick={() => copyToClipboard(user.user_id)}
+                          className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
+                          title="Copy Full ID"
+                          children={
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>}
+                        />
                       </div>}
                     />
                     <TableDataCell className="font-medium text-slate-900" children={user.username} />
@@ -207,9 +216,12 @@ const WarehouseManager = () => {
             </table>
           </div>
         </div>
+        <footer>
+          <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / usersPerPage)} searchParams={searchParams} setSearchParams={setSearchParams} />
+        </footer>
       </div>
-      } />
-      );
-      };
+    } />
+    );
+    };
 
       export default WarehouseManager;

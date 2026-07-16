@@ -14,20 +14,40 @@ describe('UserWarehouseRoleService', () => {
   let repository: {
     findOneBy: jest.Mock;
     save: jest.Mock;
+    createQueryBuilder: jest.Mock;
   };
 
   beforeEach(async () => {
     repository = {
       findOneBy: jest.fn(),
       save: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue({
+        innerJoin: jest.fn().mockReturnThis(),
+        innerJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(0),
+        getRawMany: jest.fn().mockResolvedValue([]),
+      }),
     };
-
+    const mockEntityManager = {
+      query: jest.fn().mockResolvedValue([{}]),
+      getRepository: jest.fn().mockImplementation(() => repository),
+    };
+    const mockDataSource = {
+      transaction: jest.fn().mockImplementation(async (cb) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call
+        return await cb(mockEntityManager);
+      }),
+    };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserWarehouseRoleService,
         {
           provide: DataSource,
-          useValue: {},
+          useValue: mockDataSource,
         },
         {
           provide: ClsService,

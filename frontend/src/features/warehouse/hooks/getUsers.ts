@@ -1,6 +1,9 @@
 import type { WarehouseUser } from '../warehouse.tsx';
-
-export const getUsers = async (setUsers: React.Dispatch<React.SetStateAction<WarehouseUser[]>>) => {
+interface Props {
+  setUsers: React.Dispatch<React.SetStateAction<WarehouseUser[]>>;
+  setTotalUsers: React.Dispatch<React.SetStateAction<number>>;
+}
+export const getUsers = async ({setUsers, setTotalUsers}: Props) => {
   const activeRole = JSON.parse(localStorage.getItem('activeRole') || '');
   if (activeRole == 'admin' || activeRole == 'manager') {
     try {
@@ -9,9 +12,9 @@ export const getUsers = async (setUsers: React.Dispatch<React.SetStateAction<War
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to get users.');
-      const data = await response.json();
-      setUsers(data);
-
+      const data: {data: {user_id: string, username: string, role: string}[], total: number} = await response.json();
+      setUsers(data.data);
+      setTotalUsers(data.total);
     } catch (err) {
       if (err instanceof Error) {
         console.error(err.message);
@@ -19,6 +22,13 @@ export const getUsers = async (setUsers: React.Dispatch<React.SetStateAction<War
     }
   }
   else {
-    setUsers([{user_id: JSON.parse(localStorage.getItem('user_id') || ''), username: JSON.parse(localStorage.getItem('username') || ''), role: JSON.parse(localStorage.getItem('activeRole') || '')}])
+    if (activeRole == 'staff'){
+      setUsers([{user_id: JSON.parse(localStorage.getItem('user_id') || ''), username: JSON.parse(localStorage.getItem('username') || ''), role: JSON.parse(localStorage.getItem('activeRole') || '')}])
+      setTotalUsers(1);
+    }
+    else {
+      setUsers([]);
+      setTotalUsers(0);
+    }
   }
 };

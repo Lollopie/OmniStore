@@ -28,10 +28,21 @@ export class LoginService {
               user.password,
             )
           ) {
-            const warehouses =
-              await this.userWarehouseRoleService.getUserWarehouses(
-                user.user_id,
-              );
+            let warehouses:
+              | {
+                  warehouse_id: string;
+                  name: string;
+                  role: string;
+                }[]
+              | null;
+            try {
+              warehouses =
+                await this.userWarehouseRoleService.getUserWarehouses(
+                  user.user_id,
+                );
+            } catch {
+              warehouses = [];
+            }
             const payload = {
               user_id: user.user_id,
               username: user.username,

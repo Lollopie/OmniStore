@@ -1,8 +1,14 @@
-// Handle POST request for new item
 import React from 'react';
 
-export const handleAddItem = async (name: string, amount: string, inventory: ({name: string, amount: string})[], setName: React.Dispatch<React.SetStateAction<string>>, setAmount: React.Dispatch<React.SetStateAction<string>>, setInventory: React.Dispatch<React.SetStateAction<({name: string, amount: string})[]>>) => {
+type Props = {
+  name: string;
+  amount: string;
+  setName: React.Dispatch<React.SetStateAction<string>>;
+  setAmount: React.Dispatch<React.SetStateAction<string>>;
+  setRefreshIndex: React.Dispatch<React.SetStateAction<number>>;
+};
 
+export const handleAddItem = async ({name, amount, setName, setAmount, setRefreshIndex}: Props) => {
   // Basic validation
   if (!name.trim() || !amount) {
     alert('Please provide both a name and an amount.');
@@ -26,9 +32,8 @@ export const handleAddItem = async (name: string, amount: string, inventory: ({n
 
     if (!response.ok) throw new Error('Failed to add item.');
 
-    // Refresh the list or append the returned item
-    const addedItem: {name:string, amount: string} = await response.json();
-    setInventory([...inventory, addedItem]);
+    // Trigger a refresh so the Inventory component refetches the list
+    setRefreshIndex(prev => prev + 1);
 
     // Reset form fields
     setName('');

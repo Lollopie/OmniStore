@@ -1,18 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 export interface SelectResponse extends Response {
   activeRole: string;
 }
 
 interface WarehouseSelectorProps {
+  selectedWarehouse: string;
+  setSelectedWarehouse: React.Dispatch<React.SetStateAction<string>>;
   onChange: (warehouseId: string, activeRole: string) => void;
 }
 
-export const WarehouseSelector = ({ onChange }: WarehouseSelectorProps) => {
-  const stored = localStorage.getItem('activeWarehouse');
-  const [selectedWarehouse, setSelectedWarehouse] = useState<string>(
-    stored ? JSON.parse(stored) : ''
-  );
+export const WarehouseSelector = ({ selectedWarehouse, setSelectedWarehouse, onChange }: WarehouseSelectorProps) => {
   const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const warehouseId = event.target.value;
     setSelectedWarehouse(warehouseId);

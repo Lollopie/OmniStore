@@ -19,12 +19,9 @@ export class CreateInventoryTable1782066151000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // 1. Manually drop policies first
     await queryRunner.query(
       `DROP POLICY "user_isolation_policy" ON "inventory";`,
     );
-
-    // 2. TypeORM's generated drop table SQL
     await queryRunner.query(`DROP TABLE "inventory"`);
   }
 }

@@ -3,7 +3,7 @@ import {
   Controller,
   Get,
   Patch,
-  Post,
+  Post, Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -78,8 +78,8 @@ export class WarehouseController {
       const payload = {
         user_id: userToken.user_id,
         username: userToken.username,
-        activeWarehouseId: response[0].warehouse_id,
-        activeRole: response[0].role,
+        activeWarehouseId: response.warehouse_id,
+        activeRole: response.role,
       };
       const token = {
         Authorization: await this.jwtService.signAsync(payload),
@@ -91,7 +91,7 @@ export class WarehouseController {
         maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
       });
       return {
-        activeRole: response[0].role,
+        activeRole: response.role,
       };
     }
     return { error: 'Selection failed' };
@@ -99,8 +99,9 @@ export class WarehouseController {
   @Get('/users')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
-  async get() {
-    return await this.userWarehouseRoleService.getUsers();
+  async get(@Query('page') page: number) {
+    const limit = 10;
+    return await this.userWarehouseRoleService.getUsers(page, limit);
   }
 
   @Post('/users')

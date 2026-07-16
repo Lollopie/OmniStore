@@ -3,12 +3,13 @@ import {fetchInventory} from './hooks/fetchInventory'
 import { handleAddItem } from './hooks/handleAddInventory.ts';
 import InputField from '../../components/InputField.tsx';
 import Button from '../../components/Button.tsx';
-import { generatePagination } from './hooks/generatePagination.ts';
+import { generatePagination } from '../../hooks/generatePagination.ts';
 import { useSearchParams } from 'react-router-dom';
 import MainPage from '../../components/MainPage.tsx';
 import AddButton from '../../components/AddButton.tsx';
 import TableHead from '../../components/TableHead.tsx';
 import TableDataCell from '../../components/TableDataCell.tsx';
+import Pagination from '../../components/Pagination.tsx';
 export interface InventoryItem {
   name: string;
   amount: string;
@@ -27,13 +28,11 @@ const InventoryManager = () => {
   const page: number = Number(searchParams.get('page')) || 1;
   const [pages, setPages] = useState<(number | string)[]>([]);
   const [sort, setSort] = useState('new');
+  const [refreshIndex, setRefreshIndex] = useState(0);
   const itemsPerPage = 10;
-  // Base API URL - replace with your actual API endpoint
-// 1. Set your initial loading state to true right away
   useEffect(() => {
-    // Use an abort controller to safely handle cleanup if the component unmounts
     fetchInventory(Number(page), sort, setInventory, setTotalInventory, setError, setLoading );
-  }, [page, sort]);
+  }, [page, sort, refreshIndex]);
   useEffect(() => {
     generatePagination(Number(page), Math.max(Math.ceil(totalInventory / itemsPerPage), 1), setPages);
   }, [page, sort, totalInventory]);
@@ -64,7 +63,7 @@ const InventoryManager = () => {
                       className={"border-0"}
               />
             </header>
-            <form onSubmit={(e) => {e.preventDefault();handleAddItem(name, amount, inventory, setName, setAmount, setInventory)}} className="flex flex-col">
+            <form onSubmit={(e) => {e.preventDefault();handleAddItem({name, amount, setName, setAmount, setRefreshIndex})}} className="flex flex-col">
               <div className="w-4/5 flex flex-col items-center justify-center mt-3">
                 <InputField label={"Item Name"} type={"text"} value={name} onChange={setName} />
                 <InputField label={"Amount"} type={"number"} value={amount} onChange={setAmount} />
@@ -95,11 +94,9 @@ const InventoryManager = () => {
           </div>
         </div>
 
-        {/* Status Messages */}
         {loading && <p>Loading inventory...</p>}
         {error && <p className="text-red-500">Error: {error}</p>}
 
-        {/* Inventory Table */}
         {!loading && !error && (
           <div className="mt-8 overflow-hidden border border-slate-100 rounded-lg">
             <table className="min-w-full divide-y divide-slate-100">
@@ -128,24 +125,7 @@ const InventoryManager = () => {
         )}
       </div>
       <footer>
-        <div className={"flex justify-center gap-2 mt-4"}>
-          <Button id="prevButton"
-            children={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                           fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                           strokeWidth="2" className="feather feather-arrow-left icon size-6" viewBox="0 0 24 24">
-              <path d="M19 12H5m7 7-7-7 7-7"></path>
-            </svg>} size={'sm'} disabled={Number(page) === 1} onClick={() => {searchParams.set("page", (Number(page) - 1).toString()); setSearchParams({ page: (Number(page) - 1).toString() })}} />
-          {pages.map((pageNumber: number | string) => (
-            <Button id={"pageButton-" + pageNumber} children={pageNumber} key={pageNumber} size={'sm'} disabled={pageNumber === "..." || pageNumber == page} onClick={() => {if(typeof pageNumber == "string") return;searchParams.set("page", pageNumber.toString()); setSearchParams({ page: pageNumber.toString() })}} />
-          ))}
-          <Button id="nextButton"
-            children={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                           fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                           strokeWidth="2" className="feather feather-arrow-right icon size-6" viewBox="0 0 24 24"
-            >
-              <path d="M5 12h14m-7-7 7 7-7 7"></path>
-            </svg>} size={"sm"} disabled={Number(page) == Math.max(Math.ceil(totalInventory / itemsPerPage), 1)} onClick={() => {searchParams.set("page", (Number(page) + 1).toString()); setSearchParams({page: (Number(page) + 1).toString()})}}/>
-        </div>
+        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalInventory / itemsPerPage)} searchParams={searchParams} setSearchParams={setSearchParams} />
       </footer>
     </MainPage>
   );

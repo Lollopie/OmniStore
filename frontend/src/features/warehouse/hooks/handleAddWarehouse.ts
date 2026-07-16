@@ -1,6 +1,10 @@
 import React from 'react';
-
-export const handleAddWarehouse = async (name: string,setName: React.Dispatch<React.SetStateAction<string>>) => {
+interface Props {
+  name: string;
+  setName: React.Dispatch<React.SetStateAction<string>>;
+  setWarehouseId: React.Dispatch<React.SetStateAction<string>>;
+}
+export const handleAddWarehouse = async ({name, setName, setWarehouseId}: Props) => {
 
   if (!name.trim()) {
     alert('Please provide a name.');
@@ -23,11 +27,12 @@ export const handleAddWarehouse = async (name: string,setName: React.Dispatch<Re
 
     if (!response.ok) throw new Error('Failed to add warehouse.');
 
-    const addedItem: {name:string} = await response.json();
+    const addedItem: {name:string, warehouse_id: string} = await response.json();
     const currentWarehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');
     currentWarehouses.push(addedItem);
     localStorage.setItem('user_warehouses', JSON.stringify(currentWarehouses));
     setName('');
+    setWarehouseId(addedItem.warehouse_id);
   } catch (err: unknown) {
     if (err instanceof Error) {
       alert(`Error adding warehouse: ${err.message}`);
