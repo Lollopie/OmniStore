@@ -29,6 +29,7 @@ import { UserWarehouseRoleEntity } from './userWarehouseRole/userWarehouseRole.e
 import { CreateWarehouseTable1783438313000 } from './migrations/1783438313000-CreateWarehouseTable';
 import { InventoryRefactoring1783438667000 } from './migrations/1783438667000-InventoryRefactoring';
 import { CreateUserWarehouseRoleTable1783439080000 } from './migrations/1783439080000-CreateUserWarehouseRoleTable';
+import { AddRLSUserWarehouseRole1784213959000 } from './migrations/1784213959000-AddRLSUserWarehouseRole';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { CreateUserWarehouseRoleTable1783439080000 } from './migrations/17834390
             CreateWarehouseTable1783438313000,
             InventoryRefactoring1783438667000,
             CreateUserWarehouseRoleTable1783439080000,
+            AddRLSUserWarehouseRole1784213959000,
           ],
           migrationsRun: true,
         };

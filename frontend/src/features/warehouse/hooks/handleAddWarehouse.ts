@@ -3,8 +3,9 @@ interface Props {
   name: string;
   setName: React.Dispatch<React.SetStateAction<string>>;
   setWarehouseId: React.Dispatch<React.SetStateAction<string>>;
+  setActiveRole: React.Dispatch<React.SetStateAction<string>>;
 }
-export const handleAddWarehouse = async ({name, setName, setWarehouseId}: Props) => {
+export const handleAddWarehouse = async ({name, setName, setWarehouseId, setActiveRole}: Props) => {
 
   if (!name.trim()) {
     alert('Please provide a name.');
@@ -31,8 +32,11 @@ export const handleAddWarehouse = async ({name, setName, setWarehouseId}: Props)
     const currentWarehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');
     currentWarehouses.push(addedItem);
     localStorage.setItem('user_warehouses', JSON.stringify(currentWarehouses));
+    localStorage.setItem('activeWarehouse', JSON.stringify(addedItem.warehouse_id));
+    localStorage.setItem('activeRole', JSON.stringify('admin'));
     setName('');
     setWarehouseId(addedItem.warehouse_id);
+    setActiveRole('admin');
   } catch (err: unknown) {
     if (err instanceof Error) {
       alert(`Error adding warehouse: ${err.message}`);

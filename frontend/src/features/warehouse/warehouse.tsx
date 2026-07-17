@@ -71,7 +71,7 @@ const WarehouseManager = () => {
               </header>
               <form onSubmit={(e) => {
                 e.preventDefault();
-                handleAddWarehouse({name, setName, setWarehouseId});
+                handleAddWarehouse({name, setName, setWarehouseId, setActiveRole});
               }} className="flex flex-col">
                 <div className="w-4/5 flex flex-col items-center justify-center mt-3">
                   <InputField label={'Warehouse Name'} type={'text'} value={name} onChange={setName} />

@@ -23,6 +23,14 @@ export class WarehouseService {
         .getRepository(WarehouseEntity)
         .create({ name: warehouseData.name });
       await entityManager.getRepository(WarehouseEntity).save(newWarehouse);
+      await entityManager.query(
+        `SELECT set_config('app.current_warehouse_id', $1, true)`,
+        [newWarehouse.warehouse_id],
+      );
+      await entityManager.query(
+        `SELECT set_config('app.current_user_id', $1, true)`,
+        [user_id],
+      );
       await entityManager.getRepository(UserWarehouseRoleEntity).save({
         user_id: user_id,
         warehouse_id: newWarehouse.warehouse_id,

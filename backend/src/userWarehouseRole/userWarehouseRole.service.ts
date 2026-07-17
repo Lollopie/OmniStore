@@ -28,16 +28,20 @@ export class UserWarehouseRoleService {
     return warehouseId;
   }
   private async runInRlsContext<T>(
-    id: string,
-    policy: string,
+    id: string[],
+    policy: string[],
     callback: (repo: Repository<UserWarehouseRoleEntity>) => Promise<T>,
   ): Promise<T> {
+    if (id.length === 0 || policy.length === 0 || id.length !== policy.length) {
+      throw new BadRequestException('Invalid parameters for RLS context');
+    }
     return this.dataSource.transaction(async (entityManager) => {
-      await entityManager.query(
-        `SELECT set_config('app.current_` + policy + `_id', $1, true)`,
-        [id],
-      );
-
+      for (let i = 0; i < policy.length; i++) {
+        await entityManager.query(
+          `SELECT set_config('app.current_` + policy[i] + `_id', $1, true)`,
+          [id[i]],
+        );
+      }
       const transactionalRepo = entityManager.getRepository(
         UserWarehouseRoleEntity,
       );
@@ -46,7 +50,7 @@ export class UserWarehouseRoleService {
     });
   }
   findByUserId(user_id: string): Promise<UserWarehouseRoleEntity | null> {
-    return this.runInRlsContext(user_id, 'user', (repo) =>
+    return this.runInRlsContext([user_id], ['user'], (repo) =>
       repo.findOneBy({
         user_id: user_id,
       }),
@@ -56,11 +60,14 @@ export class UserWarehouseRoleService {
     user_id: string,
     warehouse_id: string,
   ): Promise<UserWarehouseRoleEntity | null> {
-    return this.runInRlsContext(warehouse_id, 'warehouse', (repo) =>
-      repo.findOneBy({
-        user_id: user_id,
-        warehouse_id: warehouse_id,
-      }),
+    return this.runInRlsContext(
+      [user_id, warehouse_id],
+      ['user', 'warehouse'],
+      (repo) =>
+        repo.findOneBy({
+          user_id: user_id,
+          warehouse_id: warehouse_id,
+        }),
     );
   }
 
@@ -79,12 +86,15 @@ export class UserWarehouseRoleService {
       throw new ConflictException('User already belongs to this warehouse');
     }
 
-    return await this.runInRlsContext(warehouseId, 'warehouse', (repo) =>
-      repo.save({
-        user_id: user.user_id,
-        warehouse_id: warehouseId,
-        role,
-      }),
+    return await this.runInRlsContext(
+      [user.user_id, warehouseId],
+      ['user', 'warehouse'],
+      (repo) =>
+        repo.save({
+          user_id: user.user_id,
+          warehouse_id: warehouseId,
+          role,
+        }),
     );
   }
 
@@ -104,32 +114,31 @@ export class UserWarehouseRoleService {
     }
 
     existingRole.role = role;
-    return await this.runInRlsContext(warehouseId, 'warehouse', (repo) =>
-      repo.save(existingRole),
+    return await this.runInRlsContext(
+      [warehouseId, user.user_id],
+      ['warehouse', 'user'],
+      (repo) => repo.save(existingRole),
     );
   }
 
   async getUserWarehouses(
     userId: string,
   ): Promise<{ warehouse_id: string; name: string; role: string }[] | null> {
-    return await this.runInRlsContext(
-      this.getActiveWarehouseId(),
-      'warehouse',
-      (repo) =>
-        repo
-          .createQueryBuilder('user_warehouse_role')
-          .innerJoinAndSelect(
-            'WarehouseEntity',
-            'warehouse',
-            'warehouse.warehouse_id = user_warehouse_role.warehouse_id',
-          )
-          .where('user_warehouse_role.user_id = :userId', { userId })
-          .select([
-            'warehouse.warehouse_id AS warehouse_id',
-            'warehouse.name AS name',
-            'user_warehouse_role.role AS role',
-          ])
-          .getRawMany(),
+    return await this.runInRlsContext([userId], ['user'], (repo) =>
+      repo
+        .createQueryBuilder('user_warehouse_role')
+        .innerJoinAndSelect(
+          'WarehouseEntity',
+          'warehouse',
+          'warehouse.warehouse_id = user_warehouse_role.warehouse_id',
+        )
+        .where('user_warehouse_role.user_id = :userId', { userId })
+        .select([
+          'warehouse.warehouse_id AS warehouse_id',
+          'warehouse.name AS name',
+          'user_warehouse_role.role AS role',
+        ])
+        .getRawMany(),
     );
   }
   async getUsers(
@@ -143,8 +152,8 @@ export class UserWarehouseRoleService {
     const skip = (page - 1) * limit;
 
     return await this.runInRlsContext(
-      warehouse_id,
-      'warehouse',
+      [warehouse_id],
+      ['warehouse'],
       async (repo) => {
         const queryBuilder = repo
           .createQueryBuilder('user_warehouse_role')
