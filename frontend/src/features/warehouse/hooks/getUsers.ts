@@ -1,15 +1,20 @@
 import type { WarehouseUser } from '../warehouse.tsx';
 interface Props {
+  searchTerm?: string;
   setUsers: React.Dispatch<React.SetStateAction<WarehouseUser[]>>;
   setTotalUsers: React.Dispatch<React.SetStateAction<number>>;
+  controller: AbortController;
 }
-export const getUsers = async ({setUsers, setTotalUsers}: Props) => {
+export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller}: Props) => {
   const activeRole = JSON.parse(localStorage.getItem('activeRole') || '');
   if (activeRole == 'admin' || activeRole == 'manager') {
+    const params = new URLSearchParams();
     try {
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
+      params.append('search', searchTerm || '');
+      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users?${params}`, {
         method: 'GET',
-        credentials: 'include'
+        credentials: 'include',
+        signal: controller.signal
       });
       if (!response.ok) throw new Error('Failed to get users.');
       const data: {data: {user_id: string, username: string, role: string}[], total: number} = await response.json();

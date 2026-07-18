@@ -14,6 +14,7 @@ export class InventoryController {
   @Roles(Role.ADMIN, Role.MANAGER, Role.STAFF)
   getInventory(
     @userDecorator.User() userToken: userDecorator.UserToken,
+    @Query('search') searchTerm: string,
     @Query('page') page: number,
     @Query('sort') sort: string,
   ) {
@@ -23,7 +24,7 @@ export class InventoryController {
     if (!sort) {
       sort = 'new';
     }
-    return this.inventoryService.getInventory(page, sort);
+    return this.inventoryService.getInventory(searchTerm, page, sort);
   }
   @Post()
   @Roles(Role.ADMIN, Role.MANAGER)

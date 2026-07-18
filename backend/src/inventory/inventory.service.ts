@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InventoryEntity } from './inventory.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, FindManyOptions, ILike, Repository } from 'typeorm';
 import { InventoryDto } from './inventory.dto';
 import { WarehouseService } from '../warehouse/warehouse.service';
 import { ClsService } from 'nestjs-cls';
@@ -43,29 +43,30 @@ export class InventoryService {
   }
 
   async getInventory(
+    searchTerm: string,
     page: number,
     sort: string,
   ): Promise<[InventoryEntity[], number]> {
     const itemsPerPage = 10;
     const warehouse_id: string = this.clsService.get('warehouseId');
-    // 1. Build the dynamic order object based on the sort string
-    let order: Record<string, 'ASC' | 'DESC'> = { id: 'DESC' }; // Default fallback: New
+
+    let order: Record<string, 'ASC' | 'DESC'> = { id: 'DESC' };
 
     switch (sort as InventorySortOption) {
       case InventorySortOption.OLD:
         order = { id: 'ASC' };
         break;
       case InventorySortOption.NAME_ASC:
-        order = { name: 'ASC', id: 'DESC' }; // Tie-breaker: Newest first if names match
+        order = { name: 'ASC', id: 'DESC' };
         break;
       case InventorySortOption.NAME_DESC:
         order = { name: 'DESC', id: 'DESC' };
         break;
       case InventorySortOption.AMOUNT_ASC:
-        order = { amount: 'ASC', name: 'ASC' }; // Tie-breaker: Alphabetical by name
+        order = { amount: 'ASC', name: 'ASC' };
         break;
       case InventorySortOption.AMOUNT_DESC:
-        order = { amount: 'DESC', name: 'ASC' }; // Tie-breaker: Alphabetical by name
+        order = { amount: 'DESC', name: 'ASC' };
         break;
       case InventorySortOption.NEW:
       default:
@@ -73,16 +74,22 @@ export class InventoryService {
         break;
     }
     return this.runInRlsContext(warehouse_id, (repo) => {
-      return repo.findAndCount({
+      const options: FindManyOptions<InventoryEntity> = {
         select: {
           name: true,
           amount: true,
-          // created_at: true, // Uncomment if your UI needs the timestamp as well
         },
-        order: order, // 2. Pass the order object to TypeORM
-        skip: (page - 1) * itemsPerPage,
+        order: order,
         take: itemsPerPage,
-      });
+        skip: (page - 1) * itemsPerPage,
+      };
+      const trimmedSearchTerm = searchTerm?.trim();
+      if (trimmedSearchTerm) {
+        options.where = {
+          name: ILike(`%${trimmedSearchTerm}%`),
+        };
+      }
+      return repo.findAndCount(options);
     });
   }
   async createItem(item: InventoryDto): Promise<InventoryEntity> {

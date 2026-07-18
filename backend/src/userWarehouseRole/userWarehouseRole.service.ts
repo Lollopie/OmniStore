@@ -144,6 +144,7 @@ export class UserWarehouseRoleService {
   async getUsers(
     page: number = 1,
     limit: number = 10,
+    searchTerm: string,
   ): Promise<{
     data: { user_id: string; username: string; role: string }[];
     total: number;
@@ -165,6 +166,13 @@ export class UserWarehouseRoleService {
           .where('user_warehouse_role.warehouse_id = :warehouse_id', {
             warehouse_id,
           });
+        const cleanedTerm = searchTerm?.trim();
+        console.log(cleanedTerm);
+        if (cleanedTerm) {
+          queryBuilder.andWhere('user.username ILIKE :search', {
+            search: `%${cleanedTerm}%`,
+          });
+        }
         const total = await queryBuilder.getCount();
         const rawResults: {
           user_id: string;

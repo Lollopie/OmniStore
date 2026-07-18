@@ -10,12 +10,13 @@ import AddButton from '../../components/AddButton.tsx';
 import TableHead from '../../components/TableHead.tsx';
 import TableDataCell from '../../components/TableDataCell.tsx';
 import Pagination from '../../components/Pagination.tsx';
+import { useDebounce } from '../../hooks/useDebounce.ts';
+import { SearchField } from '../../components/SearchField.tsx';
 export interface InventoryItem {
   name: string;
   amount: string;
 }
 const InventoryManager = () => {
-  // State for inventory items and form inputs
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [totalInventory, setTotalInventory] = useState(0);
   const [name, setName] = useState('');
@@ -30,9 +31,15 @@ const InventoryManager = () => {
   const [sort, setSort] = useState('new');
   const [refreshIndex, setRefreshIndex] = useState(0);
   const itemsPerPage = 10;
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   useEffect(() => {
-    fetchInventory(Number(page), sort, setInventory, setTotalInventory, setError, setLoading );
-  }, [page, sort, refreshIndex]);
+    const controller = new AbortController();
+    fetchInventory({page: Number(page), sort, searchTerm: debouncedSearchTerm, controller, setInventory, setTotalInventory, setError, setLoading});
+    return () => {
+      controller.abort();
+    };
+  }, [page, sort, refreshIndex, debouncedSearchTerm]);
   useEffect(() => {
     generatePagination(Number(page), Math.max(Math.ceil(totalInventory / itemsPerPage), 1), setPages);
   }, [page, sort, totalInventory]);
@@ -93,7 +100,11 @@ const InventoryManager = () => {
             <AddButton onClick={() => setIsOpen(true)} />
           </div>
         </div>
-
+        <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <SearchField searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+          </div>
+        </div>
         {loading && <p>Loading inventory...</p>}
         {error && <p className="text-red-500">Error: {error}</p>}
 

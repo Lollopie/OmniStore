@@ -11,6 +11,8 @@ import AddButton from '../../components/AddButton.tsx';
 import Pagination from '../../components/Pagination.tsx';
 import { useSearchParams } from 'react-router-dom';
 import { generatePagination } from '../../hooks/generatePagination.ts';
+import { SearchField } from '../../components/SearchField.tsx';
+import { useDebounce } from '../../hooks/useDebounce.ts';
 export interface WarehouseUser {
   user_id: string;
   username: string;
@@ -33,6 +35,8 @@ const WarehouseManager = () => {
   const page: number = Number(searchParams.get('page')) || 1;
   const [pages, setPages] = useState<(number | string)[]>([]);
   const usersPerPage = 10;
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;
     if (!dialog){
@@ -45,8 +49,12 @@ const WarehouseManager = () => {
     }
   }, [isOpen]);
   useEffect(() => {
-    getUsers({setUsers, setTotalUsers});
-  }, [warehouseId, activeRole]);
+    const controller = new AbortController();
+    getUsers({searchTerm: debouncedSearchTerm, setUsers, setTotalUsers, controller});
+    return () => {
+      controller.abort();
+    };
+  }, [warehouseId, activeRole, debouncedSearchTerm]);
   useEffect(() => {
     generatePagination(Number(page), Math.max(Math.ceil(totalUsers / usersPerPage), 1), setPages);
   }, [page, totalUsers]);
@@ -98,7 +106,7 @@ const WarehouseManager = () => {
                 <AddButton onClick={() => setIsOpen(true)} />
               </div>
             </div>
-
+            <SearchField searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
             {/* Add user by username (only visible to admins) */}
             {activeRole === 'admin' ? (
               <div className="max-w-md mb-4 flex gap-2 items-center">

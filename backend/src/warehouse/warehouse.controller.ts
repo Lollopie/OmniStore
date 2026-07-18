@@ -3,7 +3,8 @@ import {
   Controller,
   Get,
   Patch,
-  Post, Query,
+  Post,
+  Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -99,9 +100,13 @@ export class WarehouseController {
   @Get('/users')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
-  async get(@Query('page') page: number) {
+  async get(@Query('search') searchTerm: string, @Query('page') page: number) {
     const limit = 10;
-    return await this.userWarehouseRoleService.getUsers(page, limit);
+    return await this.userWarehouseRoleService.getUsers(
+      page,
+      limit,
+      searchTerm,
+    );
   }
 
   @Post('/users')
