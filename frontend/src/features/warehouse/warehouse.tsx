@@ -62,85 +62,113 @@ const WarehouseManager = () => {
     navigator.clipboard.writeText(text);
   };
   return (
-    <MainPage children={
-      <div>
+    <MainPage>
+      <div className="max-w-2xl w-full">
         <div className="flex flex-col overflow-hidden">
           <dialog
-            ref={dialogRef} onClose={() => setIsOpen(false)}
-            className="m-auto h-fit w-full max-w-md rounded-lg bg-white p-0 shadow-lg backdrop:backdrop-blur-xs backdrop:bg-black/10 justify-center">
+            ref={dialogRef}
+            onClose={() => setIsOpen(false)}
+            className="m-auto h-fit w-full max-w-md rounded-lg bg-white p-0 shadow-lg backdrop:backdrop-blur-xs backdrop:bg-black/10 justify-center"
+          >
             <div>
               <header className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-6">
                 <h2 className="text-lg font-semibold text-slate-900">Add Warehouse</h2>
-                <Button children={<><span className="text-xl leading-none" aria-hidden="true">×</span><span
-                  className="sr-only">Close modal</span></>}
-                        size={'sm'}
-                        onClick={() => setIsOpen(false)}
-                        className={'border-0'} />
+                <Button
+                  size={"sm"}
+                  onClick={() => setIsOpen(false)}
+                  className={"border-0"}
+                  children={
+                    <>
+                      <span className="text-xl leading-none" aria-hidden="true">×</span>
+                      <span className="sr-only">Close modal</span>
+                    </>
+                  }
+                />
               </header>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                handleAddWarehouse({name, setName, setWarehouseId, setActiveRole});
-              }} className="flex flex-col">
-                <div className="w-4/5 flex flex-col items-center justify-center mt-3">
-                  <InputField label={'Warehouse Name'} type={'text'} value={name} onChange={setName} />
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAddWarehouse({name, setName, setWarehouseId, setActiveRole});
+                }}
+                className="flex flex-col items-center"
+              >
+                <div className="w-full px-4 flex flex-col mt-3">
+                  <InputField label={"Warehouse Name"} type={"text"} value={name} onChange={setName} />
                 </div>
-                <footer
-                  className="flex flex-col-reverse gap-3 border-t border-slate-200 px-4 py-4 sm:flex-row sm:justify-end sm:px-6"
-                >
-                  <Button children={'Cancel'} variant={'danger'} size={'sm'} onClick={() => setIsOpen(false)}
-                          type={'button'} />
-                  <Button children={'Add'} variant={'add'} size={'sm'} type={'submit'} />
+
+                <footer className="w-full flex flex-col-reverse gap-3 border-t border-slate-200 px-4 py-4 mt-4 sm:flex-row sm:justify-end sm:px-6">
+                  <Button children={"Cancel"} variant={"danger"} size={"sm"} onClick={() => setIsOpen(false)} type={"button"} className="w-full sm:w-auto" />
+                  <Button children={"Add"} variant={"add"} size={"sm"} type={"submit"} className="w-full sm:w-auto" />
                 </footer>
               </form>
             </div>
           </dialog>
         </div>
-        <div className="w-2xl mx-auto bg-white rounded-xl shadow-sm border border-slate-100 p-8">
+
+        <div className="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-slate-100 p-4 sm:p-8 overflow-scroll">
           <div className="space-y-6">
-            <div className="flex items-center justify-between pb-6 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <WarehouseSelector selectedWarehouse={warehouseId} setSelectedWarehouse={setWarehouseId} onChange={(warehouseId: string, role: string) => {
-                  setWarehouseId(warehouseId);
-                  setActiveRole(role);
-                }} />
-                <AddButton onClick={() => setIsOpen(true)} />
+            <div className="w-full flex items-center justify-between pb-6 border-b border-slate-100">
+              <div className="w-full flex flex-col sm:flex-row md:items-center md:gap-3">
+                <div className="flex-3">
+                  <WarehouseSelector
+                    selectedWarehouse={warehouseId}
+                    setSelectedWarehouse={setWarehouseId}
+                    onChange={(warehouseId: string, role: string) => {
+                      setWarehouseId(warehouseId);
+                      setActiveRole(role);
+                    }}
+                  />
+                </div>
+                <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
+                  <AddButton onClick={() => setIsOpen(true)} />
+                </div>
               </div>
             </div>
+
             <SearchField searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-            {/* Add user by username (only visible to admins) */}
+
             {activeRole === 'admin' ? (
-              <div className="max-w-md mb-4 flex gap-2 items-center">
+              <div className="w-full flex flex-col md:flex-row gap-2 items-stretch md:items-center mb-4">
                 <input
                   className="flex-1 rounded-lg border border-slate-300 py-2 px-3 text-sm placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   placeholder="Username to add"
                   value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)} />
-                <Button children={'Add user'} variant={'add'} size={'sm'} onClick={async () => {
-                  const username = newUsername || '';
-                  if (!username) return alert('Enter a username');
-                  try {
-                    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({ username: username, role: 'staff' }),
-                    });
-                    if (!response.ok) {
-                      const txt = await response.text();
-                      throw new Error(txt || 'Failed to add user');
+                  onChange={(e) => setNewUsername(e.target.value)}
+                />
+                <Button
+                  variant={"add"}
+                  size={"sm"}
+                  className="w-full md:w-auto whitespace-nowrap"
+                  onClick={async () => {
+                    const username = newUsername || '';
+                    if (!username) return alert('Enter a username');
+                    try {
+                      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ username: username, role: 'staff' }),
+                      });
+                      if (!response.ok) {
+                        const txt = await response.text();
+                        throw new Error(txt || 'Failed to add user');
+                      }
+                      const newUser = await response.json();
+                      newUser.username = username;
+                      setUsers((prev) => [...prev, newUser]);
+                      setNewUsername('');
+                    } catch (err) {
+                      if (err instanceof Error) alert(err.message);
                     }
-                    const newUser = await response.json();
-                    newUser.username = username;
-                    setUsers((prev) => [...prev, newUser]);
-                    setNewUsername('');
-                  } catch (err) {
-                    if (err instanceof Error) alert(err.message);
-                  }
-                }} />
+                  }}
+                  children={"Add user"}
+                />
               </div>
             ) : null}
           </div>
-          <div className="mt-8 overflow-hidden border border-slate-100 rounded-lg">
+
+          <div className="mt-8 overflow-x-auto border border-slate-100 rounded-lg">
             <table className="min-w-full divide-y divide-slate-100">
               <thead className="bg-slate-50">
               <tr>
@@ -161,21 +189,21 @@ const WarehouseManager = () => {
                   <tr key={user.user_id} className="hover:bg-slate-50/50 transition-colors">
                     <TableDataCell className="font-mono text-slate-500" children={
                       <div className="flex items-center gap-2">
-                      <span className="max-w-[120px] truncate" title={user.user_id}>
-                          {user.user_id}
-                      </span>
+                        <span className="hidden sm:block sm:max-w-[120px] truncate" title={user.user_id}>
+                            {user.user_id}
+                        </span>
                         <Button
                           onClick={() => copyToClipboard(user.user_id)}
                           className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
                           title="Copy Full ID"
                           children={
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                            </svg>}
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                          }
                         />
-                      </div>}
-                    />
+                      </div>
+                    } />
                     <TableDataCell className="font-medium text-slate-900" children={user.username} />
                     <TableDataCell>
                       {activeRole === 'admin' ? (
@@ -200,10 +228,7 @@ const WarehouseManager = () => {
                                 localStorage.setItem('activeRole', JSON.stringify(newRole));
                                 setActiveRole(newRole);
                               }
-                              setUsers((prev) => prev.map((u) => u.user_id === user.user_id ? {
-                                ...u,
-                                role: newRole,
-                              } : u));
+                              setUsers((prev) => prev.map((u) => u.user_id === user.user_id ? { ...u, role: newRole } : u));
                             } catch (err) {
                               if (err instanceof Error) alert(err.message);
                             }
@@ -224,12 +249,13 @@ const WarehouseManager = () => {
             </table>
           </div>
         </div>
-        <footer>
+
+        <footer className="mt-4 px-4">
           <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / usersPerPage)} searchParams={searchParams} setSearchParams={setSearchParams} />
         </footer>
       </div>
-    } />
-    );
+    </MainPage>
+  );
     };
 
       export default WarehouseManager;
