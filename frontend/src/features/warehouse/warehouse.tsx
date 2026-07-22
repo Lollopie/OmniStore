@@ -68,21 +68,17 @@ const WarehouseManager = () => {
           <dialog
             ref={dialogRef}
             onClose={() => setIsOpen(false)}
-            className="m-auto h-fit w-full max-w-md rounded-lg bg-white p-0 shadow-lg backdrop:backdrop-blur-xs backdrop:bg-black/10 justify-center"
+            className="modal"
           >
-            <div>
-              <header className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-6">
-                <h2 className="text-lg font-semibold text-slate-900">Add Warehouse</h2>
+            <div className="modal-box">
+              <header className="flex items-center justify-between sm:px-4">
+                <h2 className="text-lg font-semibold text-base-400">Add Warehouse</h2>
                 <Button
-                  size={"sm"}
+                  size={"md"}
+                  className="bg-base-100 text-base-300 border-none"
+                  variant={"primary"}
                   onClick={() => setIsOpen(false)}
-                  className={"border-0"}
-                  children={
-                    <>
-                      <span className="text-xl leading-none" aria-hidden="true">×</span>
-                      <span className="sr-only">Close modal</span>
-                    </>
-                  }
+                  children={'X'}
                 />
               </header>
 
@@ -97,7 +93,7 @@ const WarehouseManager = () => {
                   <InputField label={"Warehouse Name"} type={"text"} value={name} onChange={setName} />
                 </div>
 
-                <footer className="w-full flex flex-col-reverse gap-3 border-t border-slate-200 px-4 py-4 mt-4 sm:flex-row sm:justify-end sm:px-6">
+                <footer className="w-full flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">
                   <Button children={"Cancel"} variant={"danger"} size={"sm"} onClick={() => setIsOpen(false)} type={"button"} className="w-full sm:w-auto" />
                   <Button children={"Add"} variant={"add"} size={"sm"} type={"submit"} className="w-full sm:w-auto" />
                 </footer>
@@ -106,10 +102,10 @@ const WarehouseManager = () => {
           </dialog>
         </div>
 
-        <div className="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-slate-100 p-4 sm:p-8 overflow-scroll">
+        <div className="w-full max-w-2xl mx-auto bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 sm:p-8 overflow-scroll">
           <div className="space-y-6">
-            <div className="w-full flex items-center justify-between pb-6 border-b border-slate-100">
-              <div className="w-full flex flex-col sm:flex-row md:items-center md:gap-3">
+            <div className="w-full pb-6 border-b border-base-300">
+              <div className="w-full flex flex-col sm:flex-row sm:items-center sm:gap-3">
                 <div className="flex-3">
                   <WarehouseSelector
                     selectedWarehouse={warehouseId}
@@ -121,25 +117,26 @@ const WarehouseManager = () => {
                   />
                 </div>
                 <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
-                  <AddButton onClick={() => setIsOpen(true)} />
+                  <AddButton className="w-full btn-sm sm:btn-md sm:w-auto" onClick={() => setIsOpen(true)} />
                 </div>
               </div>
             </div>
 
-            <SearchField searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
             {activeRole === 'admin' ? (
-              <div className="w-full flex flex-col md:flex-row gap-2 items-stretch md:items-center mb-4">
-                <input
-                  className="flex-1 rounded-lg border border-slate-300 py-2 px-3 text-sm placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              <div className="w-full flex flex-col sm:flex-row gap-2 justify-between items-stretch md:items-center mb-4">
+                <InputField
+                  className="w-full sm:max-w-xs md:flex-3 input-sm"
+                  type="text"
                   placeholder="Username to add"
                   value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
+                  onChange={setNewUsername}
                 />
                 <Button
                   variant={"add"}
                   size={"sm"}
-                  className="w-full md:w-auto whitespace-nowrap"
+                  className="flex-none"
                   onClick={async () => {
                     const username = newUsername || '';
                     if (!username) return alert('Enter a username');
@@ -168,34 +165,35 @@ const WarehouseManager = () => {
             ) : null}
           </div>
 
-          <div className="mt-8 overflow-x-auto border border-slate-100 rounded-lg">
-            <table className="min-w-full divide-y divide-slate-100">
-              <thead className="bg-slate-50">
+          <div className="mt-8 overflow-x-auto border border-base-300 rounded-lg">
+            <table className="table min-w-full divide-y divide-base-300">
+              <thead className="bg-base-100">
               <tr>
                 <TableHead children="Id" variant="first" />
                 <TableHead children="Name" />
                 <TableHead children="Role" />
               </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-base-300 bg-base-100">
               {users.length === 0 ? (
-                <tr className="hover:bg-slate-50/50 transition-colors">
-                  <td colSpan={3} className="text-center p-3 text-slate-600">
+                <tr className="hover:bg-base-300/50 transition-colors">
+                  <td colSpan={3} className="text-center p-3 text-base-300">
                     No users in warehouse.
                   </td>
                 </tr>
               ) : (
                 users.map((user: WarehouseUser) => (
-                  <tr key={user.user_id} className="hover:bg-slate-50/50 transition-colors">
-                    <TableDataCell className="font-mono text-slate-500" children={
+                  <tr key={user.user_id} className="hover:bg-base-300/50 transition-colors">
+                    <TableDataCell className="font-mono text-base-300" children={
                       <div className="flex items-center gap-2">
                         <span className="hidden sm:block sm:max-w-[120px] truncate" title={user.user_id}>
                             {user.user_id}
                         </span>
                         <Button
                           onClick={() => copyToClipboard(user.user_id)}
-                          className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
                           title="Copy Full ID"
+                          className="bg-base-200 hover:bg-base-400 border-base-400 text-base-300"
+                          size="sm"
                           children={
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
@@ -204,11 +202,11 @@ const WarehouseManager = () => {
                         />
                       </div>
                     } />
-                    <TableDataCell className="font-medium text-slate-900" children={user.username} />
+                    <TableDataCell className="font-medium text-base-300" children={user.username} />
                     <TableDataCell>
                       {activeRole === 'admin' ? (
                         <select
-                          className="rounded border-none bg-transparent py-1 pl-1 pr-8 text-sm font-medium text-slate-700 hover:bg-slate-100 focus:ring-2 focus:ring-emerald-500"
+                          className="select select-sm font-medium focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                           value={user.role}
                           onChange={async (e) => {
                             const newRole = e.target.value;

@@ -2,11 +2,12 @@ import InputField from './InputField.tsx';
 interface SearchFieldProps {
   searchTerm: string;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  className?: string;
 }
-export function SearchField({ searchTerm, setSearchTerm }: SearchFieldProps) {
+export function SearchField({ searchTerm, setSearchTerm, className }: SearchFieldProps) {
   return (
-    <div style={{ padding: '20px', maxWidth: '500px' }}>
-      <InputField label="Search" type="text" value={searchTerm} onChange={(e) => setSearchTerm(e)} />
+    <div>
+      <InputField className={`input-sm ${className || ''}`} type="search" value={searchTerm} onChange={(e) => setSearchTerm(e)} placeholder="Search..." />
     </div>
   );
 }

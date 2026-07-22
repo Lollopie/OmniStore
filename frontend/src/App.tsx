@@ -50,13 +50,12 @@ export default function App() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-base-200">
       <header>
         <NavBar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
       </header>
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="h-full py-12 px-4 sm:px-6 lg:px-8">
         <Routes>
-          {/* Guest Only Routes - Pass isAuthenticated as a prop now */}
           <Route element={<GuestRoute isAuthenticated={isAuthenticated} />}>
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated}/>} />
@@ -64,16 +63,10 @@ export default function App() {
           </Route>
 
           <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-            {/* Your Root Page / Dashboard goes here */}
             <Route path="/" element={<Warehouse />} />
             <Route path="/inventory" element={<Inventory />} />
-
-            {/* You can easily add more protected routes here later:
-        <Route path="/dashboard" element={<Dashboard />} />
-        */}
           </Route>
 
-          {/* Catch-all 404 */}
           <Route path="*" element={<div className="p-10">404 - Page Not Found</div>} />
         </Routes>
       </div>

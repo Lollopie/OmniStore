@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import InputField from '../../components/InputField.tsx';
+import Button from '../../components/Button.tsx';
 
 interface AuthFormProps {
   title: string;
@@ -54,24 +55,25 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
 
           {error && <p className="mb-4 text-sm text-red-500 font-medium">{error}</p>}
           {success && <p className="mb-4 text-sm text-green-600 font-medium">{success}</p>}
+          <div className="space-y-4">
+            <InputField
+              label="Username"
+              type="text"
+              value={username}
+              onChange={setUsername}
+            />
 
-          <InputField
-            label="Username"
-            type="text"
-            value={username}
-            onChange={setUsername}
-          />
-
-          <InputField
-            label="Password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-          />
-
-          <button type="submit" className="w-full rounded-md bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 transition">
+            <InputField
+              className="last:mb-6"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+            />
+          </div>
+          <Button type="submit">
             {buttonText}
-          </button>
+          </Button>
         </form>
       </div>
     </main>

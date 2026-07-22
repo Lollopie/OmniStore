@@ -62,21 +62,17 @@ const InventoryManager = () => {
           <dialog
             ref={dialogRef}
             onClose={() => setIsOpen(false)}
-            className="m-auto h-fit w-full max-w-md rounded-lg bg-white p-0 shadow-lg backdrop:backdrop-blur-xs backdrop:bg-black/10 justify-center"
+            className="modal"
           >
-            <div>
-              <header className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-6">
-                <h2 className="text-lg font-semibold text-slate-900">Add Item</h2>
+            <div className="modal-box">
+              <header className="flex items-center justify-between sm:px-4">
+                <h2 className="text-lg font-semibold text-base-400">Add Item</h2>
                 <Button
-                  size={"sm"}
+                  size={"md"}
+                  className="bg-base-100 text-base-300 border-none"
+                  variant={"primary"}
                   onClick={() => setIsOpen(false)}
-                  className={"border-0"}
-                  children={
-                  <>
-                    <span className="text-xl leading-none" aria-hidden="true">×</span>
-                    <span className="sr-only">Close modal</span>
-                  </>
-                }
+                  children={'X'}
                 />
               </header>
               <form onSubmit={(e) => {
@@ -85,13 +81,11 @@ const InventoryManager = () => {
               }}
               className="flex flex-col"
               >
-                <div className="w-full flex flex-col items-center justify-center mt-3">
+                <div className="w-full flex flex-col items-center justify-center mt-3 sm:px-4">
                   <InputField label={"Item Name"} type={"text"} value={name} onChange={setName} />
                   <InputField label={"Amount"} type={"number"} value={amount} onChange={setAmount} />
                 </div>
-                <footer
-                  className="w-full flex flex-col-reverse gap-3 border-t border-slate-200 px-4 py-4 sm:flex-row sm:justify-end sm:px-6"
-                >
+                <footer className="w-full flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">
                   <Button children={"Cancel"} variant={"danger"} size={"sm"} onClick={() => setIsOpen(false)} type={"button"} />
                   <Button children={"Add"} variant={"add"} size={"sm"} type={"submit"} />
                 </footer>
@@ -99,49 +93,55 @@ const InventoryManager = () => {
             </div>
           </dialog>
         </div>
-        <div className="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-slate-100 p-4 sm:p-8 overflow-scroll">
-          <div className="w-full flex items-center justify-between pb-6 border-b border-slate-100">
-            <div className="w-full flex items-center gap-3">
-              <div className="flex-3 flex flex-col sm:flex-row md:items-center md:gap-3">
-                <label className="text-sm font-medium text-slate-700">Sort by:</label>
-                <select className="w-full sm:w-3/5 rounded-lg border border-slate-300 bg-white py-1.5 px-3 sm:ml-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500" name="sort" id="sort" onChange={(e) => {setSort(e.target.value)}}>
-                  <option value="new">New</option>
-                  <option value="old">Old</option>
-                  <option value="name asc">Name Ascending</option>
-                  <option value="name desc">Name Descending</option>
-                  <option value="amount asc">Amount Ascending</option>
-                  <option value="amount desc">Amount Descending</option>
-                </select>
-                <div className="flex-3 flex justify-center pt-2 sm:justify-end sm:pt-0">
+        <div className="w-full max-w-2xl mx-auto bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 sm:p-8 overflow-scroll">
+         <div className="space-y-6">
+          <div className="w-full pb-6 border-b border-base-300">
+            <div className="w-full">
+              <div className="flex flex-col sm:flex-row md:items-center md:gap-3">
+                <fieldset className="flex-3 fieldset flex flex-row justify-left md:items-center gap-3">
+                  <legend className="fieldset-legend ml-1">Sort by:</legend>
+                  <select className="select select-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                          name="sort"
+                          id="sort"
+                          onChange={(e) => {setSort(e.target.value)}}>
+                    <option value="new">New</option>
+                    <option value="old">Old</option>
+                    <option value="name asc">Name Ascending</option>
+                    <option value="name desc">Name Descending</option>
+                    <option value="amount asc">Amount Ascending</option>
+                    <option value="amount desc">Amount Descending</option>
+                  </select>
+                </fieldset>
+                <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
                   <AddButton onClick={() => setIsOpen(true)} />
                 </div>
               </div>
 
             </div>
           </div>
-          <SearchField searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+          <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           {loading && <p>Loading inventory...</p>}
-          {error && <p className="text-red-500">Error: {error}</p>}
-
+          {error && <p className="text-error">Error: {error}</p>}
+        </div>
           {!loading && !error && (
-            <div className="mt-8 overflow-hidden border border-slate-100 rounded-lg">
-              <table className="min-w-full divide-y divide-slate-100">
-                <thead className="bg-slate-50">
+            <div className="mt-8 overflow-hidden border border-base-300 rounded-lg">
+              <table className="table min-w-full divide-y divide-base-300">
+                <thead className="bg-base-100">
                 <tr>
                   <TableHead children="Name" variant="first" />
                   <TableHead children="Amount" />
                 </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-base-300 bg-base-100">
                 {inventory.length === 0 ? (
-                  <tr className="hover:bg-slate-50/50 transition-colors">
-                    <TableDataCell colSpan={2} children="No items in inventory." className="text-center p-3 text-slate-600"/>
+                  <tr className="hover:bg-base-200/50 transition-colors">
+                    <TableDataCell colSpan={2} children="No items in inventory." className="text-center p-3 text-base-300"/>
                   </tr>
                 ) : (
                   inventory.map((item: InventoryItem, index) => (
-                    <tr key={index} className="hover:bg-slate-50/50 transition-colors">
-                      <TableDataCell children={item.name} className="text-slate-900"/>
-                      <TableDataCell children={item.amount} className="text-slate-900"/>
+                    <tr key={index} className="hover:bg-base-200/50 transition-colors">
+                      <TableDataCell children={item.name} className="text-base-400"/>
+                      <TableDataCell children={item.amount} className="text-base-400"/>
                     </tr>
                   ))
                 )}

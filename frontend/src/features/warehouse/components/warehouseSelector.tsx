@@ -37,20 +37,19 @@ export const WarehouseSelector = ({ selectedWarehouse, setSelectedWarehouse, onC
   }
 
   return (
-    <div className="warehouse-selector flex flex-col sm:flex-row md:items-center md:gap-3">
-      <label className="text-sm font-medium text-slate-700" htmlFor="warehouse-select">Active Warehouse: </label>
-      <select className="w-full rounded-lg border border-slate-300 bg-white py-1.5 px-3 text-sm font-semibold text-slate-800 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-        id="warehouse-select"
+    <fieldset className="fieldset warehouse-selector flex flex-row justify-left md:items-center gap-2">
+      <legend className="fieldset-legend ml-1">Active Warehouse: </legend>
+      <select className="select select-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:max-w-xs w-full"
         value={selectedWarehouse}
         onChange={handleChange}
       >
-        {/*<option value="" disabled>-- Select a Warehouse --</option>*/}
+        <option value="" disabled>-- Select a Warehouse --</option>
         {warehouses.map((warehouse: { warehouse_id: string, name: string }) => (
           <option key={warehouse.warehouse_id} value={warehouse.warehouse_id}>
             {warehouse.name}
           </option>
         ))}
       </select>
-    </div>
+    </fieldset>
   );
 };
