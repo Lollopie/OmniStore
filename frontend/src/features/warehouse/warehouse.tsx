@@ -13,22 +13,35 @@ import { useSearchParams } from 'react-router-dom';
 import { generatePagination } from '../../hooks/generatePagination.ts';
 import { SearchField } from '../../components/SearchField.tsx';
 import { useDebounce } from '../../hooks/useDebounce.ts';
+import { useToast } from '../toast';
+import { getWarehouseFromWarehouseId } from './hooks/getWarehouseFromWarehouseId.ts';
+import { addUser } from './hooks/addUser.ts';
+import { changeUserRole } from './hooks/ChangeUserRole.ts';
 export interface WarehouseUser {
   user_id: string;
   username: string;
   role: string;
 }
+export interface Warehouse {
+  warehouse_id: string;
+  name: string;
+  role?: string;
+}
 const WarehouseManager = () => {
-  const readStoredValue = (key: string) => {
-    const storedValue = localStorage.getItem(key);
-    return storedValue ? JSON.parse(storedValue) : '';
-  };
   const [name, setName] = useState('');
   const [users, setUsers] = useState<WarehouseUser[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [isOpen, setIsOpen] = useState(false);
-  const [warehouseId, setWarehouseId] = useState(JSON.parse(localStorage.getItem('activeWarehouse') || '') || '');
-  const [activeRole, setActiveRole] = useState<string>(readStoredValue('activeRole'));
+  const [activeWarehouse, setActiveWarehouse] = useState<Warehouse>(() => {
+    try {
+      const rawStoredId = localStorage.getItem('activeWarehouse');
+      const warehouseId = rawStoredId ? JSON.parse(rawStoredId) : '';
+      return getWarehouseFromWarehouseId(warehouseId);
+    } catch (error) {
+      console.error('Failed to parse activeWarehouse from localStorage:', error);
+      return getWarehouseFromWarehouseId('');
+    }
+  });
   const [newUsername, setNewUsername] = useState('');
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -37,6 +50,7 @@ const WarehouseManager = () => {
   const usersPerPage = 10;
   const [searchTerm, setSearchTerm] = useState<string>('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const { addToast } = useToast();
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;
     if (!dialog){
@@ -54,7 +68,7 @@ const WarehouseManager = () => {
     return () => {
       controller.abort();
     };
-  }, [warehouseId, activeRole, debouncedSearchTerm]);
+  }, [activeWarehouse, debouncedSearchTerm]);
   useEffect(() => {
     generatePagination(Number(page), Math.max(Math.ceil(totalUsers / usersPerPage), 1), setPages);
   }, [page, totalUsers]);
@@ -85,7 +99,8 @@ const WarehouseManager = () => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleAddWarehouse({name, setName, setWarehouseId, setActiveRole});
+                  handleAddWarehouse({name, setName, setActiveWarehouse});
+                  addToast(`Added warehouse ${name}`, 'success', 5000);
                 }}
                 className="flex flex-col items-center"
               >
@@ -108,12 +123,9 @@ const WarehouseManager = () => {
               <div className="w-full flex flex-col sm:flex-row sm:items-center sm:gap-3">
                 <div className="flex-3">
                   <WarehouseSelector
-                    selectedWarehouse={warehouseId}
-                    setSelectedWarehouse={setWarehouseId}
-                    onChange={(warehouseId: string, role: string) => {
-                      setWarehouseId(warehouseId);
-                      setActiveRole(role);
-                    }}
+                    selectedWarehouse={activeWarehouse.warehouse_id}
+                    setActiveWarehouse={setActiveWarehouse}
+                    addToast={addToast}
                   />
                 </div>
                 <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
@@ -124,10 +136,10 @@ const WarehouseManager = () => {
 
             <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-            {activeRole === 'admin' ? (
+            {activeWarehouse.role === 'admin' ? (
               <div className="w-full flex flex-col sm:flex-row gap-2 justify-between items-stretch md:items-center mb-4">
                 <InputField
-                  className="w-full sm:max-w-xs md:flex-3 input-sm"
+                  className="w-full sm:max-w-xs md:flex-3 input-sm placeholder-base-300"
                   type="text"
                   placeholder="Username to add"
                   value={newUsername}
@@ -138,26 +150,7 @@ const WarehouseManager = () => {
                   size={"sm"}
                   className="flex-none"
                   onClick={async () => {
-                    const username = newUsername || '';
-                    if (!username) return alert('Enter a username');
-                    try {
-                      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ username: username, role: 'staff' }),
-                      });
-                      if (!response.ok) {
-                        const txt = await response.text();
-                        throw new Error(txt || 'Failed to add user');
-                      }
-                      const newUser = await response.json();
-                      newUser.username = username;
-                      setUsers((prev) => [...prev, newUser]);
-                      setNewUsername('');
-                    } catch (err) {
-                      if (err instanceof Error) alert(err.message);
-                    }
+                    await addUser({ newUsername, setUsers, setNewUsername, addToast });
                   }}
                   children={"Add user"}
                 />
@@ -184,13 +177,13 @@ const WarehouseManager = () => {
               ) : (
                 users.map((user: WarehouseUser) => (
                   <tr key={user.user_id} className="hover:bg-base-300/50 transition-colors">
-                    <TableDataCell className="font-mono text-base-300" children={
+                    <TableDataCell className="font-mono text-base-400" children={
                       <div className="flex items-center gap-2">
                         <span className="hidden sm:block sm:max-w-[120px] truncate" title={user.user_id}>
                             {user.user_id}
                         </span>
                         <Button
-                          onClick={() => copyToClipboard(user.user_id)}
+                          onClick={() => {copyToClipboard(user.user_id); addToast('Copied to clipboard!','success',2000);}}
                           title="Copy Full ID"
                           className="bg-base-200 hover:bg-base-400 border-base-400 text-base-300"
                           size="sm"
@@ -202,34 +195,19 @@ const WarehouseManager = () => {
                         />
                       </div>
                     } />
-                    <TableDataCell className="font-medium text-base-300" children={user.username} />
+                    <TableDataCell className="font-medium text-base-400" children={user.username} />
                     <TableDataCell>
-                      {activeRole === 'admin' ? (
+                      {activeWarehouse.role === 'admin' ? (
                         <select
                           className="select select-sm font-medium focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                           value={user.role}
                           onChange={async (e) => {
-                            const newRole = e.target.value;
-                            try {
-                              const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
-                                method: 'PATCH',
-                                credentials: 'include',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ username: user.username, role: newRole }),
-                              });
-                              if (!response.ok) {
-                                const txt = await response.text();
-                                throw new Error(txt || 'Failed to update role');
-                              }
-                              const currentUsername = readStoredValue('username');
-                              if (user.username === currentUsername) {
-                                localStorage.setItem('activeRole', JSON.stringify(newRole));
-                                setActiveRole(newRole);
-                              }
-                              setUsers((prev) => prev.map((u) => u.user_id === user.user_id ? { ...u, role: newRole } : u));
-                            } catch (err) {
-                              if (err instanceof Error) alert(err.message);
-                            }
+                            await changeUserRole({
+                              user,
+                              newRole: e.target.value,
+                              setUsers,
+                              setActiveWarehouse
+                            })
                           }}
                         >
                           <option value="admin">admin</option>
@@ -256,4 +234,4 @@ const WarehouseManager = () => {
   );
     };
 
-      export default WarehouseManager;
+export default WarehouseManager;

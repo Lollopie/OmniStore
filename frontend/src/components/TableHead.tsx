@@ -8,7 +8,7 @@ interface TableHeadProps extends React.ComponentPropsWithoutRef<'th'> {
   variant?: keyof typeof VARIANTS;
 }
 export default function TableHead({ children, variant = 'other', scope = 'col', className = '', ...props }: TableHeadProps) {
-  const baseTableHeadStyle = "text-left text-xs font-semibold uppercase tracking-wider text-slate-500";
+  const baseTableHeadStyle = "text-left text-xs font-semibold uppercase tracking-wider text-base-400";
   const variantStyles = VARIANTS[variant] || VARIANTS.other;
   return (
     <th

@@ -6,6 +6,7 @@ import Inventory from './features/inventory/Inventory.tsx';
 import NavBar from './components/NavBar.tsx';
 import './assets/index.css';
 import Warehouse from './features/warehouse/warehouse.tsx';
+import { ToastProvider } from './features/toast';
 function ProtectedRoute({ isAuthenticated } : {isAuthenticated: boolean}) {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
@@ -50,26 +51,28 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-base-200">
-      <header>
-        <NavBar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
-      </header>
-      <div className="h-full py-12 px-4 sm:px-6 lg:px-8">
-        <Routes>
-          <Route element={<GuestRoute isAuthenticated={isAuthenticated} />}>
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated}/>} />
-            <Route path="/logout" element={<Navigate to="/login" replace />} />
-          </Route>
+    <ToastProvider>
+      <div className="min-h-screen bg-base-200">
+        <header className="w-full lg:max-w-3/5 mx-auto py-3 rounded-2xl">
+          <NavBar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
+        </header>
+        <div className="h-full py-12 px-4 sm:px-6 lg:px-8">
+          <Routes>
+            <Route element={<GuestRoute isAuthenticated={isAuthenticated} />}>
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated}/>} />
+              <Route path="/logout" element={<Navigate to="/login" replace />} />
+            </Route>
 
-          <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-            <Route path="/" element={<Warehouse />} />
-            <Route path="/inventory" element={<Inventory />} />
-          </Route>
+            <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+              <Route path="/" element={<Warehouse />} />
+              <Route path="/inventory" element={<Inventory />} />
+            </Route>
 
-          <Route path="*" element={<div className="p-10">404 - Page Not Found</div>} />
-        </Routes>
+            <Route path="*" element={<div className="p-10">404 - Page Not Found</div>} />
+          </Routes>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }

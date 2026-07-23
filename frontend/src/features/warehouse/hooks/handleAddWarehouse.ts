@@ -1,11 +1,11 @@
 import React from 'react';
+import type { Warehouse } from '../warehouse.tsx';
 interface Props {
   name: string;
   setName: React.Dispatch<React.SetStateAction<string>>;
-  setWarehouseId: React.Dispatch<React.SetStateAction<string>>;
-  setActiveRole: React.Dispatch<React.SetStateAction<string>>;
+  setActiveWarehouse: React.Dispatch<React.SetStateAction<Warehouse>>;
 }
-export const handleAddWarehouse = async ({name, setName, setWarehouseId, setActiveRole}: Props) => {
+export const handleAddWarehouse = async ({name, setName, setActiveWarehouse}: Props) => {
 
   if (!name.trim()) {
     alert('Please provide a name.');
@@ -35,8 +35,7 @@ export const handleAddWarehouse = async ({name, setName, setWarehouseId, setActi
     localStorage.setItem('activeWarehouse', JSON.stringify(addedItem.warehouse_id));
     localStorage.setItem('activeRole', JSON.stringify('admin'));
     setName('');
-    setWarehouseId(addedItem.warehouse_id);
-    setActiveRole('admin');
+    setActiveWarehouse({ warehouse_id: addedItem.warehouse_id, name: addedItem.name, role: 'admin' });
   } catch (err: unknown) {
     if (err instanceof Error) {
       alert(`Error adding warehouse: ${err.message}`);

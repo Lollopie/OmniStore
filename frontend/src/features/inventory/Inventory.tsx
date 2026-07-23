@@ -134,12 +134,12 @@ const InventoryManager = () => {
                 </thead>
                 <tbody className="divide-y divide-base-300 bg-base-100">
                 {inventory.length === 0 ? (
-                  <tr className="hover:bg-base-200/50 transition-colors">
+                  <tr className="hover:bg-base-300/50 transition-colors">
                     <TableDataCell colSpan={2} children="No items in inventory." className="text-center p-3 text-base-300"/>
                   </tr>
                 ) : (
                   inventory.map((item: InventoryItem, index) => (
-                    <tr key={index} className="hover:bg-base-200/50 transition-colors">
+                    <tr key={index} className="hover:bg-base-300/50 transition-colors">
                       <TableDataCell children={item.name} className="text-base-400"/>
                       <TableDataCell children={item.amount} className="text-base-400"/>
                     </tr>

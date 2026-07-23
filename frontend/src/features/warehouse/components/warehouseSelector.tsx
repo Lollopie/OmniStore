@@ -1,4 +1,6 @@
 import React from 'react';
+import { getWarehouseFromWarehouseId } from '../hooks/getWarehouseFromWarehouseId.ts';
+import type { Warehouse } from '../warehouse.tsx';
 
 export interface SelectResponse extends Response {
   activeRole: string;
@@ -6,14 +8,15 @@ export interface SelectResponse extends Response {
 
 interface WarehouseSelectorProps {
   selectedWarehouse: string;
-  setSelectedWarehouse: React.Dispatch<React.SetStateAction<string>>;
-  onChange: (warehouseId: string, activeRole: string) => void;
+  setActiveWarehouse: React.Dispatch<React.SetStateAction<Warehouse>>;
+  addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
 
-export const WarehouseSelector = ({ selectedWarehouse, setSelectedWarehouse, onChange }: WarehouseSelectorProps) => {
+export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addToast }: WarehouseSelectorProps) => {
   const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const warehouseId = event.target.value;
-    setSelectedWarehouse(warehouseId);
+    const activeWarehouse = getWarehouseFromWarehouseId(warehouseId);
+    setActiveWarehouse(activeWarehouse);
 
 
     const response: SelectResponse = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/select`, {
@@ -28,7 +31,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setSelectedWarehouse, onC
       localStorage.setItem('activeWarehouse', JSON.stringify(event.target.value));
       const { activeRole } = await response.json();
       localStorage.setItem('activeRole', JSON.stringify(activeRole));
-      onChange(warehouseId, activeRole);
+      addToast(`Changed active warehouse to ${activeWarehouse.name || activeWarehouse.warehouse_id}`, 'info', 5000);
     }
   };
   const warehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');

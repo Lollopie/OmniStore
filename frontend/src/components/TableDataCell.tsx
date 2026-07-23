@@ -1,7 +1,7 @@
 import React from 'react';
 
 const VARIANTS = {
-  primary: "text-slate-500",
+  primary: "text-base-400",
 }
 interface TableDataCellProps extends React.ComponentPropsWithoutRef<'td'> {
   variant?: keyof typeof VARIANTS;

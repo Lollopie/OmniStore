@@ -51,10 +51,10 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
     <main className="flex flex-1 justify-center p-6">
       <div className="w-full max-w-md rounded-lg height:90%">
         <form onSubmit={handleSubmit}>
-          <h2 className="mb-6 text-2xl font-bold text-gray-800">{title}</h2>
+          <h2 className="mb-6 text-2xl font-bold text-base-400">{title}</h2>
 
-          {error && <p className="mb-4 text-sm text-red-500 font-medium">{error}</p>}
-          {success && <p className="mb-4 text-sm text-green-600 font-medium">{success}</p>}
+          {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
+          {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
           <div className="space-y-4">
             <InputField
               label="Username"
