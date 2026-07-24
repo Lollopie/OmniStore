@@ -59,8 +59,8 @@ export default function NavBar({isAuthenticated, setIsAuthenticated}: NavBarProp
           <div className="md:hidden flex items-center">
             <button id="mobile-menu-btn"
                     className="outline-none text-base-400 hover:text-base-300 transition-colors duration-200" onClick={() => setIsOpen(!isOpen)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              <svg className="w-6 h-6" fill="none" stroke="currentColor">
+                <use href="icons.svg#hamburger-menu-icon" />
               </svg>
             </button>
           </div>

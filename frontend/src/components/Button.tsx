@@ -4,8 +4,10 @@ const VARIANTS = {
   primary: "btn-primary",
   danger: "btn-error",
   add: "btn-accent",
+  info: "btn-info",
 }
 const SIZES = {
+  xs: "btn-xs",
   sm: "btn-sm",
   md: "btn-md",
   lg: "btn-lg",

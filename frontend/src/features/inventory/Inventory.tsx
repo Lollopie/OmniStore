@@ -13,6 +13,8 @@ import Pagination from '../../components/Pagination.tsx';
 import { useDebounce } from '../../hooks/useDebounce.ts';
 import { SearchField } from '../../components/SearchField.tsx';
 import { useToast } from '../toast';
+import Edit from '../../assets/Edit.tsx';
+import Trash from '../../assets/Trash.tsx';
 export interface InventoryItem {
   name: string;
   amount: string;
@@ -131,18 +133,25 @@ const InventoryManager = () => {
                 <tr>
                   <TableHead children="Name" variant="first" />
                   <TableHead children="Amount" />
+                  <TableHead children=""/>
                 </tr>
                 </thead>
                 <tbody className="divide-y divide-base-300 bg-base-100">
                 {inventory.length === 0 ? (
                   <tr className="hover:bg-base-300/50 transition-colors">
-                    <TableDataCell colSpan={2} children="No items in inventory." className="text-center p-3 text-base-300"/>
+                    <TableDataCell colSpan={3} children="No items in inventory." className="text-center p-3 text-base-300"/>
                   </tr>
                 ) : (
                   inventory.map((item: InventoryItem, index) => (
                     <tr key={index} className="hover:bg-base-300/50 transition-colors">
                       <TableDataCell children={item.name} className="text-base-400"/>
                       <TableDataCell children={item.amount} className="text-base-400"/>
+                      <TableDataCell children={
+                        <div className="flex justify-end items-center gap-2">
+                          <Button children={<Edit size={16} className="stroke-current" />} variant={"info"} size={"xs"} />
+                          <Button children={<Trash size={16}/>} variant={"danger"} size={"xs"} />
+                        </div>}
+                                     className="text-base-400"/>
                     </tr>
                   ))
                 )}
