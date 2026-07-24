@@ -4,8 +4,9 @@ interface Props {
   setUsers: React.Dispatch<React.SetStateAction<WarehouseUser[]>>;
   setTotalUsers: React.Dispatch<React.SetStateAction<number>>;
   controller: AbortController;
+  addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
-export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller}: Props) => {
+export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller, addToast}: Props) => {
   const activeRole = JSON.parse(localStorage.getItem('activeRole') || '');
   if (activeRole == 'admin' || activeRole == 'manager') {
     const params = new URLSearchParams();
@@ -21,6 +22,9 @@ export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller}
       setUsers(data.data);
       setTotalUsers(data.total);
     } catch (err) {
+      if (!controller.signal.aborted) {
+        addToast("Failed to get users", 'error', 3000);
+      }
       if (err instanceof Error) {
         console.error(err.message);
       }

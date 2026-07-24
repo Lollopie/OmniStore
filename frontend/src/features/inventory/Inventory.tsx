@@ -12,6 +12,7 @@ import TableDataCell from '../../components/TableDataCell.tsx';
 import Pagination from '../../components/Pagination.tsx';
 import { useDebounce } from '../../hooks/useDebounce.ts';
 import { SearchField } from '../../components/SearchField.tsx';
+import { useToast } from '../toast';
 export interface InventoryItem {
   name: string;
   amount: string;
@@ -22,7 +23,6 @@ const InventoryManager = () => {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,9 +33,10 @@ const InventoryManager = () => {
   const itemsPerPage = 10;
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const { addToast } = useToast();
   useEffect(() => {
     const controller = new AbortController();
-    fetchInventory({page: Number(page), sort, searchTerm: debouncedSearchTerm, controller, setInventory, setTotalInventory, setError, setLoading});
+    fetchInventory({page: Number(page), sort, searchTerm: debouncedSearchTerm, controller, setInventory, setTotalInventory, setLoading, addToast});
     return () => {
       controller.abort();
     };
@@ -77,7 +78,8 @@ const InventoryManager = () => {
               </header>
               <form onSubmit={(e) => {
                 e.preventDefault();
-                handleAddItem({name, amount, setName, setAmount, setRefreshIndex})
+                handleAddItem({name, amount, setName, setAmount, setRefreshIndex, addToast});
+                setIsOpen(false);
               }}
               className="flex flex-col"
               >
@@ -121,9 +123,8 @@ const InventoryManager = () => {
           </div>
           <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           {loading && <p>Loading inventory...</p>}
-          {error && <p className="text-error">Error: {error}</p>}
         </div>
-          {!loading && !error && (
+          {!loading && (
             <div className="mt-8 overflow-hidden border border-base-300 rounded-lg">
               <table className="table min-w-full divide-y divide-base-300">
                 <thead className="bg-base-100">

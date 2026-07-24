@@ -16,9 +16,6 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
   const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const warehouseId = event.target.value;
     const activeWarehouse = getWarehouseFromWarehouseId(warehouseId);
-    setActiveWarehouse(activeWarehouse);
-
-
     const response: SelectResponse = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/select`, {
       method: 'POST',
       headers: {
@@ -31,7 +28,12 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
       localStorage.setItem('activeWarehouse', JSON.stringify(event.target.value));
       const { activeRole } = await response.json();
       localStorage.setItem('activeRole', JSON.stringify(activeRole));
+      activeWarehouse.role = activeRole;
+      setActiveWarehouse(activeWarehouse);
       addToast(`Changed active warehouse to ${activeWarehouse.name || activeWarehouse.warehouse_id}`, 'info', 5000);
+    }
+    else {
+      addToast(`Failed to change active warehouse.`, 'error', 5000);
     }
   };
   const warehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');

@@ -6,10 +6,10 @@ type Props = {
   setName: React.Dispatch<React.SetStateAction<string>>;
   setAmount: React.Dispatch<React.SetStateAction<string>>;
   setRefreshIndex: React.Dispatch<React.SetStateAction<number>>;
+  addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 };
 
-export const handleAddItem = async ({name, amount, setName, setAmount, setRefreshIndex}: Props) => {
-  // Basic validation
+export const handleAddItem = async ({name, amount, setName, setAmount, setRefreshIndex, addToast}: Props) => {
   if (!name.trim() || !amount) {
     alert('Please provide both a name and an amount.');
     return;
@@ -32,15 +32,15 @@ export const handleAddItem = async ({name, amount, setName, setAmount, setRefres
 
     if (!response.ok) throw new Error('Failed to add item.');
 
-    // Trigger a refresh so the Inventory component refetches the list
     setRefreshIndex(prev => prev + 1);
 
-    // Reset form fields
     setName('');
     setAmount('');
-  } catch (err: unknown) {
+    addToast('Item added successfully!', 'success', 3000);
+  } catch (err) {
+    addToast('Failed to add item', 'error', 3000);
     if (err instanceof Error) {
-      alert(`Error adding item: ${err.message}`);
+      console.error(`Error adding item: ${err.message}`);
     }
   }
 };

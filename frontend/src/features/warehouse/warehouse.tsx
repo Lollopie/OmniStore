@@ -16,7 +16,7 @@ import { useDebounce } from '../../hooks/useDebounce.ts';
 import { useToast } from '../toast';
 import { getWarehouseFromWarehouseId } from './hooks/getWarehouseFromWarehouseId.ts';
 import { addUser } from './hooks/addUser.ts';
-import { changeUserRole } from './hooks/ChangeUserRole.ts';
+import { changeUserRole } from './hooks/changeUserRole.ts';
 export interface WarehouseUser {
   user_id: string;
   username: string;
@@ -64,7 +64,7 @@ const WarehouseManager = () => {
   }, [isOpen]);
   useEffect(() => {
     const controller = new AbortController();
-    getUsers({searchTerm: debouncedSearchTerm, setUsers, setTotalUsers, controller});
+    getUsers({searchTerm: debouncedSearchTerm, setUsers, setTotalUsers, controller, addToast});
     return () => {
       controller.abort();
     };
@@ -99,8 +99,8 @@ const WarehouseManager = () => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleAddWarehouse({name, setName, setActiveWarehouse});
-                  addToast(`Added warehouse ${name}`, 'success', 5000);
+                  handleAddWarehouse({name, setName, setActiveWarehouse, addToast});
+                  setIsOpen(false);
                 }}
                 className="flex flex-col items-center"
               >
@@ -206,7 +206,8 @@ const WarehouseManager = () => {
                               user,
                               newRole: e.target.value,
                               setUsers,
-                              setActiveWarehouse
+                              setActiveWarehouse,
+                              addToast
                             })
                           }}
                         >

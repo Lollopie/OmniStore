@@ -4,8 +4,9 @@ interface Props {
   name: string;
   setName: React.Dispatch<React.SetStateAction<string>>;
   setActiveWarehouse: React.Dispatch<React.SetStateAction<Warehouse>>;
+  addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
-export const handleAddWarehouse = async ({name, setName, setActiveWarehouse}: Props) => {
+export const handleAddWarehouse = async ({name, setName, setActiveWarehouse, addToast}: Props) => {
 
   if (!name.trim()) {
     alert('Please provide a name.');
@@ -36,9 +37,11 @@ export const handleAddWarehouse = async ({name, setName, setActiveWarehouse}: Pr
     localStorage.setItem('activeRole', JSON.stringify('admin'));
     setName('');
     setActiveWarehouse({ warehouse_id: addedItem.warehouse_id, name: addedItem.name, role: 'admin' });
+    addToast(`Warehouse "${addedItem.name}" added successfully!`, 'success', 3000);
   } catch (err: unknown) {
+    addToast(`Failed to add warehouse ${name}`, 'error', 3000);
     if (err instanceof Error) {
-      alert(`Error adding warehouse: ${err.message}`);
+      console.error(`Error adding warehouse: ${err.message}`);
     }
   }
 };

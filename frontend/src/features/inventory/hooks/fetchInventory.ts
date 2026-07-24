@@ -6,11 +6,11 @@ interface fetchInventoryProps {
   searchTerm: string;
   setInventory: React.Dispatch<React.SetStateAction<InventoryItem[]>>;
   setTotalInventory: React.Dispatch<React.SetStateAction<number>>;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   controller: AbortController;
+  addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
-export const fetchInventory = async ({page, sort, searchTerm, setInventory, setTotalInventory, setError, setLoading, controller}: fetchInventoryProps) => {
+export const fetchInventory = async ({page, sort, searchTerm, setInventory, setTotalInventory, setLoading, controller, addToast}: fetchInventoryProps) => {
   const params = new URLSearchParams();
   if (!page || page < 1) {
     page = 1;
@@ -24,10 +24,12 @@ export const fetchInventory = async ({page, sort, searchTerm, setInventory, setT
     const data = await response.json();
     setInventory(data[0]);
     setTotalInventory(data[1]);
-    setError(null);
   } catch (err) {
+    if (!controller.signal.aborted) {
+      addToast("Failed to fetch inventory.", 'error', 3000);
+    }
     if (err instanceof Error) {
-      setError(err.message);
+      console.error(err.message);
     }
   } finally {
     if (!controller.signal.aborted) {

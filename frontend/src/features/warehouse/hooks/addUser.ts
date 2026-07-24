@@ -25,6 +25,7 @@ export const addUser = async ({newUsername, setUsers, setNewUsername, addToast}:
     setNewUsername('');
     addToast(`Added user "${username}" to active warehouse`, 'success', 5000);
   } catch (err) {
-    if (err instanceof Error) alert(err.message);
+    addToast(`Failed to add user "${username}"`, 'error', 3000);
+    if (err instanceof Error) console.error(err.message);
   }
 };

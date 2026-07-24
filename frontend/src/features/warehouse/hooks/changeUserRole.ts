@@ -5,8 +5,9 @@ interface Props {
   newRole: string;
   setUsers: React.Dispatch<React.SetStateAction<WarehouseUser[]>>;
   setActiveWarehouse: React.Dispatch<React.SetStateAction<Warehouse>>;
+  addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
-export const changeUserRole = async ({user, newRole, setUsers, setActiveWarehouse}: Props) => {
+export const changeUserRole = async ({user, newRole, setUsers, setActiveWarehouse, addToast}: Props) => {
   try {
     const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
       method: 'PATCH',
@@ -24,7 +25,11 @@ export const changeUserRole = async ({user, newRole, setUsers, setActiveWarehous
       setActiveWarehouse((prev: Warehouse) => ({ ...prev, role: newRole }));
     }
     setUsers((prev) => prev.map((u) => u.user_id === user.user_id ? { ...u, role: newRole } : u));
+    addToast(`Successfully set User role for "${user.username}"`, 'success', 5000);
   } catch (err) {
-    if (err instanceof Error) alert(err.message);
+    addToast('Failed to update role.', 'error', 5000);
+    if (err instanceof Error){
+      console.error(err);
+    }
   }
 };
