@@ -1,28 +1,28 @@
 import React from 'react';
 
 type Props = {
+  id: string;
   name: string;
   amount: string;
-  setName: React.Dispatch<React.SetStateAction<string>>;
-  setAmount: React.Dispatch<React.SetStateAction<string>>;
   setRefreshIndex: React.Dispatch<React.SetStateAction<number>>;
   addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 };
 
-export const handleAddItem = async ({name, amount, setName, setAmount, setRefreshIndex, addToast}: Props) => {
-  if (!name.trim() || !amount) {
-    alert('Please provide both a name and an amount.');
+export const handleDeleteItem = async ({id, name, amount, setRefreshIndex, addToast}: Props) => {
+  if (!id || !name.trim() || !amount) {
+    alert('Please provide an ID, a name and an amount.');
     return;
   }
 
   const newItem = {
+    id: id,
     name: name.trim(),
     amount: parseInt(amount, 10)
   };
 
   try {
     const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/inventory`, {
-      method: 'POST',
+      method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -30,17 +30,15 @@ export const handleAddItem = async ({name, amount, setName, setAmount, setRefres
       credentials: 'include'
     });
 
-    if (!response.ok) throw new Error('Failed to add item.');
+    if (!response.ok) throw new Error('Failed to delete item.');
 
     setRefreshIndex(prev => prev + 1);
 
-    setName('');
-    setAmount('');
-    addToast('Item added successfully!', 'success', 3000);
+    addToast('Item deleted successfully!', 'success', 3000);
   } catch (err) {
-    addToast('Failed to add item', 'error', 3000);
+    addToast('Failed to delete item', 'error', 3000);
     if (err instanceof Error) {
-      console.error(`Error adding item: ${err.message}`);
+      console.error(`Error deleting item: ${err.message}`);
     }
   }
 };

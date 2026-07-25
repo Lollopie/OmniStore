@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {fetchInventory} from './hooks/fetchInventory'
-import { handleAddItem } from './hooks/handleAddInventory.ts';
-import InputField from '../../components/InputField.tsx';
+import { handleAddItem } from './hooks/handleAddItem.ts';
 import Button from '../../components/Button.tsx';
 import { generatePagination } from '../../hooks/generatePagination.ts';
 import { useSearchParams } from 'react-router-dom';
@@ -15,18 +14,24 @@ import { SearchField } from '../../components/SearchField.tsx';
 import { useToast } from '../toast';
 import Edit from '../../assets/Edit.tsx';
 import Trash from '../../assets/Trash.tsx';
+import { Modal } from '../../components/Modal.tsx';
+import { ItemForm } from './components/ItemForm.tsx';
+import { handleUpdateItem } from './hooks/handleUpdateItem.ts';
+import { handleDeleteItem } from './hooks/handleDeleteItem.ts';
+import { readStoredValue } from '../../hooks/readStoredValue.ts';
 export interface InventoryItem {
+  id: string;
   name: string;
   amount: string;
 }
 const InventoryManager = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [totalInventory, setTotalInventory] = useState(0);
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [addItemIsOpen, setAddItemIsOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const addItemDialogRef = useRef<HTMLDialogElement>(null);
+  const updateItemDialogRef = useRef<HTMLDialogElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const page: number = Number(searchParams.get('page')) || 1;
   const [pages, setPages] = useState<(number | string)[]>([]);
@@ -47,56 +52,70 @@ const InventoryManager = () => {
     generatePagination(Number(page), Math.max(Math.ceil(totalInventory / itemsPerPage), 1), setPages);
   }, [page, sort, totalInventory]);
   useEffect(() => {
-    const dialog: HTMLDialogElement | null = dialogRef.current;
+    const dialog: HTMLDialogElement | null = addItemDialogRef.current;
     if (!dialog){
       return;
     }
 
-    if (isOpen) {
+    if (addItemIsOpen) {
       dialog.showModal();
     } else {
       dialog.close();
     }
-  }, [isOpen]);
+  }, [addItemIsOpen]);
+  useEffect(() => {
+    const dialog: HTMLDialogElement | null = updateItemDialogRef.current;
+    if (!dialog){
+      return;
+    }
+
+    if (selectedItem) {
+      dialog.showModal();
+    } else {
+      dialog.close();
+    }
+  }, [selectedItem]);
   return (
     <MainPage>
       <div className="max-w-2xl w-full overflow-hidden">
-        <div className="flex flex-col">
-          <dialog
-            ref={dialogRef}
-            onClose={() => setIsOpen(false)}
-            className="modal"
-          >
-            <div className="modal-box">
-              <header className="flex items-center justify-between sm:px-4">
-                <h2 className="text-lg font-semibold text-base-400">Add Item</h2>
-                <Button
-                  size={"md"}
-                  className="bg-base-100 text-base-300 border-none"
-                  variant={"primary"}
-                  onClick={() => setIsOpen(false)}
-                  children={'X'}
-                />
-              </header>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                handleAddItem({name, amount, setName, setAmount, setRefreshIndex, addToast});
-                setIsOpen(false);
+        <Modal dialogRef={addItemDialogRef} title="Add Item" onClose={() => setAddItemIsOpen(false)}>
+          <ItemForm
+            submitLabel="Add"
+            onCancel={() => setAddItemIsOpen(false)}
+            onSubmit={(data) => {
+              handleAddItem({name: data.name, amount: data.amount.toString(), setRefreshIndex, addToast});
+              setAddItemIsOpen(false);
+            }}
+          />
+        </Modal>
+        <Modal
+          dialogRef={updateItemDialogRef}
+          title="Update Item"
+          onClose={() => setSelectedItem(null)}
+        >
+          {selectedItem && (
+            <ItemForm
+              key={selectedItem.id}
+              initialValues={{
+                name: selectedItem.name,
+                amount: selectedItem.amount
               }}
-              className="flex flex-col"
-              >
-                <div className="w-full flex flex-col items-center justify-center mt-3 sm:px-4">
-                  <InputField label={"Item Name"} type={"text"} value={name} onChange={setName} />
-                  <InputField label={"Amount"} type={"number"} value={amount} onChange={setAmount} />
-                </div>
-                <footer className="w-full flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">
-                  <Button children={"Cancel"} variant={"danger"} size={"sm"} onClick={() => setIsOpen(false)} type={"button"} />
-                  <Button children={"Add"} variant={"add"} size={"sm"} type={"submit"} />
-                </footer>
-              </form>
-            </div>
-          </dialog>
-        </div>
+              submitLabel="Update"
+              onCancel={() => setSelectedItem(null)}
+              onSubmit={(data) => {
+                console.log(selectedItem);
+                handleUpdateItem({
+                  id: selectedItem.id,
+                  name: data.name,
+                  amount: data.amount.toString(),
+                  setRefreshIndex,
+                  addToast
+                });
+                setSelectedItem(null);
+              }}
+            />
+          )}
+        </Modal>
         <div className="w-full max-w-2xl mx-auto bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 sm:p-8 overflow-scroll">
          <div className="space-y-6">
           <div className="w-full pb-6 border-b border-base-300">
@@ -117,7 +136,7 @@ const InventoryManager = () => {
                   </select>
                 </fieldset>
                 <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
-                  <AddButton onClick={() => setIsOpen(true)} />
+                  <AddButton onClick={() => setAddItemIsOpen(true)} />
                 </div>
               </div>
 
@@ -133,25 +152,33 @@ const InventoryManager = () => {
                 <tr>
                   <TableHead children="Name" variant="first" />
                   <TableHead children="Amount" />
-                  <TableHead children=""/>
+                  {readStoredValue('activeRole') === 'admin' && <TableHead children="" />}
                 </tr>
                 </thead>
                 <tbody className="divide-y divide-base-300 bg-base-100">
                 {inventory.length === 0 ? (
                   <tr className="hover:bg-base-300/50 transition-colors">
-                    <TableDataCell colSpan={3} children="No items in inventory." className="text-center p-3 text-base-300"/>
+                    <TableDataCell colSpan={readStoredValue('activeRole') === 'admin' ? 3 : 2} children="No items in inventory." className="text-center p-3 text-base-300"/>
                   </tr>
                 ) : (
-                  inventory.map((item: InventoryItem, index) => (
-                    <tr key={index} className="hover:bg-base-300/50 transition-colors">
+                  inventory.map((item: InventoryItem) => (
+                    <tr key={item.id} className="hover:bg-base-300/50 transition-colors">
                       <TableDataCell children={item.name} className="text-base-400"/>
                       <TableDataCell children={item.amount} className="text-base-400"/>
-                      <TableDataCell children={
-                        <div className="flex justify-end items-center gap-2">
-                          <Button children={<Edit size={16} className="stroke-current" />} variant={"info"} size={"xs"} />
-                          <Button children={<Trash size={16}/>} variant={"danger"} size={"xs"} />
+                      {readStoredValue('activeRole') === 'admin' && (
+                        <TableDataCell children={
+                          <div className="flex justify-end items-center gap-2">
+                            <Button onClick={() => setSelectedItem(item)}
+                                    children={<Edit size={16} className="stroke-current" />}
+                                    variant={"info"}
+                                  size={"xs"} />
+                          <Button onClick={() => handleDeleteItem({id: item.id, name: item.name, amount: item.amount.toString(), setRefreshIndex, addToast})}
+                                  children={<Trash size={16}/>}
+                                  variant={"danger"}
+                                  size={"xs"} />
                         </div>}
                                      className="text-base-400"/>
+                      )}
                     </tr>
                   ))
                 )}

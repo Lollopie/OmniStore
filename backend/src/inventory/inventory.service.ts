@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InventoryEntity } from './inventory.entity';
-import { DataSource, FindManyOptions, ILike, Repository } from 'typeorm';
+import {
+  DataSource,
+  DeleteResult,
+  FindManyOptions,
+  ILike,
+  Repository,
+} from 'typeorm';
 import { InventoryDto } from './inventory.dto';
 import { WarehouseService } from '../warehouse/warehouse.service';
 import { ClsService } from 'nestjs-cls';
@@ -76,6 +82,7 @@ export class InventoryService {
     return this.runInRlsContext(warehouse_id, (repo) => {
       const options: FindManyOptions<InventoryEntity> = {
         select: {
+          id: true,
           name: true,
           amount: true,
         },
@@ -95,7 +102,7 @@ export class InventoryService {
   async createItem(item: InventoryDto): Promise<InventoryEntity> {
     const warehouse_id: string = this.clsService.get('warehouseId');
     if (!(await this.warehouseService.findOne(warehouse_id))) {
-      throw new Error('Warehouse not found');
+      throw new BadRequestException('Warehouse not found');
     }
     const newItem = {
       name: item.name,
@@ -107,10 +114,29 @@ export class InventoryService {
       return await repo.save(newItemPlusUUID);
     });
   }
-
-  async remove(id: number, warehouse_id: string): Promise<void> {
-    await this.runInRlsContext(warehouse_id, async (repo) => {
-      await repo.delete(id);
+  async updateItem(item: InventoryDto): Promise<InventoryEntity> {
+    const warehouse_id: string = this.clsService.get('warehouseId');
+    if (!(await this.warehouseService.findOne(warehouse_id))) {
+      throw new BadRequestException('Warehouse not found');
+    }
+    const updatedItem = {
+      name: item.name,
+      amount: parseInt(item.amount, 10),
+      warehouse: { warehouse_id: warehouse_id },
+    };
+    return this.runInRlsContext(warehouse_id, async (repo) => {
+      const itemToUpdate = await repo.findOne({ where: { id: item.id } });
+      if (!itemToUpdate) {
+        throw new BadRequestException('Item not found');
+      }
+      const newItem = repo.merge(itemToUpdate, updatedItem);
+      return await repo.save(newItem);
+    });
+  }
+  async remove(item: InventoryDto): Promise<DeleteResult> {
+    const warehouse_id: string = this.clsService.get('warehouseId');
+    return await this.runInRlsContext(warehouse_id, async (repo) => {
+      return await repo.delete({ id: item.id });
     });
   }
 }

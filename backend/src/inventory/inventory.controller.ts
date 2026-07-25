@@ -1,11 +1,21 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { AuthGuard } from '../auth/auth.guard.js';
 import { InventoryDto } from './inventory.dto';
-import * as userDecorator from '../user/user.decorator';
 import { RolesGuard } from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '../roles/roles.enum';
+import { DeleteResult } from 'typeorm';
 @Controller('inventory')
 @UseGuards(AuthGuard, RolesGuard)
 export class InventoryController {
@@ -13,7 +23,6 @@ export class InventoryController {
   @Get()
   @Roles(Role.ADMIN, Role.MANAGER, Role.STAFF)
   getInventory(
-    @userDecorator.User() userToken: userDecorator.UserToken,
     @Query('search') searchTerm: string,
     @Query('page') page: number,
     @Query('sort') sort: string,
@@ -28,10 +37,27 @@ export class InventoryController {
   }
   @Post()
   @Roles(Role.ADMIN, Role.MANAGER)
-  addInventory(
-    @userDecorator.User() userToken: userDecorator.UserToken,
-    @Body() item: InventoryDto,
-  ) {
+  addItem(@Body() item: InventoryDto) {
     return this.inventoryService.createItem(item);
+  }
+  @Patch()
+  @Roles(Role.ADMIN, Role.MANAGER)
+  updateItem(@Body() item: InventoryDto) {
+    if (!item.id) {
+      throw new BadRequestException('Item ID is required');
+    }
+    return this.inventoryService.updateItem(item);
+  }
+  @Delete()
+  @Roles(Role.ADMIN, Role.MANAGER)
+  async deleteItem(@Body() item: InventoryDto) {
+    if (!item.id) {
+      throw new BadRequestException('Item ID is required');
+    }
+    const result: DeleteResult = await this.inventoryService.remove(item);
+    if (!result.affected) {
+      throw new BadRequestException('Item not found');
+    }
+    return { message: 'Item has been deleted.' };
   }
 }

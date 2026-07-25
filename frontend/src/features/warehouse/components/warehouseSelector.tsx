@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { getWarehouseFromWarehouseId } from '../hooks/getWarehouseFromWarehouseId.ts';
 import type { Warehouse } from '../warehouse.tsx';
 
@@ -25,7 +25,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
       credentials: 'include',
     }) as SelectResponse;
     if (response.ok) {
-      localStorage.setItem('activeWarehouse', JSON.stringify(event.target.value));
+      localStorage.setItem('activeWarehouse', JSON.stringify(warehouseId));
       const { activeRole } = await response.json();
       localStorage.setItem('activeRole', JSON.stringify(activeRole));
       activeWarehouse.role = activeRole;
@@ -40,7 +40,10 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
   if (!warehouses || warehouses.length === 0) {
     return <p>No warehouses assigned.</p>;
   }
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    console.log(selectedWarehouse);
+  }, [selectedWarehouse]);
   return (
     <fieldset className="fieldset warehouse-selector flex flex-row justify-left md:items-center gap-2">
       <legend className="fieldset-legend ml-1">Active Warehouse: </legend>

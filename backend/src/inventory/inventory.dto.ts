@@ -4,6 +4,8 @@ import {
   MinLength,
   MaxLength,
   IsInt,
+  IsUUID,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -18,4 +20,7 @@ export class InventoryDto {
   @Type(() => Number)
   @IsInt()
   amount: string;
+  @IsOptional()
+  @IsUUID(7, { message: 'Invalid UUID' })
+  id?: string;
 }
