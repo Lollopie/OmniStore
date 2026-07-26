@@ -6,5 +6,8 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "maxWorkers": 1
+  "maxWorkers": 1,
+  "moduleNameMapper": {
+    "^@shared/(.*)$": "<rootDir>/../../shared/$1"
+  }
 }

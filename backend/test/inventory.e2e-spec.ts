@@ -27,7 +27,7 @@ async function registerAndLogin(
   const response2 = await request(app.getHttpServer())
     .post('/warehouse')
     .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-    .send({ name: 'Warehouse 1' })
+    .send({ warehouseName: 'Warehouse 1' })
     .expect(201);
   return response2.headers['set-cookie'][0].split(';')[0];
 }
@@ -92,7 +92,7 @@ describe('InventoryController (e2e)', () => {
     const createResponse = await request(app.getHttpServer())
       .post('/inventory')
       .set('Cookie', `${aliceToken}`)
-      .send({ name: 'Apples', amount: '5' })
+      .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -128,13 +128,13 @@ describe('InventoryController (e2e)', () => {
     await request(app.getHttpServer())
       .post('/inventory')
       .set('Cookie', aliceToken)
-      .send({ name: 'Alice item', amount: '1' })
+      .send({ itemName: 'Alice item', amount: '1' })
       .expect(201);
 
     await request(app.getHttpServer())
       .post('/inventory')
       .set('Cookie', bobToken)
-      .send({ name: 'Bob item', amount: '2' })
+      .send({ itemName: 'Bob item', amount: '2' })
       .expect(201);
 
     const aliceList = await request(app.getHttpServer())
@@ -168,7 +168,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: 1 })
+        .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -195,7 +195,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: 1 })
+        .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -230,7 +230,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: 1 })
+        .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -263,7 +263,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: 1 })
+        .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -296,7 +296,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: 1 })
+        .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -331,7 +331,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: i })
+        .send({ itemName: i.toString(), amount: i.toString() })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -363,7 +363,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: i })
+        .send({ itemName: i.toString(), amount: i.toString() })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -400,7 +400,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: 1 })
+        .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -410,7 +410,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse2 = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: (numberOfItems + i).toString(), amount: 2 })
+        .send({ itemName: (numberOfItems + i).toString(), amount: '2' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse2.body.name).toBe((numberOfItems + i).toString());
@@ -443,7 +443,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: 1 })
+        .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
@@ -453,7 +453,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse2 = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: (numberOfItems + i).toString(), amount: 2 })
+        .send({ itemName: (numberOfItems + i).toString(), amount: '2' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse2.body.name).toBe((numberOfItems + i).toString());
@@ -486,7 +486,7 @@ describe('InventoryController (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/inventory')
         .set('Cookie', `${aliceToken}`)
-        .send({ name: i.toString(), amount: 1 })
+        .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.name).toBe(i.toString());
