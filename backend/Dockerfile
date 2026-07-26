@@ -3,12 +3,16 @@ FROM node:24-alpine AS development
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+COPY /backend/package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY /backend .
+COPY shared/ ../shared
+WORKDIR /usr/src/shared
+RUN npm install
 
+WORKDIR /usr/src/app
 RUN npm run build
 
 # Stage 2: Production Execution
@@ -16,7 +20,7 @@ FROM node:24-alpine AS production
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+COPY /backend/package*.json ./
 
 # Install production dependencies only
 RUN npm ci --only=production

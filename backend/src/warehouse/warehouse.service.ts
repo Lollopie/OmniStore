@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { WarehouseDto } from './warehouse.dto';
+import { WarehouseDto } from '@shared/dto/warehouse.dto';
 import { WarehouseEntity } from './warehouse.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -21,7 +21,7 @@ export class WarehouseService {
     return await this.dataSource.transaction(async (entityManager) => {
       const newWarehouse = entityManager
         .getRepository(WarehouseEntity)
-        .create({ name: warehouseData.name });
+        .create({ name: warehouseData.warehouseName });
       await entityManager.getRepository(WarehouseEntity).save(newWarehouse);
       await entityManager.query(
         `SELECT set_config('app.current_warehouse_id', $1, true)`,

@@ -3,11 +3,10 @@ import {
   Matches,
   MinLength,
   MaxLength,
-  IsInt,
   IsUUID,
   IsOptional,
+  IsNumberString,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 export class InventoryDto {
   @IsString()
@@ -16,9 +15,8 @@ export class InventoryDto {
   @Matches(/^[A-Za-z\d\s!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]+$/, {
     message: 'Illegal Item name',
   })
-  name: string;
-  @Type(() => Number)
-  @IsInt()
+  itemName: string;
+  @IsNumberString({}, { message: 'Amount must be a number' })
   amount: string;
   @IsOptional()
   @IsUUID(7, { message: 'Invalid UUID' })

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import {fetchInventory} from './hooks/fetchInventory'
+import { fetchInventory } from './hooks/fetchInventory'
 import { handleAddItem } from './hooks/handleAddItem.ts';
 import Button from '../../components/Button.tsx';
 import { generatePagination } from '../../hooks/generatePagination.ts';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import MainPage from '../../components/MainPage.tsx';
 import AddButton from '../../components/AddButton.tsx';
 import TableHead from '../../components/TableHead.tsx';
@@ -96,14 +96,9 @@ const InventoryManager = () => {
           {selectedItem && (
             <ItemForm
               key={selectedItem.id}
-              initialValues={{
-                name: selectedItem.name,
-                amount: selectedItem.amount
-              }}
               submitLabel="Update"
               onCancel={() => setSelectedItem(null)}
               onSubmit={(data) => {
-                console.log(selectedItem);
                 handleUpdateItem({
                   id: selectedItem.id,
                   name: data.name,

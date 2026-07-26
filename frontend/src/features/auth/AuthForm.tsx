@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { classValidatorResolver } from '@hookform/resolvers/class-validator';
+import { RegisterDto } from '@shared/dto/register.dto';
 import InputField from '../../components/InputField.tsx';
 import Button from '../../components/Button.tsx';
+
 
 interface AuthFormProps {
   title: string;
@@ -10,19 +14,21 @@ interface AuthFormProps {
   onSuccess?: () => void;
   handleResponse: (data : {warehouses?: string, activeWarehouse?: string, activeRole?: string, message?: string, user_id: string, username: string} ) => void;
 }
-
+const resolver = classValidatorResolver(RegisterDto);
 export default function AuthForm({ title, buttonText, endpoint, successMessage, onSuccess, handleResponse }: AuthFormProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: {errors},
+  } = useForm<RegisterDto>({ resolver });
+  const submit = async (registerDto: RegisterDto) => {
     setError('');
     setSuccess('');
 
-    const trimmedUsername = username.trim();
+    const trimmedUsername = registerDto.username.trim();
+    const password = registerDto.password;
 
     try {
       const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/${endpoint}`, {
@@ -50,7 +56,7 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
   return (
     <main className="flex flex-1 justify-center p-6">
       <div className="w-full max-w-md rounded-lg height:90%">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit((data) => submit(data))}>
           <h2 className="mb-6 text-2xl font-bold text-base-400">{title}</h2>
 
           {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
@@ -58,18 +64,18 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
           <div className="space-y-4">
             <InputField
               label="Username"
+              className="input"
               type="text"
-              value={username}
-              onChange={setUsername}
+              {...register('username')}
             />
-
+            {errors.username && <p className="mb-4 text-sm text-error font-medium">{errors.username.message}</p>}
             <InputField
               className="last:mb-6"
               label="Password"
               type="password"
-              value={password}
-              onChange={setPassword}
+              {...register('password')}
             />
+            {errors.password && <p className="mb-4 text-sm text-error font-medium">{errors.password.message}</p>}
           </div>
           <Button type="submit">
             {buttonText}

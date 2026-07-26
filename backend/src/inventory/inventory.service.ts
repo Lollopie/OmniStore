@@ -7,7 +7,7 @@ import {
   ILike,
   Repository,
 } from 'typeorm';
-import { InventoryDto } from './inventory.dto';
+import { InventoryDto } from '@shared/dto/inventory.dto';
 import { WarehouseService } from '../warehouse/warehouse.service';
 import { ClsService } from 'nestjs-cls';
 export enum InventorySortOption {
@@ -105,7 +105,7 @@ export class InventoryService {
       throw new BadRequestException('Warehouse not found');
     }
     const newItem = {
-      name: item.name,
+      name: item.itemName,
       amount: parseInt(item.amount, 10),
       warehouse: { warehouse_id: warehouse_id },
     };
@@ -120,7 +120,7 @@ export class InventoryService {
       throw new BadRequestException('Warehouse not found');
     }
     const updatedItem = {
-      name: item.name,
+      name: item.itemName,
       amount: parseInt(item.amount, 10),
       warehouse: { warehouse_id: warehouse_id },
     };

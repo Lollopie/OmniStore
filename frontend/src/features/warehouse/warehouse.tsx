@@ -9,7 +9,7 @@ import TableHead from '../../components/TableHead.tsx';
 import TableDataCell from '../../components/TableDataCell.tsx';
 import AddButton from '../../components/AddButton.tsx';
 import Pagination from '../../components/Pagination.tsx';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { generatePagination } from '../../hooks/generatePagination.ts';
 import { SearchField } from '../../components/SearchField.tsx';
 import { useDebounce } from '../../hooks/useDebounce.ts';
@@ -17,6 +17,9 @@ import { useToast } from '../toast';
 import { getWarehouseFromWarehouseId } from './hooks/getWarehouseFromWarehouseId.ts';
 import { addUser } from './hooks/addUser.ts';
 import { changeUserRole } from './hooks/changeUserRole.ts';
+import { classValidatorResolver } from '@hookform/resolvers/class-validator';
+import { WarehouseDto } from '@shared/dto/warehouse.dto';
+import { useForm } from 'react-hook-form';
 export interface WarehouseUser {
   user_id: string;
   username: string;
@@ -27,8 +30,8 @@ export interface Warehouse {
   name: string;
   role?: string;
 }
+const resolver = classValidatorResolver(WarehouseDto);
 const WarehouseManager = () => {
-  const [name, setName] = useState('');
   const [users, setUsers] = useState<WarehouseUser[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -51,6 +54,11 @@ const WarehouseManager = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { addToast } = useToast();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<WarehouseDto>({ resolver });
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;
     if (!dialog){
@@ -63,6 +71,7 @@ const WarehouseManager = () => {
     }
   }, [isOpen]);
   useEffect(() => {
+    console.log(activeWarehouse);
     const controller = new AbortController();
     getUsers({searchTerm: debouncedSearchTerm, setUsers, setTotalUsers, controller, addToast});
     return () => {
@@ -97,15 +106,15 @@ const WarehouseManager = () => {
               </header>
 
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAddWarehouse({name, setName, setActiveWarehouse, addToast});
+                onSubmit={handleSubmit((data) => {
+                  handleAddWarehouse({warehouseDto: data, setActiveWarehouse, addToast });
                   setIsOpen(false);
-                }}
+                })}
                 className="flex flex-col items-center"
               >
                 <div className="w-full px-4 flex flex-col mt-3">
-                  <InputField label={"Warehouse Name"} type={"text"} value={name} onChange={setName} />
+                  <InputField label={"Warehouse Name"} type={"text"} {...register('warehouseName')} />
+                  {errors.warehouseName && <p className="text-error text-sm">{errors.warehouseName.message}</p>}
                 </div>
 
                 <footer className="w-full flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">
@@ -143,7 +152,7 @@ const WarehouseManager = () => {
                   type="text"
                   placeholder="Username to add"
                   value={newUsername}
-                  onChange={setNewUsername}
+                  setValue={setNewUsername}
                 />
                 <Button
                   variant={"add"}

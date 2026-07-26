@@ -21,13 +21,15 @@ services:
   # 2. NestJS Backend
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: development
     container_name: nestjs_backend
     ports:
       - "3000:3000"
     volumes:
       - ./backend:/usr/src/app
+      - ./shared:/usr/src/shared
       - /usr/src/app/node_modules
     command: npm run start:dev
     environment:
@@ -49,13 +51,15 @@ services:
   # 3. React Frontend
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: react_frontend
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - ./frontend:/app/frontend
+      - ./shared:/app/shared
+      - /app/frontend/node_modules
     environment:
       - VITE_NESTJS_HOST_URL=http://localhost:3000
     depends_on:

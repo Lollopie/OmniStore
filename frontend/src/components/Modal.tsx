@@ -2,7 +2,7 @@ import type { ReactNode, RefObject } from 'react';
 import Button from './Button.tsx';
 
 interface ModalProps {
-  dialogRef: RefObject<HTMLDialogElement>;
+  dialogRef: RefObject<HTMLDialogElement | null>;
   title: string;
   onClose: () => void;
   children: ReactNode;

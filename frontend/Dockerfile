@@ -1,12 +1,18 @@
-FROM node:24-alpine
+FROM node:24-slim
 
-WORKDIR /app
+WORKDIR /app/frontend
 
-COPY package*.json ./
+COPY /frontend/package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY /frontend .
+
+COPY shared/ ../shared
+WORKDIR /app/shared
+RUN npm install
+
+WORKDIR /app/frontend
 
 EXPOSE 5173
 

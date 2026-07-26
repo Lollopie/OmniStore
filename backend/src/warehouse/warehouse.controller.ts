@@ -13,7 +13,7 @@ import {
   WarehouseDto,
   WarehouseIDDto,
   WarehouseUserRoleDto,
-} from './warehouse.dto';
+} from '@shared/dto/warehouse.dto';
 import { AuthGuard } from '../auth/auth.guard.js';
 import * as userDecorator from '../user/user.decorator';
 import express from 'express';
@@ -22,7 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
-import { Role } from '../roles/roles.enum';
+import { Role } from '@shared/enum/roles.enum';
 
 @Controller('warehouse')
 export class WarehouseController {
@@ -39,16 +39,16 @@ export class WarehouseController {
     @userDecorator.User() userToken: userDecorator.UserToken,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const response = await this.warehouseService.createWarehouse(
+    const warehouse = await this.warehouseService.createWarehouse(
       warehouseData,
       userToken.user_id,
       'admin',
     );
-    if (response) {
+    if (warehouse) {
       const payload = {
         user_id: userToken.user_id,
         username: userToken.username,
-        activeWarehouseId: response.warehouse_id,
+        activeWarehouseId: warehouse.warehouse_id,
         activeRole: 'admin',
       };
       const token = {
@@ -60,6 +60,11 @@ export class WarehouseController {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
       });
+      const response: { name: string; warehouse_id: string; role: string } = {
+        name: warehouse.name,
+        warehouse_id: warehouse.warehouse_id,
+        role: 'admin',
+      };
       return response;
     }
     return { error: 'Creation failed' };

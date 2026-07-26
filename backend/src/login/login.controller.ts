@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import express from 'express';
 import { LoginService } from './login.service';
-import { RegisterDto } from '../register/register.dto';
+import { RegisterDto } from '@shared/dto/register.dto';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('login')

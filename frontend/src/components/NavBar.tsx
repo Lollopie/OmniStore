@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import React, { useEffect, useRef } from 'react';
 import Logo from './Logo.tsx';
 import { ThemeToggle } from './ThemeToggle.tsx';

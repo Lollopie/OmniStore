@@ -6,7 +6,7 @@ import {
   IsUUID,
   IsEnum,
 } from 'class-validator';
-import { Role } from '../roles/roles.enum';
+import { Role } from '../enum/roles.enum';
 
 export class WarehouseDto {
   @IsString()
@@ -19,7 +19,7 @@ export class WarehouseDto {
   @Matches(/^[A-Za-z\d\s!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]+$/, {
     message: 'Illegal Warehouse name',
   })
-  name: string;
+  warehouseName: string;
 }
 export class WarehouseIDDto {
   @IsString()
