@@ -9,6 +9,7 @@ COPY backend/package*.json ./backend/
 WORKDIR /usr/src/shared
 RUN npm install
 COPY shared/ .
+RUN npm run build
 
 WORKDIR /usr/src/backend
 RUN npm install
@@ -25,7 +26,6 @@ COPY --from=development /usr/src/shared /usr/src/shared
 COPY --from=development /usr/src/backend/package*.json ./
 COPY --from=development /usr/src/backend/dist ./dist
 
-# Install production dependencies only
 RUN npm ci --only=production
 
 RUN apk add shadow && usermod -a -G 1000 node

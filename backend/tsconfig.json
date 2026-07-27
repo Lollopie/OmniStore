@@ -15,16 +15,15 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@shared/*": ["../shared/*"]
+      "@shared": ["../shared/dist/index.js"],
+      "@shared/*": ["../shared/dist/*", "../shared/dist/*.js"]
     },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false,
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["src/**/*", "../shared/**/*"]
+  "include": ["src/**/*"]
 }

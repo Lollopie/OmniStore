@@ -49,7 +49,9 @@ jobs:
             backend/package-lock.json
 
       - name: Install shared dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm run build
         working-directory: shared
 
       - name: Install backend dependencies

@@ -11,6 +11,7 @@ COPY /frontend .
 COPY shared/ ../shared
 WORKDIR /app/shared
 RUN npm install
+RUN npm run build
 
 WORKDIR /app/frontend
 
