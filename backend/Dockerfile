@@ -1,34 +1,33 @@
 # Stage 1: Development / Build
 FROM node:24-alpine AS development
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/
 
-COPY /backend/package*.json ./
+COPY shared/package*.json ./shared/
+COPY backend/package*.json ./backend/
 
-RUN npm install
-
-COPY /backend .
-COPY shared/ ../shared
 WORKDIR /usr/src/shared
 RUN npm install
+COPY shared/ .
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/backend
+RUN npm install
+COPY backend/ .
 RUN npm run build
+
 
 # Stage 2: Production Execution
 FROM node:24-alpine AS production
 
 WORKDIR /usr/src/app
 
-COPY /backend/package*.json ./
+COPY --from=development /usr/src/shared /usr/src/shared
+COPY --from=development /usr/src/backend/package*.json ./
+COPY --from=development /usr/src/backend/dist ./dist
 
 # Install production dependencies only
 RUN npm ci --only=production
 
-RUN apk add shadow
-
-RUN usermod -a -G 1000 node
-
-COPY --from=development /usr/src/app/dist ./dist
+RUN apk add shadow && usermod -a -G 1000 node
 
 CMD ["node", "dist/main.js"]
