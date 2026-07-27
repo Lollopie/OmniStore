@@ -14,7 +14,7 @@ import {
   WarehouseIDDto,
   WarehouseUserRoleDto,
 } from '@shared/dto/warehouse.dto';
-import { AuthGuard } from '../auth/auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard';
 import * as userDecorator from '../user/user.decorator';
 import express from 'express';
 import { JwtService } from '@nestjs/jwt';

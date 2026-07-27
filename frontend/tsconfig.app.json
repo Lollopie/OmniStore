@@ -23,12 +23,12 @@
     "allowSyntheticDefaultImports": true,
 
     "paths": {
-        "@shared/*": ["../shared/dist/*"],
-        "@shared": ["../shared/dist/index.d.ts"]
+        "@shared/*": ["../shared/*"],
+        "@shared": ["../shared/index.d.ts"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*", "../shared/dist/**/*"],
+  "include": ["src/**/*", "../shared/**/*"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

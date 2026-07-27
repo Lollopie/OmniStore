@@ -10,8 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
-import { AuthGuard } from '../auth/auth.guard.js';
-import { InventoryDto } from '@shared';
+import { AuthGuard } from '../auth/auth.guard';
+import { InventoryDto } from '@shared/dto/inventory.dto';
 import { RolesGuard } from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@shared/enum/roles.enum';

@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import express from 'express';
-import { AuthGuard } from '../auth/auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('logout')
 export class LogoutController {

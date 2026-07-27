@@ -6,7 +6,7 @@ import {
   IsUUID,
   IsEnum,
 } from 'class-validator';
-import { Role } from '../enum/roles.enum.js'
+import { Role } from '../enum/roles.enum'
 
 export class WarehouseDto {
   @IsString()

@@ -4,10 +4,13 @@
   "testEnvironment": "node",
   "testRegex": "\\.e2e-spec\\.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.ts$": ["ts-jest", {
+      "tsconfig": "tsconfig.json"
+    }]
   },
   "maxWorkers": 1,
   "moduleNameMapper": {
-    "^@shared/(.*)$": "<rootDir>/../../shared/$1"
+    "^@shared$": "<rootDir>/../../shared/dist/index.js",
+    "^@shared/(.*)$": "<rootDir>/../../shared/dist/$1"
   }
 }

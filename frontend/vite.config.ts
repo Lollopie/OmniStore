@@ -13,10 +13,13 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@shared': path.resolve(__dirname, '../shared/dist'),
+      '@shared': path.resolve(__dirname, '../shared'),
     },
   },
   server: {
+    fs: {
+      allow: ['..']
+    },
     watch: {
       usePolling: true,
     },

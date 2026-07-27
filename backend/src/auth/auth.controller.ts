@@ -1,5 +1,5 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { AuthGuard } from './auth.guard.js';
+import { AuthGuard } from './auth.guard';
 import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('auth')
