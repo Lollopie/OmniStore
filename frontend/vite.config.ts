@@ -1,17 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import tailwindcss from '@tailwindcss/vite';
-import * as path from 'node:path';
+import tailwindcss from '@tailwindcss/vite'
+import * as path from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react({
-    tsDecorators: true,
-  }), tailwindcss()],
+  plugins: [
+    react({
+      tsDecorators: true,
+    }),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, '../shared'),
-    }
+    },
   },
   server: {
     watch: {

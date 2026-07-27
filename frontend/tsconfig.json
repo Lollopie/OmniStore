@@ -4,12 +4,4 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
-    "compilerOptions": {
-        "paths": {
-          "@shared/*": ["../shared/*"]
-        },
-        "strictPropertyInitialization": false,
-        "experimentalDecorators": true
-    },
-  "include": ["src/**/*", "../shared/**/*"]
 }
