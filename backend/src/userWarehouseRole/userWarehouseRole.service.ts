@@ -49,13 +49,6 @@ export class UserWarehouseRoleService {
       return callback(transactionalRepo);
     });
   }
-  findByUserId(user_id: string): Promise<UserWarehouseRoleEntity | null> {
-    return this.runInRlsContext([user_id], ['user'], (repo) =>
-      repo.findOneBy({
-        user_id: user_id,
-      }),
-    );
-  }
   findRole(
     user_id: string,
     warehouse_id: string,
@@ -167,7 +160,6 @@ export class UserWarehouseRoleService {
             warehouse_id,
           });
         const cleanedTerm = searchTerm?.trim();
-        console.log(cleanedTerm);
         if (cleanedTerm) {
           queryBuilder.andWhere('user.username ILIKE :search', {
             search: `%${cleanedTerm}%`,

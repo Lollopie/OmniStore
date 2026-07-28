@@ -23,7 +23,7 @@ describe('RegisterController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
-          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
+          envFilePath: [`.env.${process.env.NODE_ENV || 'test'}`, `.env`],
           load: [authConfig, dbConfig],
         }),
         AppModule,
@@ -212,6 +212,24 @@ describe('RegisterController (e2e)', () => {
     } else {
       expect(true).toBe(false);
     }
+  });
+  it('/register (POST) - should reject duplicate usernames', async () => {
+    const userData = {
+      username: 'test',
+      password: 'password1',
+    };
+
+    await request(app.getHttpServer())
+      .post('/register')
+      .send(userData)
+      .expect(201);
+
+    const response = await request(app.getHttpServer())
+      .post('/register')
+      .send(userData)
+      .expect(400);
+    const body = response.body as { message: string | string[] };
+    expect(body.message).toContain('Username already exists');
   });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;

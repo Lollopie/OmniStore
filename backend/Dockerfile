@@ -20,7 +20,7 @@ RUN npm run build
 # Stage 2: Production Execution
 FROM node:24-alpine AS production
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/backend
 
 COPY --from=development /usr/src/shared /usr/src/shared
 COPY --from=development /usr/src/backend/package*.json ./

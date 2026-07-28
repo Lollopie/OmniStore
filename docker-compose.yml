@@ -28,9 +28,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/usr/src/app
+      - ./backend:/usr/src/backend
       - ./shared:/usr/src/shared
-      - /usr/src/app/node_modules
+      - /usr/src/backend/node_modules
     command: npm run start:dev
     environment:
       DATABASE_HOST: postgres

@@ -17,7 +17,7 @@ import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('auth.jwtSecret'), // 3. Dynamically fetch the secret
+        secret: configService.get<string>('auth.jwtSecret'),
         signOptions: {
           expiresIn: configService.get<number>('auth.jwtExpiresIn'),
         },

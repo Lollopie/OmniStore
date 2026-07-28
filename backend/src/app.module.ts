@@ -36,8 +36,8 @@ import { AddRLSUserWarehouseRole1784213959000 } from './migrations/1784213959000
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [
-        `.env`,
         `.env.${process.env.NODE_ENV || 'dev'}`,
+        `.env`,
         '/etc/secrets/.env',
       ],
       load: [authConfig, dbConfig],

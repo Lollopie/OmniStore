@@ -18,7 +18,7 @@ describe('RateLimit (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         await ConfigModule.forRoot({
-          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
+          envFilePath: [`.env.${process.env.NODE_ENV || 'test'}`, `.env`],
           load: [authConfig, dbConfig],
         }),
         AppModule,
@@ -37,19 +37,19 @@ describe('RateLimit (e2e)', () => {
     await app.init();
   });
   it('/healthz', async () => {
-    for (let i = 0; i < configService.get<number>('db.rateLimit')!; i++) {
+    for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
       await request(app.getHttpServer()).get('/healthz').expect(200);
     }
     await request(app.getHttpServer()).get('/healthz').expect(200);
   });
   it('/auth/status', async () => {
-    for (let i = 0; i < configService.get<number>('db.rateLimit')!; i++) {
+    for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
       await request(app.getHttpServer()).get('/auth/status').expect(401);
     }
     await request(app.getHttpServer()).get('/auth/status').expect(401);
   });
   it('/register', async () => {
-    for (let i = 0; i < configService.get<number>('db.rateLimit')!; i++) {
+    for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
       await request(app.getHttpServer())
         .post('/register')
         .send({ username: 'test' + i.toString(), password: 'password1' })

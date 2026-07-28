@@ -2,21 +2,21 @@ import React from 'react';
 
 type Props = {
   id: string;
-  name: string;
+  itemName: string;
   amount: string;
   setRefreshIndex: React.Dispatch<React.SetStateAction<number>>;
   addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 };
 
-export const handleUpdateItem = async ({id, name, amount, setRefreshIndex, addToast}: Props) => {
-  if (!id || !name.trim() || !amount) {
+export const handleUpdateItem = async ({id, itemName, amount, setRefreshIndex, addToast}: Props) => {
+  if (!id || !itemName.trim() || !amount) {
     alert('Please provide an ID, a name and an amount.');
     return;
   }
 
   const newItem = {
     id: id,
-    name: name.trim(),
+    itemName: itemName.trim(),
     amount: parseInt(amount, 10)
   };
 

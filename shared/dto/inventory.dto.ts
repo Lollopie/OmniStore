@@ -16,7 +16,7 @@ export class InventoryDto {
     message: 'Illegal Item name',
   })
   itemName: string;
-  @IsNumberString({}, { message: 'Amount must be a number' })
+  @IsNumberString({}, { message: 'Amount must be a number string' })
   amount: string;
   @IsOptional()
   @IsUUID(7, { message: 'Invalid UUID' })

@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 
 interface ItemFormProps {
   submitLabel: string;
-  onSubmit: (data: { name: string; amount: number }) => void;
+  onSubmit: (data: { itemName: string; amount: number }) => void;
   onCancel: () => void;
 }
 const resolver = classValidatorResolver(InventoryDto);
@@ -24,7 +24,7 @@ export const ItemForm = ({
   });
 
   const submit = (inventoryDto: InventoryDto) => {
-    onSubmit({ name: inventoryDto.itemName, amount: parseInt(inventoryDto.amount, 10) });
+    onSubmit({ itemName: inventoryDto.itemName, amount: parseInt(inventoryDto.amount, 10) });
   };
 
   return (

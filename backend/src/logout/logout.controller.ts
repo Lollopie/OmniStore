@@ -5,26 +5,29 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import express from 'express';
-import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('logout')
 export class LogoutController {
   constructor() {}
   @Post()
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard)
   logout(
     @Req() req: express.Request,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    res.cookie('token', req['user'], {
+    if (
+      !req.cookies ||
+      !req.cookies['token'] ||
+      typeof req.cookies['token'] !== 'string'
+    ) {
+      return { message: 'No token provided' };
+    }
+    res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      expires: new Date(1970, 1, 1),
     });
 
     return { message: 'Logout successful' };

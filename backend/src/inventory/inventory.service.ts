@@ -13,8 +13,8 @@ import { ClsService } from 'nestjs-cls';
 export enum InventorySortOption {
   NEW = 'new',
   OLD = 'old',
-  NAME_ASC = 'name asc',
-  NAME_DESC = 'name desc',
+  NAME_ASC = 'itemName asc',
+  NAME_DESC = 'itemName desc',
   AMOUNT_ASC = 'amount asc',
   AMOUNT_DESC = 'amount desc',
 }
@@ -42,12 +42,6 @@ export class InventoryService {
     });
   }
 
-  async findAll(warehouse_id: string): Promise<InventoryEntity[]> {
-    return this.runInRlsContext(warehouse_id, (repo) => {
-      return repo.find();
-    });
-  }
-
   async getInventory(
     searchTerm: string,
     page: number,
@@ -63,16 +57,16 @@ export class InventoryService {
         order = { id: 'ASC' };
         break;
       case InventorySortOption.NAME_ASC:
-        order = { name: 'ASC', id: 'DESC' };
+        order = { itemName: 'ASC', id: 'DESC' };
         break;
       case InventorySortOption.NAME_DESC:
-        order = { name: 'DESC', id: 'DESC' };
+        order = { itemName: 'DESC', id: 'DESC' };
         break;
       case InventorySortOption.AMOUNT_ASC:
-        order = { amount: 'ASC', name: 'ASC' };
+        order = { amount: 'ASC', itemName: 'ASC' };
         break;
       case InventorySortOption.AMOUNT_DESC:
-        order = { amount: 'DESC', name: 'ASC' };
+        order = { amount: 'DESC', itemName: 'ASC' };
         break;
       case InventorySortOption.NEW:
       default:
@@ -83,7 +77,7 @@ export class InventoryService {
       const options: FindManyOptions<InventoryEntity> = {
         select: {
           id: true,
-          name: true,
+          itemName: true,
           amount: true,
         },
         order: order,
@@ -93,7 +87,7 @@ export class InventoryService {
       const trimmedSearchTerm = searchTerm?.trim();
       if (trimmedSearchTerm) {
         options.where = {
-          name: ILike(`%${trimmedSearchTerm}%`),
+          itemName: ILike(`%${trimmedSearchTerm}%`),
         };
       }
       return repo.findAndCount(options);
@@ -101,11 +95,8 @@ export class InventoryService {
   }
   async createItem(item: InventoryDto): Promise<InventoryEntity> {
     const warehouse_id: string = this.clsService.get('warehouseId');
-    if (!(await this.warehouseService.findOne(warehouse_id))) {
-      throw new BadRequestException('Warehouse not found');
-    }
     const newItem = {
-      name: item.itemName,
+      itemName: item.itemName,
       amount: parseInt(item.amount, 10),
       warehouse: { warehouse_id: warehouse_id },
     };
@@ -116,11 +107,8 @@ export class InventoryService {
   }
   async updateItem(item: InventoryDto): Promise<InventoryEntity> {
     const warehouse_id: string = this.clsService.get('warehouseId');
-    if (!(await this.warehouseService.findOne(warehouse_id))) {
-      throw new BadRequestException('Warehouse not found');
-    }
     const updatedItem = {
-      name: item.itemName,
+      itemName: item.itemName,
       amount: parseInt(item.amount, 10),
       warehouse: { warehouse_id: warehouse_id },
     };

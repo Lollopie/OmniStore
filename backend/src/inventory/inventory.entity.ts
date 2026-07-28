@@ -18,7 +18,7 @@ export class InventoryEntity {
   @RelationId((inventory: InventoryEntity) => inventory.warehouse)
   warehouse_id: string;
   @Column()
-  name: string;
+  itemName: string;
 
   @Column('numeric')
   amount: number;

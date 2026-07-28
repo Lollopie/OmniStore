@@ -21,7 +21,7 @@ import { handleDeleteItem } from './hooks/handleDeleteItem.ts';
 import { readStoredValue } from '../../hooks/readStoredValue.ts';
 export interface InventoryItem {
   id: string;
-  name: string;
+  itemName: string;
   amount: string;
 }
 const InventoryManager = () => {
@@ -83,7 +83,7 @@ const InventoryManager = () => {
             submitLabel="Add"
             onCancel={() => setAddItemIsOpen(false)}
             onSubmit={(data) => {
-              handleAddItem({name: data.name, amount: data.amount.toString(), setRefreshIndex, addToast});
+              handleAddItem({itemName: data.itemName, amount: data.amount.toString(), setRefreshIndex, addToast});
               setAddItemIsOpen(false);
             }}
           />
@@ -101,7 +101,7 @@ const InventoryManager = () => {
               onSubmit={(data) => {
                 handleUpdateItem({
                   id: selectedItem.id,
-                  name: data.name,
+                  itemName: data.itemName,
                   amount: data.amount.toString(),
                   setRefreshIndex,
                   addToast
@@ -124,8 +124,8 @@ const InventoryManager = () => {
                           onChange={(e) => {setSort(e.target.value)}}>
                     <option value="new">New</option>
                     <option value="old">Old</option>
-                    <option value="name asc">Name Ascending</option>
-                    <option value="name desc">Name Descending</option>
+                    <option value="itemName asc">Name Ascending</option>
+                    <option value="itemName desc">Name Descending</option>
                     <option value="amount asc">Amount Ascending</option>
                     <option value="amount desc">Amount Descending</option>
                   </select>
@@ -158,7 +158,7 @@ const InventoryManager = () => {
                 ) : (
                   inventory.map((item: InventoryItem) => (
                     <tr key={item.id} className="hover:bg-base-300/50 transition-colors">
-                      <TableDataCell children={item.name} className="text-base-400"/>
+                      <TableDataCell children={item.itemName} className="text-base-400"/>
                       <TableDataCell children={item.amount} className="text-base-400"/>
                       {readStoredValue('activeRole') === 'admin' && (
                         <TableDataCell children={
@@ -167,7 +167,7 @@ const InventoryManager = () => {
                                     children={<Edit size={16} className="stroke-current" />}
                                     variant={"info"}
                                   size={"xs"} />
-                          <Button onClick={() => handleDeleteItem({id: item.id, name: item.name, amount: item.amount.toString(), setRefreshIndex, addToast})}
+                          <Button onClick={() => handleDeleteItem({id: item.id, itemName: item.itemName, amount: item.amount.toString(), setRefreshIndex, addToast})}
                                   children={<Trash size={16}/>}
                                   variant={"danger"}
                                   size={"xs"} />
