@@ -20,13 +20,14 @@ import { changeUserRole } from './hooks/changeUserRole.ts';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { WarehouseDto } from '@shared/dto/warehouse.dto';
 import { useForm } from 'react-hook-form';
+import { Role } from '@shared/enum/roles.enum.ts';
 export interface WarehouseUser {
-  user_id: string;
+  userId: string;
   username: string;
   role: string;
 }
 export interface Warehouse {
-  warehouse_id: string;
+  warehouseId: string;
   name: string;
   role?: string;
 }
@@ -132,7 +133,7 @@ const WarehouseManager = () => {
               <div className="w-full flex flex-col sm:flex-row sm:items-center sm:gap-3">
                 <div className="flex-3">
                   <WarehouseSelector
-                    selectedWarehouse={activeWarehouse.warehouse_id}
+                    selectedWarehouse={activeWarehouse.warehouseId}
                     setActiveWarehouse={setActiveWarehouse}
                     addToast={addToast}
                   />
@@ -185,14 +186,14 @@ const WarehouseManager = () => {
                 </tr>
               ) : (
                 users.map((user: WarehouseUser) => (
-                  <tr key={user.user_id} className="hover:bg-base-300/50 transition-colors">
+                  <tr key={user.userId} className="hover:bg-base-300/50 transition-colors">
                     <TableDataCell className="font-mono text-base-400" children={
                       <div className="flex items-center gap-2">
-                        <span className="hidden sm:block sm:max-w-[120px] truncate" title={user.user_id}>
-                            {user.user_id}
+                        <span className="hidden sm:block sm:max-w-[120px] truncate" title={user.userId}>
+                            {user.userId}
                         </span>
                         <Button
-                          onClick={() => {copyToClipboard(user.user_id); addToast('Copied to clipboard!','success',2000);}}
+                          onClick={() => {copyToClipboard(user.userId); addToast('Copied to clipboard!','success',2000);}}
                           title="Copy Full ID"
                           className="bg-base-200 hover:bg-base-400 border-base-400 text-base-300"
                           size="sm"
@@ -220,9 +221,11 @@ const WarehouseManager = () => {
                             })
                           }}
                         >
-                          <option value="admin">admin</option>
-                          <option value="manager">manager</option>
-                          <option value="staff">staff</option>
+                          {Object.values(Role).map((role) => (
+                            <option key={role} value={role}>
+                              {role}
+                            </option>
+                          ))}
                         </select>
                       ) : (
                         user.role

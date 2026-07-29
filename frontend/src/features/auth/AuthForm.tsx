@@ -12,7 +12,14 @@ interface AuthFormProps {
   endpoint: string;
   successMessage: string;
   onSuccess?: () => void;
-  handleResponse: (data : {warehouses?: string, activeWarehouse?: string, activeRole?: string, message?: string, user_id: string, username: string} ) => void;
+  handleResponse: (data: {
+    warehouses: { warehouseId: string; name: string; role: string }[] | null;
+    activeWarehouse: string | null;
+    activeRole: string | null;
+    message?: string;
+    userId: string;
+    username: string;
+  }) => void;
 }
 const resolver = classValidatorResolver(RegisterDto);
 export default function AuthForm({ title, buttonText, endpoint, successMessage, onSuccess, handleResponse }: AuthFormProps) {
@@ -38,7 +45,14 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
         credentials: 'include'
       });
 
-      const data: {warehouses?: string, activeWarehouse?: string, activeRole?: string, message?: string, user_id: string, username: string} = await response.json();
+      const data: {
+        warehouses: { warehouseId: string; name: string; role: string }[] | null;
+        activeWarehouse: string | null;
+        activeRole: string | null;
+        message?: string;
+        userId: string;
+        username: string;
+      } = await response.json();
       handleResponse(data);
       if (!response.ok) {
         if( data.message ){

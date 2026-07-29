@@ -18,7 +18,7 @@ export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller,
         signal: controller.signal
       });
       if (!response.ok) throw new Error('Failed to get users.');
-      const data: {data: {user_id: string, username: string, role: string}[], total: number} = await response.json();
+      const data: {data: {userId: string, username: string, role: string}[], total: number} = await response.json();
       setUsers(data.data);
       setTotalUsers(data.total);
     } catch (err) {
@@ -32,7 +32,7 @@ export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller,
   }
   else {
     if (activeRole == 'staff'){
-      setUsers([{user_id: JSON.parse(localStorage.getItem('user_id') || ''), username: JSON.parse(localStorage.getItem('username') || ''), role: JSON.parse(localStorage.getItem('activeRole') || '')}])
+      setUsers([{userId: JSON.parse(localStorage.getItem('userId') || ''), username: JSON.parse(localStorage.getItem('username') || ''), role: JSON.parse(localStorage.getItem('activeRole') || '')}])
       setTotalUsers(1);
     }
     else {

@@ -547,13 +547,13 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(createResponse.body.id).toBeDefined();
+    expect(createResponse.body.itemId).toBeDefined();
 
     const listResponse = await request(app.getHttpServer())
       .patch('/inventory')
       .send({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-        id: createResponse.body.id,
+        itemId: createResponse.body.itemId,
         itemName: 'Apples',
         amount: '5',
       })
@@ -565,7 +565,7 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body['itemName']).toBe('Apples');
   });
-  it('edit no id', async () => {
+  it('edit no itemId', async () => {
     const aliceToken = await registerAndLogin(
       app,
       'alice.inventory.test',
@@ -582,7 +582,7 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(createResponse.body.id).toBeDefined();
+    expect(createResponse.body.itemId).toBeDefined();
 
     await request(app.getHttpServer())
       .patch('/inventory')
@@ -593,7 +593,7 @@ describe('InventoryController (e2e)', () => {
       .set('Cookie', `${aliceToken}`)
       .expect(400);
   });
-  it('edit wrong id', async () => {
+  it('edit wrong itemId', async () => {
     const aliceToken = await registerAndLogin(
       app,
       'alice.inventory.test',
@@ -610,12 +610,12 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(createResponse.body.id).toBeDefined();
+    expect(createResponse.body.itemId).toBeDefined();
 
     await request(app.getHttpServer())
       .patch('/inventory')
       .send({
-        id: '019fa8c5-9e10-7dca-bc57-02af04a588f8',
+        itemId: '019fa8c5-9e10-7dca-bc57-02af04a588f8',
         itemName: 'Apples',
         amount: '5',
       })
@@ -639,13 +639,13 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(createResponse.body.id).toBeDefined();
+    expect(createResponse.body.itemId).toBeDefined();
 
     const listResponse = await request(app.getHttpServer())
       .delete('/inventory')
       .send({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-        id: createResponse.body.id,
+        itemId: createResponse.body.itemId,
         itemName: 'Apples',
         amount: '5',
       })
@@ -654,7 +654,7 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body['message']).toBe('Item has been deleted.');
   });
-  it('delete no id', async () => {
+  it('delete no itemId', async () => {
     const aliceToken = await registerAndLogin(
       app,
       'alice.inventory.test',
@@ -671,7 +671,7 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(createResponse.body.id).toBeDefined();
+    expect(createResponse.body.itemId).toBeDefined();
 
     await request(app.getHttpServer())
       .delete('/inventory')
@@ -682,7 +682,7 @@ describe('InventoryController (e2e)', () => {
       .set('Cookie', `${aliceToken}`)
       .expect(400);
   });
-  it('delete wrong id', async () => {
+  it('delete wrong itemId', async () => {
     const aliceToken = await registerAndLogin(
       app,
       'alice.inventory.test',
@@ -699,12 +699,12 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(createResponse.body.id).toBeDefined();
+    expect(createResponse.body.itemId).toBeDefined();
 
     await request(app.getHttpServer())
       .delete('/inventory')
       .send({
-        id: '019fa8c5-9e10-7dca-bc57-02af04a588f8',
+        itemId: '019fa8c5-9e10-7dca-bc57-02af04a588f8',
         itemName: 'Apples',
         amount: '5',
       })
@@ -738,7 +738,7 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(searchResponse.body[0][0].amount)).toBe('5');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(searchResponse.body[0][0].id).toBeDefined();
+    expect(searchResponse.body[0][0].itemId).toBeDefined();
   });
   it('non existent warehouseId', async () => {
     const aliceToken = await registerAndLogin(
@@ -747,13 +747,13 @@ describe('InventoryController (e2e)', () => {
       'Password123',
     );
     const assignedToken: {
-      user_id: string;
+      userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
     } = jwtService.decode(aliceToken.split('token=')[1]);
     const token = jwtService.sign({
-      user_id: assignedToken.user_id,
+      userId: assignedToken.userId,
       username: assignedToken.username,
       activeWarehouseId: '019fa8c5-6daa-73cb-bcdd-c6d56fb5ae05',
       activeRole: assignedToken.activeRole,

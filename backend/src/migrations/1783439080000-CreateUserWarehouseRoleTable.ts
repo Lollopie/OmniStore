@@ -6,7 +6,7 @@ export class CreateUserWarehouseRoleTable1783439080000 implements MigrationInter
       `CREATE TABLE user_warehouse_role (
                                            user_id UUID REFERENCES "user"(user_id) ON DELETE CASCADE,
                                            warehouse_id UUID REFERENCES "warehouse"(warehouse_id) ON DELETE CASCADE,
-                                           role VARCHAR(50) NOT NULL, -- e.g., 'manager', 'staff'
+                                           role VARCHAR(50) NOT NULL,
                                            PRIMARY KEY (user_id, warehouse_id)
        );`,
     );

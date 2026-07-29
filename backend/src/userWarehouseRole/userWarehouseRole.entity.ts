@@ -5,15 +5,13 @@ import { WarehouseEntity } from '../warehouse/warehouse.entity';
 @Entity('user_warehouse_role')
 export class UserWarehouseRoleEntity {
   @PrimaryColumn('uuid', { name: 'user_id' })
-  user_id: string;
+  userId: string;
 
   @PrimaryColumn('uuid', { name: 'warehouse_id' })
-  warehouse_id: string;
+  warehouseId: string;
 
   @Column({ type: 'varchar', length: 50 })
   role: string;
-
-  // --- Relations ---
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

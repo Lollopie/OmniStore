@@ -20,3 +20,4 @@ lerna-debug.log*
 .tmp
 Idea.txt
 TODO.txt
+/backend/coverage/

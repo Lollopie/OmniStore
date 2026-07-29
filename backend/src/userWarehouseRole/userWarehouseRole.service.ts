@@ -50,16 +50,16 @@ export class UserWarehouseRoleService {
     });
   }
   findRole(
-    user_id: string,
-    warehouse_id: string,
+    userId: string,
+    warehouseId: string,
   ): Promise<UserWarehouseRoleEntity | null> {
     return this.runInRlsContext(
-      [user_id, warehouse_id],
+      [userId, warehouseId],
       ['user', 'warehouse'],
       (repo) =>
         repo.findOneBy({
-          user_id: user_id,
-          warehouse_id: warehouse_id,
+          userId: userId,
+          warehouseId: warehouseId,
         }),
     );
   }
@@ -74,18 +74,18 @@ export class UserWarehouseRoleService {
       throw new NotFoundException('User not found');
     }
 
-    const existingRole = await this.findRole(user.user_id, warehouseId);
+    const existingRole = await this.findRole(user.userId, warehouseId);
     if (existingRole) {
       throw new ConflictException('User already belongs to this warehouse');
     }
 
     return await this.runInRlsContext(
-      [user.user_id, warehouseId],
+      [user.userId, warehouseId],
       ['user', 'warehouse'],
       (repo) =>
         repo.save({
-          user_id: user.user_id,
-          warehouse_id: warehouseId,
+          userId: user.userId,
+          warehouseId: warehouseId,
           role,
         }),
     );
@@ -100,7 +100,7 @@ export class UserWarehouseRoleService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const existingRole = await this.findRole(user.user_id, warehouseId);
+    const existingRole = await this.findRole(user.userId, warehouseId);
 
     if (!existingRole) {
       throw new NotFoundException('User is not assigned to this warehouse');
@@ -108,7 +108,7 @@ export class UserWarehouseRoleService {
 
     existingRole.role = role;
     return await this.runInRlsContext(
-      [warehouseId, user.user_id],
+      [warehouseId, user.userId],
       ['warehouse', 'user'],
       (repo) => repo.save(existingRole),
     );
@@ -116,18 +116,18 @@ export class UserWarehouseRoleService {
 
   async getUserWarehouses(
     userId: string,
-  ): Promise<{ warehouse_id: string; name: string; role: string }[] | null> {
+  ): Promise<{ warehouseId: string; name: string; role: string }[] | null> {
     return await this.runInRlsContext([userId], ['user'], (repo) =>
       repo
         .createQueryBuilder('user_warehouse_role')
         .innerJoinAndSelect(
           'WarehouseEntity',
           'warehouse',
-          'warehouse.warehouse_id = user_warehouse_role.warehouse_id',
+          'warehouse.warehouseId = user_warehouse_role.warehouseId',
         )
-        .where('user_warehouse_role.user_id = :userId', { userId })
+        .where('user_warehouse_role.userId = :userId', { userId })
         .select([
-          'warehouse.warehouse_id AS warehouse_id',
+          'warehouse.warehouseId AS "warehouseId"',
           'warehouse.name AS name',
           'user_warehouse_role.role AS role',
         ])
@@ -139,14 +139,14 @@ export class UserWarehouseRoleService {
     limit: number = 10,
     searchTerm: string,
   ): Promise<{
-    data: { user_id: string; username: string; role: string }[];
+    data: { userId: string; username: string; role: string }[];
     total: number;
   }> {
-    const warehouse_id: string = this.clsService.get('warehouseId');
+    const warehouseId: string = this.clsService.get('warehouseId');
     const skip = (page - 1) * limit;
 
     return await this.runInRlsContext(
-      [warehouse_id],
+      [warehouseId],
       ['warehouse'],
       async (repo) => {
         const queryBuilder = repo
@@ -154,10 +154,10 @@ export class UserWarehouseRoleService {
           .innerJoin(
             'UserEntity',
             'user',
-            'user.user_id = user_warehouse_role.user_id',
+            'user.userId = user_warehouse_role.userId',
           )
-          .where('user_warehouse_role.warehouse_id = :warehouse_id', {
-            warehouse_id,
+          .where('user_warehouse_role.warehouseId = :warehouseId', {
+            warehouseId,
           });
         const cleanedTerm = searchTerm?.trim();
         if (cleanedTerm) {
@@ -167,12 +167,12 @@ export class UserWarehouseRoleService {
         }
         const total = await queryBuilder.getCount();
         const rawResults: {
-          user_id: string;
+          userId: string;
           username: string;
           role: string;
         }[] = await queryBuilder
           .select([
-            'user.user_id AS user_id',
+            'user.userId AS "userId"',
             'user.username AS username',
             'user_warehouse_role.role AS role',
           ])

@@ -3,8 +3,8 @@ import { UserEntity } from './user.entity';
 
 export abstract class UserBaseEntity {
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn({ name: 'userId' })
   user: UserEntity;
-  @Column('uuid', { name: 'user_id' })
-  user_id: string;
+  @Column('uuid', { name: 'userId' })
+  userId: string;
 }

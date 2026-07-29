@@ -24,7 +24,7 @@ export class WarehouseDto {
 export class WarehouseIDDto {
   @IsString()
   @IsUUID(7, { message: 'Invalid Warehouse ID' })
-  id: string;
+  warehouseId: string;
 }
 
 export class WarehouseUserRoleDto {

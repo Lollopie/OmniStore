@@ -6,7 +6,7 @@ import {
 
 export type UserToken = {
   username: string;
-  user_id: string;
+  userId: string;
   activeWarehouseId: string;
   activeRole: string;
 };

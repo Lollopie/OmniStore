@@ -24,7 +24,7 @@ export const changeUserRole = async ({user, newRole, setUsers, setActiveWarehous
       localStorage.setItem('activeRole', JSON.stringify(newRole));
       setActiveWarehouse((prev: Warehouse) => ({ ...prev, role: newRole }));
     }
-    setUsers((prev) => prev.map((u) => u.user_id === user.user_id ? { ...u, role: newRole } : u));
+    setUsers((prev) => prev.map((u) => u.userId === user.userId ? { ...u, role: newRole } : u));
     addToast(`Successfully set User role for "${user.username}"`, 'success', 5000);
   } catch (err) {
     addToast('Failed to update role.', 'error', 5000);

@@ -21,7 +21,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id: warehouseId }),
+      body: JSON.stringify({ warehouseId: warehouseId }),
       credentials: 'include',
     }) as SelectResponse;
     if (response.ok) {
@@ -30,7 +30,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
       localStorage.setItem('activeRole', JSON.stringify(activeRole));
       activeWarehouse.role = activeRole;
       setActiveWarehouse(activeWarehouse);
-      addToast(`Changed active warehouse to ${activeWarehouse.name || activeWarehouse.warehouse_id}`, 'info', 5000);
+      addToast(`Changed active warehouse to ${activeWarehouse.name || activeWarehouse.warehouseId}`, 'info', 5000);
     }
     else {
       addToast(`Failed to change active warehouse.`, 'error', 5000);
@@ -48,8 +48,8 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
         onChange={handleChange}
       >
         <option value="" disabled>-- Select a Warehouse --</option>
-        {warehouses.map((warehouse: { warehouse_id: string, name: string }) => (
-          <option key={warehouse.warehouse_id} value={warehouse.warehouse_id}>
+        {warehouses.map((warehouse: { warehouseId: string, name: string }) => (
+          <option key={warehouse.warehouseId} value={warehouse.warehouseId}>
             {warehouse.name}
           </option>
         ))}

@@ -10,14 +10,14 @@ import { WarehouseEntity } from '../warehouse/warehouse.entity';
 
 @Entity('inventory')
 export class InventoryEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('uuid', { name: 'item_id' })
+  itemId: string;
   @ManyToOne(() => WarehouseEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'warehouse_id' })
   warehouse: WarehouseEntity;
   @RelationId((inventory: InventoryEntity) => inventory.warehouse)
-  warehouse_id: string;
-  @Column()
+  warehouseId: string;
+  @Column({ name: 'item_name' })
   itemName: string;
 
   @Column('numeric')

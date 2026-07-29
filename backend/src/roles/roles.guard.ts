@@ -32,7 +32,7 @@ export class RolesGuard implements CanActivate {
       .switchToHttp()
       .getRequest<AuthenticatedRequest>();
     const user: {
-      user_id: string;
+      userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
@@ -50,7 +50,7 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) return true;
 
     const userRole = await this.userWarehouseRoleService.findRole(
-      user.user_id,
+      user.userId,
       user.activeWarehouseId,
     );
     if (!userRole) {

@@ -64,7 +64,7 @@ describe('WarehouseController (e2e)', () => {
     expect(warehouseResponse.body).toEqual({
       name: 'Warehouse 1',
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      warehouse_id: expect.any(String),
+      warehouseId: expect.any(String),
       role: 'admin',
     });
     expect(warehouseResponse.headers['set-cookie'][0]).toMatch(
@@ -101,7 +101,7 @@ describe('WarehouseController (e2e)', () => {
       )
       .send({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-        id: warehouseResponse.body.warehouse_id,
+        warehouseId: warehouseResponse.body.warehouseId,
       })
       .expect(201);
     expect(selectResponse.body).toEqual({
@@ -146,7 +146,7 @@ describe('WarehouseController (e2e)', () => {
     expect(getUsersResponse.body['data']).toEqual([
       {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        user_id: expect.any(String),
+        userId: expect.any(String),
         username: 'username',
         role: 'admin',
       },
@@ -269,9 +269,9 @@ describe('WarehouseController (e2e)', () => {
       .expect(201);
     expect(postUsersResponse.body).toEqual({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      user_id: expect.any(String),
+      userId: expect.any(String),
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      warehouse_id: expect.any(String),
+      warehouseId: expect.any(String),
       role: 'admin',
     });
   });
@@ -310,9 +310,9 @@ describe('WarehouseController (e2e)', () => {
       .expect(200);
     expect(patchUserResponse.body).toEqual({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      user_id: expect.any(String),
+      userId: expect.any(String),
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      warehouse_id: expect.any(String),
+      warehouseId: expect.any(String),
       role: 'staff',
     });
   });
@@ -450,7 +450,7 @@ describe('WarehouseController (e2e)', () => {
     expect(getUsersResponse.body['data']).toEqual([
       {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        user_id: expect.any(String),
+        userId: expect.any(String),
         username: 'username2',
         role: 'admin',
       },

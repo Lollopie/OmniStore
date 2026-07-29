@@ -15,7 +15,7 @@ export class WarehouseService {
   ) {}
   async createWarehouse(
     warehouseData: WarehouseDto,
-    user_id: string,
+    userId: string,
     role: string,
   ): Promise<WarehouseEntity> {
     return await this.dataSource.transaction(async (entityManager) => {
@@ -25,21 +25,21 @@ export class WarehouseService {
       await entityManager.getRepository(WarehouseEntity).save(newWarehouse);
       await entityManager.query(
         `SELECT set_config('app.current_warehouse_id', $1, true)`,
-        [newWarehouse.warehouse_id],
+        [newWarehouse.warehouseId],
       );
       await entityManager.query(
         `SELECT set_config('app.current_user_id', $1, true)`,
-        [user_id],
+        [userId],
       );
       await entityManager.getRepository(UserWarehouseRoleEntity).save({
-        user_id: user_id,
-        warehouse_id: newWarehouse.warehouse_id,
+        userId: userId,
+        warehouseId: newWarehouse.warehouseId,
         role: role,
       });
       return newWarehouse;
     });
   }
-  findOne(warehouse_id: string): Promise<WarehouseEntity | null> {
-    return this.warehouseEntityRepository.findOneBy({ warehouse_id });
+  findOne(warehouseId: string): Promise<WarehouseEntity | null> {
+    return this.warehouseEntityRepository.findOneBy({ warehouseId });
   }
 }

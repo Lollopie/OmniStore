@@ -20,5 +20,5 @@ export class InventoryDto {
   amount: string;
   @IsOptional()
   @IsUUID(7, { message: 'Invalid UUID' })
-  id?: string;
+  itemId?: string;
 }

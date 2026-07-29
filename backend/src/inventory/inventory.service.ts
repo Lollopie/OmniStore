@@ -8,7 +8,6 @@ import {
   Repository,
 } from 'typeorm';
 import { InventoryDto } from '@shared/dto/inventory.dto';
-import { WarehouseService } from '../warehouse/warehouse.service';
 import { ClsService } from 'nestjs-cls';
 export enum InventorySortOption {
   NEW = 'new',
@@ -22,18 +21,17 @@ export enum InventorySortOption {
 export class InventoryService {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly warehouseService: WarehouseService,
     private readonly clsService: ClsService,
   ) {}
 
   private async runInRlsContext<T>(
-    warehouse_id: string,
+    warehouseId: string,
     callback: (repo: Repository<InventoryEntity>) => Promise<T>,
   ): Promise<T> {
     return this.dataSource.transaction(async (entityManager) => {
       await entityManager.query(
         `SELECT set_config('app.current_warehouse_id', $1, true)`,
-        [warehouse_id],
+        [warehouseId],
       );
 
       const transactionalRepo = entityManager.getRepository(InventoryEntity);
@@ -48,19 +46,19 @@ export class InventoryService {
     sort: string,
   ): Promise<[InventoryEntity[], number]> {
     const itemsPerPage = 10;
-    const warehouse_id: string = this.clsService.get('warehouseId');
+    const warehouseId: string = this.clsService.get('warehouseId');
 
-    let order: Record<string, 'ASC' | 'DESC'> = { id: 'DESC' };
+    let order: Record<string, 'ASC' | 'DESC'> = { itemId: 'DESC' };
 
     switch (sort as InventorySortOption) {
       case InventorySortOption.OLD:
-        order = { id: 'ASC' };
+        order = { itemId: 'ASC' };
         break;
       case InventorySortOption.NAME_ASC:
-        order = { itemName: 'ASC', id: 'DESC' };
+        order = { itemName: 'ASC', itemId: 'DESC' };
         break;
       case InventorySortOption.NAME_DESC:
-        order = { itemName: 'DESC', id: 'DESC' };
+        order = { itemName: 'DESC', itemId: 'DESC' };
         break;
       case InventorySortOption.AMOUNT_ASC:
         order = { amount: 'ASC', itemName: 'ASC' };
@@ -70,13 +68,13 @@ export class InventoryService {
         break;
       case InventorySortOption.NEW:
       default:
-        order = { id: 'DESC' };
+        order = { itemId: 'DESC' };
         break;
     }
-    return this.runInRlsContext(warehouse_id, (repo) => {
+    return this.runInRlsContext(warehouseId, (repo) => {
       const options: FindManyOptions<InventoryEntity> = {
         select: {
-          id: true,
+          itemId: true,
           itemName: true,
           amount: true,
         },
@@ -94,26 +92,28 @@ export class InventoryService {
     });
   }
   async createItem(item: InventoryDto): Promise<InventoryEntity> {
-    const warehouse_id: string = this.clsService.get('warehouseId');
+    const warehouseId: string = this.clsService.get('warehouseId');
     const newItem = {
       itemName: item.itemName,
       amount: parseInt(item.amount, 10),
-      warehouse: { warehouse_id: warehouse_id },
+      warehouse: { warehouseId: warehouseId },
     };
-    return this.runInRlsContext(warehouse_id, async (repo) => {
+    return this.runInRlsContext(warehouseId, async (repo) => {
       const newItemPlusUUID = repo.create(newItem);
       return await repo.save(newItemPlusUUID);
     });
   }
   async updateItem(item: InventoryDto): Promise<InventoryEntity> {
-    const warehouse_id: string = this.clsService.get('warehouseId');
+    const warehouseId: string = this.clsService.get('warehouseId');
     const updatedItem = {
       itemName: item.itemName,
       amount: parseInt(item.amount, 10),
-      warehouse: { warehouse_id: warehouse_id },
+      warehouse: { warehouseId: warehouseId },
     };
-    return this.runInRlsContext(warehouse_id, async (repo) => {
-      const itemToUpdate = await repo.findOne({ where: { id: item.id } });
+    return this.runInRlsContext(warehouseId, async (repo) => {
+      const itemToUpdate = await repo.findOne({
+        where: { itemId: item.itemId },
+      });
       if (!itemToUpdate) {
         throw new BadRequestException('Item not found');
       }
@@ -122,9 +122,9 @@ export class InventoryService {
     });
   }
   async remove(item: InventoryDto): Promise<DeleteResult> {
-    const warehouse_id: string = this.clsService.get('warehouseId');
-    return await this.runInRlsContext(warehouse_id, async (repo) => {
-      return await repo.delete({ id: item.id });
+    const warehouseId: string = this.clsService.get('warehouseId');
+    return await this.runInRlsContext(warehouseId, async (repo) => {
+      return await repo.delete({ itemId: item.itemId });
     });
   }
 }

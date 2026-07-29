@@ -12,9 +12,12 @@ export default function Login({ setIsAuthenticated }: LoginProps) {  return (
       onSuccess={() => setIsAuthenticated(true)}
       handleResponse={(data) => {
         localStorage.setItem('user_warehouses', JSON.stringify(data.warehouses));
-        localStorage.setItem('activeWarehouse', JSON.stringify(data.activeWarehouse));
+        localStorage.setItem(
+          'activeWarehouse',
+          JSON.stringify(data.warehouses && data.warehouses[0] ? data.warehouses[0].warehouseId : ''),
+        );
         localStorage.setItem('activeRole', JSON.stringify(data.activeRole));
-        localStorage.setItem('user_id', JSON.stringify(data.user_id));
+        localStorage.setItem('userId', JSON.stringify(data.userId));
         localStorage.setItem('username', JSON.stringify(data.username));
       }}
     />

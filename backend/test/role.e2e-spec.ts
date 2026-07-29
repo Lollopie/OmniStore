@@ -95,7 +95,7 @@ describe('RoleGuard (e2e)', () => {
       })
       .expect(200);
     const token: {
-      user_id: string;
+      userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
@@ -103,12 +103,12 @@ describe('RoleGuard (e2e)', () => {
       response.headers['set-cookie'][0].split('token=')[1].split(';')[0],
     );
     const newToken: {
-      user_id: string;
+      userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
     } = {
-      user_id: token.user_id,
+      userId: token.userId,
       username: token.username,
       activeWarehouseId: '019fa8c5-6daa-73cb-bcdd-c6d56fb5ae05',
       activeRole: 'admin',
@@ -195,7 +195,7 @@ describe('RoleGuard (e2e)', () => {
       .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
       .expect(201);
     const token: {
-      user_id: string;
+      userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
@@ -203,15 +203,15 @@ describe('RoleGuard (e2e)', () => {
       response2.headers['set-cookie'][0].split('token=')[1].split(';')[0],
     );
     const newToken: {
-      user_id: string;
+      userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
     } = {
-      user_id: token.user_id,
+      userId: token.userId,
       username: token.username,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      activeWarehouseId: warehouseResponse.body.warehouse_id,
+      activeWarehouseId: warehouseResponse.body.warehouseId,
       activeRole: 'admin',
     };
     const roleGuardResponse = await request(app.getHttpServer())

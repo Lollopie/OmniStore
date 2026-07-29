@@ -41,14 +41,14 @@ export class WarehouseController {
   ) {
     const warehouse = await this.warehouseService.createWarehouse(
       warehouseData,
-      userToken.user_id,
+      userToken.userId,
       'admin',
     );
     if (warehouse) {
       const payload = {
-        user_id: userToken.user_id,
+        userId: userToken.userId,
         username: userToken.username,
-        activeWarehouseId: warehouse.warehouse_id,
+        activeWarehouseId: warehouse.warehouseId,
         activeRole: 'admin',
       };
       const token = {
@@ -60,9 +60,9 @@ export class WarehouseController {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
       });
-      const response: { name: string; warehouse_id: string; role: string } = {
+      const response: { name: string; warehouseId: string; role: string } = {
         name: warehouse.name,
-        warehouse_id: warehouse.warehouse_id,
+        warehouseId: warehouse.warehouseId,
         role: 'admin',
       };
       return response;
@@ -77,14 +77,14 @@ export class WarehouseController {
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const response = await this.userWarehouseRoleService.findRole(
-      userToken.user_id,
-      warehouseData.id,
+      userToken.userId,
+      warehouseData.warehouseId,
     );
     if (response) {
       const payload = {
-        user_id: userToken.user_id,
+        userId: userToken.userId,
         username: userToken.username,
-        activeWarehouseId: response.warehouse_id,
+        activeWarehouseId: response.warehouseId,
         activeRole: response.role,
       };
       const token = {

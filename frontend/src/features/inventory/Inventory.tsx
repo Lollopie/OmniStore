@@ -130,9 +130,12 @@ const InventoryManager = () => {
                     <option value="amount desc">Amount Descending</option>
                   </select>
                 </fieldset>
-                <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
-                  <AddButton onClick={() => setAddItemIsOpen(true)} />
-                </div>
+                {(readStoredValue('activeRole') === 'admin' ||
+                  readStoredValue('activeRole') === 'manager') && (
+                  <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
+                    <AddButton onClick={() => setAddItemIsOpen(true)} />
+                  </div>
+                )}
               </div>
 
             </div>

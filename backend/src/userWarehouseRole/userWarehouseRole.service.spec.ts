@@ -81,14 +81,14 @@ describe('UserWarehouseRoleService', () => {
     it('should create a user role assignment for the active warehouse', async () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
-        user_id: 'user-1',
+        userId: 'user-1',
         username: 'jane',
         password: 'hashed',
       });
       repository.findOneBy.mockResolvedValue(null);
       repository.save.mockResolvedValue({
-        user_id: 'user-1',
-        warehouse_id: 'warehouse-1',
+        userId: 'user-1',
+        warehouseId: 'warehouse-1',
         role: 'staff',
       });
 
@@ -96,8 +96,8 @@ describe('UserWarehouseRoleService', () => {
 
       expect(result.role).toBe('staff');
       expect(repository.save).toHaveBeenCalledWith({
-        user_id: 'user-1',
-        warehouse_id: 'warehouse-1',
+        userId: 'user-1',
+        warehouseId: 'warehouse-1',
         role: 'staff',
       });
     });
@@ -105,13 +105,13 @@ describe('UserWarehouseRoleService', () => {
     it('should throw when the user already belongs to the warehouse', async () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
-        user_id: 'user-1',
+        userId: 'user-1',
         username: 'jane',
         password: 'hashed',
       });
       repository.findOneBy.mockResolvedValue({
-        user_id: 'user-1',
-        warehouse_id: 'warehouse-1',
+        userId: 'user-1',
+        warehouseId: 'warehouse-1',
         role: 'staff',
       });
 
@@ -125,18 +125,18 @@ describe('UserWarehouseRoleService', () => {
     it('should update the existing role assignment', async () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
-        user_id: 'user-1',
+        userId: 'user-1',
         username: 'jane',
         password: 'hashed',
       });
       repository.findOneBy.mockResolvedValue({
-        user_id: 'user-1',
-        warehouse_id: 'warehouse-1',
+        userId: 'user-1',
+        warehouseId: 'warehouse-1',
         role: 'staff',
       });
       repository.save.mockResolvedValue({
-        user_id: 'user-1',
-        warehouse_id: 'warehouse-1',
+        userId: 'user-1',
+        warehouseId: 'warehouse-1',
         role: 'manager',
       });
 
@@ -144,8 +144,8 @@ describe('UserWarehouseRoleService', () => {
 
       expect(result.role).toBe('manager');
       expect(repository.save).toHaveBeenCalledWith({
-        user_id: 'user-1',
-        warehouse_id: 'warehouse-1',
+        userId: 'user-1',
+        warehouseId: 'warehouse-1',
         role: 'manager',
       });
     });
@@ -154,7 +154,7 @@ describe('UserWarehouseRoleService', () => {
       clsService.get.mockReturnValue('warehouse-1');
       repository.findOneBy.mockResolvedValue(null);
       usersService.findByUsername.mockResolvedValue({
-        user_id: 'user-1',
+        userId: 'user-1',
         username: 'jane',
         password: 'hashed',
       });

@@ -58,7 +58,7 @@ describe('AuthController (e2e)', () => {
   });
   it('/auth/status logged in', async () => {
     const token = jwtService.sign({
-      user_id: '1',
+      userId: '1',
       username: 'username',
       activeWarehouseId: '',
       activeRole: '',
@@ -70,7 +70,7 @@ describe('AuthController (e2e)', () => {
   });
   it('/auth/status expired token', async () => {
     const token = jwtService.sign({
-      user_id: '1',
+      userId: '1',
       username: 'username',
       activeWarehouseId: '',
       activeRole: '',

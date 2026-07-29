@@ -16,6 +16,7 @@ import { RolesGuard } from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@shared/enum/roles.enum';
 import { DeleteResult } from 'typeorm';
+import { InventoryEntity } from './inventory.entity';
 @Controller('inventory')
 @UseGuards(AuthGuard, RolesGuard)
 export class InventoryController {
@@ -26,7 +27,7 @@ export class InventoryController {
     @Query('search') searchTerm: string,
     @Query('page') page: number,
     @Query('sort') sort: string,
-  ) {
+  ): Promise<[InventoryEntity[], number]> {
     if (!page) {
       page = 1;
     }
@@ -37,21 +38,21 @@ export class InventoryController {
   }
   @Post()
   @Roles(Role.ADMIN, Role.MANAGER)
-  addItem(@Body() item: InventoryDto) {
+  addItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
     return this.inventoryService.createItem(item);
   }
   @Patch()
   @Roles(Role.ADMIN, Role.MANAGER)
-  updateItem(@Body() item: InventoryDto) {
-    if (!item.id) {
+  updateItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
+    if (!item.itemId) {
       throw new BadRequestException('Item ID is required');
     }
     return this.inventoryService.updateItem(item);
   }
   @Delete()
   @Roles(Role.ADMIN, Role.MANAGER)
-  async deleteItem(@Body() item: InventoryDto) {
-    if (!item.id) {
+  async deleteItem(@Body() item: InventoryDto): Promise<{ message: string }> {
+    if (!item.itemId) {
       throw new BadRequestException('Item ID is required');
     }
     const result: DeleteResult = await this.inventoryService.remove(item);
