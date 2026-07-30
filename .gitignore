@@ -21,3 +21,4 @@ lerna-debug.log*
 Idea.txt
 TODO.txt
 /backend/coverage/
+/playwright/

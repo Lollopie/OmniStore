@@ -17,8 +17,12 @@ export default function InputField({ label, fieldSize, className, setValue, ...p
   return (
     <div className={`max-w-2xl w-full`}>
       <fieldset className="fieldset w-full">
-        {label && <label className="label">{label}</label>}
+        {label && <label htmlFor={label} className="label">
+          {label}
+        </label>}
         <input
+          name={label}
+          id={label}
           className={`${baseInputFieldStyle} ${className || ''} ${fieldSize ? SIZES[fieldSize] : ''}`}
           {...props}
           onChange={e => setValue && setValue(e.target.value)}
