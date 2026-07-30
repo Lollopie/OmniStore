@@ -121,14 +121,16 @@ jobs:
             backend/package-lock.json
             frontend/package-lock.json
 
-      - name: Install shared dependencies
+      - name: Build shared
         run: |
           npm ci
           npm run build
         working-directory: shared
 
-      - name: Install backend dependencies
-        run: npm ci
+      - name: Build backend
+        run: |
+          npm ci
+          npm run build # Generates dist/ needed for 'npm run start'
         working-directory: backend
 
       - name: Initialize test database

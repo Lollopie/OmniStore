@@ -53,14 +53,18 @@ export default defineConfig({
   ],
     webServer: [
     {
-      command: 'cd ../backend && npm run start:dev',
+      command: 'npm run start',
+      cwd: '../backend',
       url: 'http://localhost:3000/healthz',
       reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
     },
     {
       command: 'npm run dev -- --mode playwright',
+      cwd: './',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
     },
   ],
 });
