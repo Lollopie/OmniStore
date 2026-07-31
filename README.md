@@ -1,130 +1,123 @@
-# OmniStore: A Multi-User Isolated Web Inventory System
-## Key Features
+# OmniStore
 
-- **Multi-User Isolation**: Complete data separation at the database level using PostgreSQL Row-Level Security (RLS). Each user interacts only with their own data context.
-- **Secure Authentication**: Stateless session handling via JSON Web Tokens (JWT) and industry-standard password hashing using `bcrypt`.
-- **Modern User Interface**: A clean, responsive, and intuitive dashboard built with React and styled dynamically using Tailwind CSS.
-- **Robust & Scalable API**: A modular, enterprise-ready backend architecture powered by NestJS and TypeScript.
-- **Automated Quality Assurance**: Continuous Integration (CI) workflow configured with GitHub Actions to run automated tests on every push or pull request.
+OmniStore is a multi-user warehouse and inventory management app built with NestJS, React, PostgreSQL, Redis, and shared TypeScript DTOs.
 
----
+## Features
 
-## Tech Stack
+- Authentication with register, login, logout, and cookie-based session checks
+- Warehouse and inventory management behind protected routes
+- Role-based warehouse access
+- PostgreSQL migrations with row-level security support
+- Redis-backed request throttling
+- React UI with theme switching and responsive navigation
 
-### Front-End
-- **Framework**: React.js
-- **Styling**: Tailwind CSS
-- **Data Fetching & State**: Fetch API
+## Repository layout
 
-### Back-End
-- **Framework**: NestJS (TypeScript)
-- **Authentication**: JWT (JSON Web Tokens)
-- **Cryptography**: bcrypt
+- `backend/` - NestJS API
+- `frontend/` - React + Vite client
+- `shared/` - shared validation and DTO utilities
 
-### Database
-- **Engine**: PostgreSQL
-- **Security**: Row-Level Security (RLS) policies
+## Requirements
 
-### DevOps & CI/CD
-- **CI Workflow**: GitHub Actions (Automated testing suite)
+- Node.js 24
+- npm
+- PostgreSQL 18 or compatible
+- Redis 8 or compatible
 
----
+## Environment variables
 
-## Security Architecture
+### Backend
 
-### Data Isolation (PostgreSQL RLS)
-Unlike traditional multi-tenant applications that rely entirely on application-level filtering (e.g., appending `WHERE user_id = X` to every query), OmniStore enforces isolation directly within the database engine using **Row-Level Security (RLS)**.
-- Every query executed on behalf of an authenticated user sets a local transaction session variable (e.g., `SELECT set_config('app.current_user_id', {user_id}, true)`).
-- PostgreSQL native RLS policies automatically restrict `SELECT`, `INSERT`, `UPDATE`, and `DELETE` operations based on this context.
-- This pattern mitigates the risk of accidental cross-tenant data leaks caused by potential developer oversight in the API layer.
+Create `backend/.env.dev`, `backend/.env.test`, or `backend/.env.prod` as needed.
 
-### Authentication Flow
-1. **Login**: User submits credentials through the React front-end.
-2. **Verification**: NestJS handles the request, uses `bcrypt` to securely verify the password hash stored in PostgreSQL.
-3. **Token Issuance**: Upon successful validation, the backend generates a cryptographically signed **JWT**.
-4. **Authorized Requests**: The client securely stores this token as an HTML only cookie and includes it as a cookie in subsequent API transactions.
-
----
-
-## 📋 Prerequisites
-
-Before running this project, ensure you have the following installed on your machine:
-- [Node.js](https://nodejs.org/) (v24)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [PostgreSQL](https://www.postgresql.org/) (v14)
-
----
-
-## 🔧 Installation & Setup
-
-### 1. Clone the Repository
-```bash
-git clone [https://github.com/yourusername/omnistore.git](https://github.com/yourusername/omnistore.git)
-cd omnistore
+```env
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=dev
+APP_USER=postgres
+APP_PASSWORD=postgres
+DATABASE_SYNCHRONIZE=false
+BCRYPT_SALT_ROUNDS=14
+JWT_SECRET=your_secret
+JWT_EXPIRATION=3600
+REDIS_URL=redis://localhost:6379
+RATE_LIMIT=10
+RATE_TIMEOUT=60000
 ```
-### 2. Back-End Configuration
-Navigate to the backend directory and install the required dependencies:
+
+### Frontend
+
+```env
+VITE_NESTJS_HOST_URL=http://localhost:3000
+```
+
+## Run locally
+
+### Shared package
+
+```bash
+cd shared
+npm install
+npm run build
+```
+
+### Backend
+
 ```bash
 cd backend
 npm install
-```
-Create a .env file in the root of the backend/ directory and configure your environment variables:
-```env
-JWT_SECRET=your_super_secret_jwt_key
-JWT_EXPIRATION=3600#Expiration Time in seconds (1 hour)
-```
-Adapt the database connection and password encryption setttings in the .env.dev, .env.test, and .env.prod files to match your setup.
-```env
-DATABASE_HOST=localhost
-DATABASE_NAME=dev
-DATABASE_USER=postgres
-DATABASE_PASSWORD=passwoord
-DATABASE_PORT=5432
-DATABASE_SYNCHRONIZE=false
-BCRYPT_SALT_ROUNDS=14
-```
-Run database migrations/initialization scripts, and start the development server:
-```bash
 npm run start:dev
 ```
-### 3. Front-End Configuration
 
-Navigate to the frontend directory and install dependencies:
+### Frontend
+
 ```bash
-cd ../frontend
+cd frontend
 npm install
-```
-Start the frontend development server:
-```bash
 npm run dev
 ```
-## Testing & CI/CD
-OmniStore implements automated testing to ensure stability, reliability, and code quality.
-Running Tests Locally
 
-Backend Tests:
-Run unit and end-to-end (e2e) tests inside the backend folder:
+The frontend runs on `http://localhost:5173` and the backend on `http://localhost:3000`.
+
+## Docker Compose
+
+You can also start the full stack with Docker Compose:
+
 ```bash
+docker compose up --build
+```
+
+## Testing
+
+Backend:
+
+```bash
+cd backend
 npm run test
 npm run test:e2e
 ```
-### GitHub Actions (CI)
 
-The repository features an integrated GitHub Actions CI pipeline. On every push or pull request to the main branches, the workflow handles:
+Frontend Playwright tests:
 
-1. Automated setup of the Node.js runtime environment.
+```bash
+cd frontend
+npx playwright test
+```
 
-1. Caching and installing project dependencies.
+## CI/CD
 
-1. Executing the comprehensive test suite to prevent regressions.
+The project uses GitHub Actions to automate quality gates and deployment:
 
-The configuration can be inspected in .github/workflows/main.yml.
+- runs backend unit tests and E2E tests on pull requests and pushes to `main`
+- runs frontend Playwright tests against the same PostgreSQL and Redis services
+- builds the shared package and backend before browser tests
+- triggers production deployments after both test jobs pass
+- performs a post-deploy health check against `GET /healthz`
 
-## RoadMap & Future Scope (TODOs)
-- [X] Dockerization: Containerize both Front-End and Back-End applications utilizing Dockerfile configs and orchestrate multi-container deployment via docker-compose.
-- [X] Enhanced Security: Implement additional security measures such as rate limiting and advanced logging for suspicious activities.
-- [X] Automatic Cloud Deployment: Build continuous deployment (CD) pipelines through GitHub Actions to automatically roll out updates to a cloud provider (e.g., AWS, Render, DigitalOcean).
-- [ ] Advanced User Management: Introduce role-based access control (RBAC) to allow for different user permissions and administrative capabilities.
+## Health check
+
+The backend exposes a health endpoint at `GET /healthz`.
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
+MIT. See [LICENSE](LICENSE).
