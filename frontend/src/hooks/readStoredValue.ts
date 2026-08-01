@@ -1,4 +1,10 @@
-export const readStoredValue = (key: string) => {
+export const readStoredValue = <T = unknown>(key: string, fallback: T | string = ''): T | string => {
   const storedValue = localStorage.getItem(key);
-  return storedValue ? JSON.parse(storedValue) : '';
+  if (!storedValue) return fallback;
+
+  try {
+    return JSON.parse(storedValue) as T;
+  } catch {
+    return storedValue;
+  }
 };

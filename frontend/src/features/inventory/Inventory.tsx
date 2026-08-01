@@ -20,7 +20,7 @@ import { handleUpdateItem } from './hooks/handleUpdateItem.ts';
 import { handleDeleteItem } from './hooks/handleDeleteItem.ts';
 import { readStoredValue } from '../../hooks/readStoredValue.ts';
 export interface InventoryItem {
-  id: string;
+  itemId: string;
   itemName: string;
   amount: string;
 }
@@ -29,6 +29,7 @@ const InventoryManager = () => {
   const [totalInventory, setTotalInventory] = useState(0);
   const [loading, setLoading] = useState(true);
   const [addItemIsOpen, setAddItemIsOpen] = useState(false);
+  const [updateItemIsOpen, setUpdateItemIsOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const addItemDialogRef = useRef<HTMLDialogElement>(null);
   const updateItemDialogRef = useRef<HTMLDialogElement>(null);
@@ -78,29 +79,31 @@ const InventoryManager = () => {
   return (
     <MainPage>
       <div className="max-w-2xl w-full overflow-hidden">
-        <Modal dialogRef={addItemDialogRef} title="Add Item" onClose={() => setAddItemIsOpen(false)}>
-          <ItemForm
-            submitLabel="Add"
-            onCancel={() => setAddItemIsOpen(false)}
-            onSubmit={(data) => {
-              handleAddItem({itemName: data.itemName, amount: data.amount.toString(), setRefreshIndex, addToast});
+        {addItemIsOpen && (
+          <Modal dialogRef={addItemDialogRef} title="Add Item" onClose={() => setAddItemIsOpen(false)}>
+            <ItemForm
+              submitLabel="Add"
+              onCancel={() => setAddItemIsOpen(false)}
+              onSubmit={(data) => {
+                handleAddItem({itemName: data.itemName, amount: data.amount.toString(), setRefreshIndex, addToast});
               setAddItemIsOpen(false);
             }}
           />
-        </Modal>
-        <Modal
+        </Modal>)}
+        {updateItemIsOpen && (
+          <Modal
           dialogRef={updateItemDialogRef}
           title="Update Item"
-          onClose={() => setSelectedItem(null)}
+          onClose={() => {setUpdateItemIsOpen(false);setSelectedItem(null)}}
         >
           {selectedItem && (
             <ItemForm
-              key={selectedItem.id}
+              key={selectedItem.itemId}
               submitLabel="Update"
-              onCancel={() => setSelectedItem(null)}
+              onCancel={() => {setUpdateItemIsOpen(false);setSelectedItem(null)}}
               onSubmit={(data) => {
                 handleUpdateItem({
-                  id: selectedItem.id,
+                  itemId: selectedItem.itemId,
                   itemName: data.itemName,
                   amount: data.amount.toString(),
                   setRefreshIndex,
@@ -110,7 +113,7 @@ const InventoryManager = () => {
               }}
             />
           )}
-        </Modal>
+        </Modal>)}
         <div className="w-full max-w-2xl mx-auto bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 sm:p-8 overflow-scroll">
          <div className="space-y-6">
           <div className="w-full pb-6 border-b border-base-300">
@@ -160,17 +163,17 @@ const InventoryManager = () => {
                   </tr>
                 ) : (
                   inventory.map((item: InventoryItem) => (
-                    <tr key={item.id} className="hover:bg-base-300/50 transition-colors">
+                    <tr key={item.itemId} className="hover:bg-base-300/50 transition-colors">
                       <TableDataCell children={item.itemName} className="text-base-400"/>
                       <TableDataCell children={item.amount} className="text-base-400"/>
                       {readStoredValue('activeRole') === 'admin' && (
                         <TableDataCell children={
                           <div className="flex justify-end items-center gap-2">
-                            <Button onClick={() => setSelectedItem(item)}
+                            <Button onClick={() => {setUpdateItemIsOpen(true);setSelectedItem(item)}}
                                     children={<Edit size={16} className="stroke-current" />}
                                     variant={"info"}
                                   size={"xs"} />
-                          <Button onClick={() => handleDeleteItem({id: item.id, itemName: item.itemName, amount: item.amount.toString(), setRefreshIndex, addToast})}
+                          <Button onClick={() => handleDeleteItem({itemId: item.itemId, itemName: item.itemName, amount: item.amount.toString(), setRefreshIndex, addToast})}
                                   children={<Trash size={16}/>}
                                   variant={"danger"}
                                   size={"xs"} />

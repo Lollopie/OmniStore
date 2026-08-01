@@ -1,23 +1,23 @@
 import React from 'react';
 
 type Props = {
-  id: string;
+  itemId: string;
   itemName: string;
   amount: string;
   setRefreshIndex: React.Dispatch<React.SetStateAction<number>>;
   addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 };
 
-export const handleDeleteItem = async ({id, itemName, amount, setRefreshIndex, addToast}: Props) => {
-  if (!id || !itemName.trim() || !amount) {
+export const handleDeleteItem = async ({itemId, itemName, amount, setRefreshIndex, addToast}: Props) => {
+  if (!itemId || !itemName.trim() || !amount) {
     alert('Please provide an ID, a name and an amount.');
     return;
   }
 
   const newItem = {
-    id: id,
+    itemId: itemId,
     itemName: itemName.trim(),
-    amount: parseInt(amount, 10)
+    amount: amount.trim()
   };
 
   try {

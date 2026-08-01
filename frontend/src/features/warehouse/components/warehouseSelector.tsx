@@ -38,7 +38,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
   };
   const warehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');
   if (!warehouses || warehouses.length === 0) {
-    return <p>No warehouses assigned.</p>;
+    return <h3>No warehouses assigned.</h3>;
   }
   return (
     <fieldset className="fieldset warehouse-selector flex flex-row justify-left md:items-center gap-2">

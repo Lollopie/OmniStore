@@ -6,6 +6,12 @@ const VARIANTS = {
   add: "btn-accent",
   info: "btn-info",
 }
+const Labels = {
+  primary: "",
+  danger: "Delete",
+  add: "Add",
+  info: "Edit",
+}
 const SIZES = {
   xs: "btn-xs",
   sm: "btn-sm",
@@ -20,9 +26,11 @@ export default function Button({ children, variant = 'primary', size = 'md', cla
   const baseButtonStyles = "btn";
 
   const variantStyles = VARIANTS[variant] || VARIANTS.primary;
+  const variantLabel = Labels[variant] || Labels.primary;
   const sizeStyles = SIZES[size] || SIZES.md;
   return (
     <button
+      aria-label={variantLabel}
       className={`${baseButtonStyles} ${variantStyles} ${sizeStyles} ${className}`}
       {...props}
     >
