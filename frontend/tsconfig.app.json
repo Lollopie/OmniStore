@@ -21,6 +21,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
 
     "paths": {
         "@shared/*": ["../shared/*"],
@@ -29,6 +30,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*", "../shared/**/*"],
+  "include": ["src/**/*", "../shared/**/*", "playwright.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

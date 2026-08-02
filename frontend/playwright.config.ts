@@ -4,9 +4,10 @@ import { defineConfig, devices } from '@playwright/test';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-import { config } from 'dotenv';
-import * as path from 'path';
-config({ path: path.resolve('./frontend', '.env.playwright') });
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve('./frontend', '.env.playwright') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
