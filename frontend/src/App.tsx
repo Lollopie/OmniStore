@@ -1,46 +1,31 @@
-import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router';
-import Register from './features/auth/Register';
-import Login from './features/auth/Login';
+import Register from './features/auth/authForm/Register';
+import Login from './features/auth/authForm/Login';
 import Inventory from './features/inventory/Inventory.tsx';
 import NavBar from './components/NavBar.tsx';
 import './assets/index.css';
 import Warehouse from './features/warehouse/warehouse.tsx';
 import { ToastProvider } from './features/toast';
-function ProtectedRoute({ isAuthenticated } : {isAuthenticated: boolean}) {
+import { SettingsLayout } from './features/settings/Settings.tsx';
+import { useTheme } from './features/theme/hooks/useTheme.tsx';
+import { AccountSettings } from './features/settings/components/AccountSettings.tsx';
+import { WarehouseSettings } from './features/settings/components/WarehouseSettings.tsx';
+import PreferenceSettings from './features/settings/components/PreferenceSettings.tsx';
+import { AuthProvider, useAuth } from './features/auth/authContext/';
+
+function ProtectedRoute() {
+  const { isAuthenticated } = useAuth();
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-function GuestRoute({ isAuthenticated } : {isAuthenticated: boolean}) {
+function GuestRoute() {
+  const { isAuthenticated } = useAuth();
   return !isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
 }
 
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/auth/status`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        if (response.ok) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
-      } catch {
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuthStatus();
-  }, []);
+function AppContent() {
+  const { loading } = useAuth();
+  useTheme();
 
   if (loading) {
     return (
@@ -54,19 +39,26 @@ export default function App() {
     <ToastProvider>
       <div className="min-h-screen bg-base-200">
         <header className="w-full lg:max-w-3/5 mx-auto py-3 rounded-2xl">
-          <NavBar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
+          <NavBar />
         </header>
         <div className="h-full py-12 px-4 sm:px-6 lg:px-8">
           <Routes>
-            <Route element={<GuestRoute isAuthenticated={isAuthenticated} />}>
+            <Route element={<GuestRoute />}>
               <Route path="/register" element={<Register />} />
-              <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated}/>} />
+              <Route path="/login" element={<Login />} />
               <Route path="/logout" element={<Navigate to="/login" replace />} />
             </Route>
 
-            <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+            <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Warehouse />} />
               <Route path="/inventory" element={<Inventory />} />
+              <Route path="/settings" element={<SettingsLayout />}>
+                <Route index element={<Navigate to="account" replace />} />
+
+                <Route path="account" element={<AccountSettings />} />
+                <Route path="warehouses" element={<WarehouseSettings />} />
+                <Route path="preferences" element={<PreferenceSettings />} />
+              </Route>
             </Route>
 
             <Route path="*" element={<div className="p-10">404 - Page Not Found</div>} />
@@ -74,5 +66,13 @@ export default function App() {
         </div>
       </div>
     </ToastProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

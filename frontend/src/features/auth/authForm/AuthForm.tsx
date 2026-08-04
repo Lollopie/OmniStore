@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
-import { RegisterDto } from '@shared/dto/register.dto';
-import InputField from '../../components/InputField.tsx';
-import Button from '../../components/Button.tsx';
+import { RegisterDto } from '@shared/dto/register.dto.ts';
+import InputField from '../../../components/InputField.tsx';
+import Button from '../../../components/Button.tsx';
 
 
 interface AuthFormProps {

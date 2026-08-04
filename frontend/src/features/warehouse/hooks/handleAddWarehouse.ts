@@ -30,9 +30,9 @@ export const handleAddWarehouse = async ({warehouseDto, setActiveWarehouse, addT
     if (!response.ok) throw new Error('Failed to add warehouse.');
 
     const addedItem: { name:string, warehouseId: string, role:string } = await response.json();
-    const currentWarehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');
+    const currentWarehouses = JSON.parse(localStorage.getItem('userWarehouses') || '[]');
     currentWarehouses.push(addedItem);
-    localStorage.setItem('user_warehouses', JSON.stringify(currentWarehouses));
+    localStorage.setItem('userWarehouses', JSON.stringify(currentWarehouses));
     localStorage.setItem('activeWarehouse', JSON.stringify(addedItem.warehouseId));
     localStorage.setItem('activeRole', JSON.stringify(addedItem.role));
     setActiveWarehouse({ warehouseId: addedItem.warehouseId, name: addedItem.name, role: addedItem.role });

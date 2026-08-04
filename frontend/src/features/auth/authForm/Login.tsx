@@ -1,9 +1,10 @@
 import AuthForm from './AuthForm.tsx';
-import React from 'react';
-interface LoginProps {
-  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
-}
-export default function Login({ setIsAuthenticated }: LoginProps) {  return (
+import { useAuth } from '../authContext/';
+// interface LoginProps {
+// }
+export default function Login() {
+  const { setIsAuthenticated } = useAuth();
+  return (
     <AuthForm
       title="Login"
       buttonText="Login"
@@ -11,7 +12,7 @@ export default function Login({ setIsAuthenticated }: LoginProps) {  return (
       successMessage='Login successful!'
       onSuccess={() => setIsAuthenticated(true)}
       handleResponse={(data) => {
-        localStorage.setItem('user_warehouses', JSON.stringify(data.warehouses));
+        localStorage.setItem('userWarehouses', JSON.stringify(data.warehouses));
         localStorage.setItem(
           'activeWarehouse',
           JSON.stringify(data.warehouses && data.warehouses[0] ? data.warehouses[0].warehouseId : ''),

@@ -1,14 +1,13 @@
 import { Link } from 'react-router';
 import React, { useEffect, useRef } from 'react';
 import Logo from './Logo.tsx';
-import { ThemeToggle } from './ThemeToggle.tsx';
-export interface NavBarProps {
-  isAuthenticated: boolean;
-  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
-}
-export default function NavBar({isAuthenticated, setIsAuthenticated}: NavBarProps) {
+import { useAuth } from '../features/auth/authContext/';
+// export interface NavBarProps {
+// }
+export default function NavBar() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
+  const { isAuthenticated, logout } = useAuth();
   const handleLogout= async () => {
     if (isAuthenticated) {
       try {
@@ -17,7 +16,7 @@ export default function NavBar({isAuthenticated, setIsAuthenticated}: NavBarProp
           credentials: 'include'
         });
         if(response.ok){
-          setIsAuthenticated(false);
+          logout();
         }
       }
       catch (err) {
@@ -42,16 +41,16 @@ export default function NavBar({isAuthenticated, setIsAuthenticated}: NavBarProp
           {!isAuthenticated &&
             <>
               <Link to="/login" className="btn btn-ghost">Login</Link>
-              <Link to="/register" className="btn btn-primary mx-5">Register</Link>
+              <Link to="/register" className="btn btn-primary mr-5">Register</Link>
             </>
           }
           {isAuthenticated &&
             <>
               <Link to={"/inventory"} className="btn btn-ghost">Inventory</Link>
-              <Link to="/logout" onClick={handleLogout} className="btn btn-ghost mx-5">Logout</Link>
+              <Link to={"/settings"} className="btn btn-ghost">Settings</Link>
+              <Link to="/logout" onClick={handleLogout} className="btn btn-ghost mr-5">Logout</Link>
             </>
           }
-          <ThemeToggle />
         </div>
       </div>
       <div className="md:hidden flex flex-col mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
@@ -77,6 +76,7 @@ export default function NavBar({isAuthenticated, setIsAuthenticated}: NavBarProp
           {isAuthenticated &&
             <div className="flex flex-col">
               <Link to={"/inventory"} className="btn btn-ghost">Inventory</Link>
+              <Link to={"/settings"} className="btn btn-ghost">Settings</Link>
               <Link to="/logout" onClick={handleLogout} className="btn btn-ghost">Logout</Link>
             </div>
           }

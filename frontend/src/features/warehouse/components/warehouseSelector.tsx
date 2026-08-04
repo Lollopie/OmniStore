@@ -36,7 +36,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
       addToast(`Failed to change active warehouse.`, 'error', 5000);
     }
   };
-  const warehouses = JSON.parse(localStorage.getItem('user_warehouses') || '[]');
+  const warehouses = JSON.parse(localStorage.getItem('userWarehouses') || '[]');
   if (!warehouses || warehouses.length === 0) {
     return <h3>No warehouses assigned.</h3>;
   }
