@@ -28,7 +28,7 @@ test.describe('Warehouse Flow', () => {
     await page.getByLabel('Warehouse Name').fill('Test Warehouse');
 
     const createResponse = page.waitForResponse(
-      (res) => res.url().includes('/warehouse') && res.request().method() === 'POST'
+      (res) => res.url().includes('/warehouses') && res.request().method() === 'POST'
     );
     await page.getByRole('button', { name: 'Add', exact: true }).filter({ hasText: 'Add' }).click();
     await createResponse;
@@ -50,7 +50,7 @@ test.describe('Warehouse Flow', () => {
     }
 
     const searchResponse = page.waitForResponse(
-      (res) => res.url().includes('/warehouse/users') && res.request().method() === 'GET'
+      (res) => res.url().includes('/warehouses/users') && res.request().method() === 'GET'
     );
 
     await page.getByPlaceholder('Search...').fill('test');
@@ -82,7 +82,7 @@ test.describe('Warehouse Flow', () => {
       await page.getByPlaceholder('Username to add').fill(targetUser);
       await page.getByText('Add user', { exact: true }).click();
       const addResponse = page.waitForResponse(
-        (res) => res.url().includes('/warehouse/users') && res.request().method() === 'POST'
+        (res) => res.url().includes('/warehouses/users') && res.request().method() === 'POST'
       );
       await addResponse;
       await expect(

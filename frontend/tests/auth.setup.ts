@@ -57,7 +57,7 @@ setup('create inventory account', async ({ request, page }) => {
     return res.ok;
   }, {url, credentials});
   expect(loginSuccess).toBeTruthy();
-  const warehouseUrl = `${process.env.VITE_NESTJS_HOST_URL}/warehouse`;
+  const warehouseUrl = `${process.env.VITE_NESTJS_HOST_URL}/warehouses`;
   const warehouseAddSuccess = await page.evaluate(async (warehouseUrl) => {
     const res = await fetch(warehouseUrl, {
       method: 'POST',

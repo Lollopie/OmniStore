@@ -24,7 +24,7 @@ import { RolesGuard } from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@shared/enum/roles.enum';
 
-@Controller('warehouse')
+@Controller('warehouses')
 export class WarehouseController {
   constructor(
     private readonly warehouseService: WarehouseService,

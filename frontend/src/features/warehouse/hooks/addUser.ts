@@ -9,7 +9,7 @@ export const addUser = async ({newUsername, setUsers, setNewUsername, addToast}:
   const username = newUsername || '';
   if (!username) return alert('Enter a username');
   try {
-    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users`, {
+    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

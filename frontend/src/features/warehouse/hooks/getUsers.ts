@@ -12,7 +12,7 @@ export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller,
     const params = new URLSearchParams();
     try {
       params.append('search', searchTerm || '');
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/users?${params}`, {
+      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses/users?${params}`, {
         method: 'GET',
         credentials: 'include',
         signal: controller.signal

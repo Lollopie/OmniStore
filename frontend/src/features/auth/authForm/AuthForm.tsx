@@ -4,6 +4,7 @@ import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { RegisterDto } from '@shared/dto/register.dto.ts';
 import InputField from '../../../components/InputField.tsx';
 import Button from '../../../components/Button.tsx';
+import { PasswordInput } from '../../../components/PasswordInput.tsx';
 
 
 interface AuthFormProps {
@@ -78,12 +79,11 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
           <div className="space-y-4">
             <InputField
               label="Username"
-              className="input"
               type="text"
               {...register('username')}
             />
             {errors.username && <p className="mb-4 text-sm text-error font-medium">{errors.username.message}</p>}
-            <InputField
+            <PasswordInput
               className="last:mb-6"
               label="Password"
               type="password"

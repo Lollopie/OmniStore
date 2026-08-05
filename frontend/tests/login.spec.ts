@@ -39,7 +39,7 @@ test('guest can register a new account', async ({ page }) => {
   await page.goto('/register');
   await expect(page.getByRole('heading', { name: 'Create an Account' })).toBeVisible();
   await page.getByLabel('Username').fill(credentials.username);
-  await page.getByLabel('Password').fill(credentials.password);
+  await page.getByRole('textbox', { name: 'Password' }).fill(credentials.password);
 
   const registerResponsePromise = page.waitForResponse(
     (res) => res.url().includes('/register') && res.request().method() === 'POST'
@@ -69,7 +69,7 @@ test('guest can sign in with payload monitoring', async ({ page }) => {
   await page.goto('/login');
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
   await page.getByLabel('Username').fill(credentials.username);
-  await page.getByLabel('Password').fill(credentials.password);
+  await page.getByRole('textbox', { name: 'Password' }).fill(credentials.password);
 
   const loginResponsePromise = page.waitForResponse(
     (res) => res.url().includes('/login') && res.request().method() === 'POST'

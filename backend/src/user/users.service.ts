@@ -5,6 +5,7 @@ import { UserEntity } from './user.entity';
 import { RegisterDto } from '@shared/dto/register.dto';
 import { UnauthorizedException } from '@nestjs/common';
 import { PasswordService } from '../auth/password.service';
+import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
 
 @Injectable()
 export class UsersService {
@@ -36,5 +37,28 @@ export class UsersService {
     }
 
     return await this.usersRepository.delete(userId);
+  }
+  async updatePassword(userId: string, changePasswordDto: ChangePasswordDto) {
+    if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
+      throw new UnauthorizedException('New passwords do not match');
+    }
+    const user = await this.usersRepository.findOneBy({
+      userId: userId,
+    });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    if (
+      !(await this.passwordService.verifyPassword(
+        changePasswordDto.password,
+        user.password,
+      ))
+    ) {
+      throw new UnauthorizedException('Invalid password');
+    }
+    user.password = await this.passwordService.hashPassword(
+      changePasswordDto.confirmPassword,
+    );
+    return await this.usersRepository.save(user);
   }
 }

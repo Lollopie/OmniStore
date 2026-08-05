@@ -14,7 +14,7 @@ describe('RateLimit (e2e)', () => {
   let configService: ConfigService;
   let redisClient: RedisClientType;
   let dataSource: DataSource;
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         await ConfigModule.forRoot({
@@ -30,11 +30,13 @@ describe('RateLimit (e2e)', () => {
       url: configService.get<string>('db.redisUrl'),
     });
     await redisClient.connect();
-    await redisClient.flushDb();
     dataSource = moduleFixture.get<DataSource>(DataSource);
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
+  });
+  beforeEach(async () => {
+    await redisClient.flushDb();
   });
   it('/healthz', async () => {
     for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
@@ -77,7 +79,9 @@ describe('RateLimit (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
+  });
+  afterAll(async () => {
     await app.close();
     redisClient.destroy();
-  });
+  })
 });

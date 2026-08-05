@@ -10,7 +10,7 @@
   },
   "maxWorkers": 1,
   "moduleNameMapper": {
-    "^@shared$": "<rootDir>/../shared/dist/index.js",
-    "^@shared/(.*)$": "<rootDir>/../shared/dist/$1"
+    "^@shared$": "<rootDir>/../shared/dist/src/index.js",
+    "^@shared/(.*)$": "<rootDir>/../shared/dist/src/$1"
   }
 }

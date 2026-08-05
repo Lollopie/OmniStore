@@ -7,6 +7,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Role } from '../enum/roles.enum'
+import { IsValidUsername } from '../decorators/isValidUsername.decorator';
 
 export class WarehouseDto {
   @IsString()
@@ -28,12 +29,7 @@ export class WarehouseIDDto {
 }
 
 export class WarehouseUserRoleDto {
-  @IsString()
-  @MinLength(3, { message: 'Invalid Username' })
-  @MaxLength(30, { message: 'Invalid Username' })
-  @Matches(/^[a-zA-Z0-9._-]+$/, {
-    message: 'Invalid Username',
-  })
+  @IsValidUsername()
   username: string;
 
   @IsEnum(Role, { message: 'Invalid role' })

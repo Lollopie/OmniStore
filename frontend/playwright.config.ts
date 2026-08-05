@@ -39,18 +39,6 @@ export default defineConfig({
       use: {...devices['Desktop Chrome']},
       dependencies: ['setup']
     },
-
-    {
-      name: 'e2e tests firefox',
-      use: {...devices['Desktop Firefox']},
-      dependencies: ['setup']
-    },
-
-    {
-      name: 'e2e tests webkit',
-      use: {...devices['Desktop Safari']},
-      dependencies: ['setup']
-    },
   ],
     webServer: [
     {

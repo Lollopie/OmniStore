@@ -6,7 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 
 describe('HealthController (e2e)', () => {
   let app: NestExpressApplication;
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
       providers: [],
@@ -19,7 +19,7 @@ describe('HealthController (e2e)', () => {
   it('/health', () => {
     return request(app.getHttpServer()).get('/healthz').expect(200);
   });
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
   });
 });

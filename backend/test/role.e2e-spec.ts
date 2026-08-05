@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { CanActivate, Injectable, ValidationPipe } from '@nestjs/common';
@@ -10,6 +9,8 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { registerAndLogin } from './utils/helper';
+import { CookieAccessInfo } from 'cookiejar';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -20,7 +21,7 @@ describe('RoleGuard (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let jwtService: JwtService;
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -54,54 +55,29 @@ describe('RoleGuard (e2e)', () => {
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
   it('RoleGuard no warehouse', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const roleGuardResponse = await request(app.getHttpServer())
+    const agent = await registerAndLogin(app, 'username', 'password1');
+    const roleGuardResponse = await agent
       .post('/inventory')
       .send({
         itemName: 'Apple',
         amount: '1',
       })
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
       .expect(400);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe('No active Warehouse found');
   });
   it('RoleGuard non-existent warehouse', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
+    const agent = await registerAndLogin(app, 'username', 'password1');
+    const cookie = agent.jar.getCookie(
+      'token',
+      new CookieAccessInfo('127.0.0.1', '/', false, false),
+    );
     const token: {
       userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
-    } = jwtService.decode(
-      response.headers['set-cookie'][0].split('token=')[1].split(';')[0],
-    );
+    } = jwtService.decode(cookie.value);
     const newToken: {
       userId: string;
       username: string;
@@ -113,114 +89,79 @@ describe('RoleGuard (e2e)', () => {
       activeWarehouseId: '019fa8c5-6daa-73cb-bcdd-c6d56fb5ae05',
       activeRole: 'admin',
     };
-    const roleGuardResponse = await request(app.getHttpServer())
+    cookie.value = jwtService.sign(newToken);
+    const roleGuardResponse = await agent
       .post('/inventory')
       .send({
         itemName: 'Apple',
         amount: '1',
       })
-      .set('Cookie', `token=${jwtService.sign(newToken)}`)
       .expect(400);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe('Active Warehouse not found');
   });
   it('RoleGuard with permission', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .expect(201);
-    await request(app.getHttpServer())
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    await agent
       .post('/inventory')
       .send({
         itemName: 'Apple',
         amount: '1',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(201);
   });
   it('RoleGuard without role in warehouse', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username2',
-        password: 'password1',
-      })
-      .expect(201);
-    const response2 = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username2',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .expect(201);
+    const firstAgent = await registerAndLogin(
+      app,
+      'username',
+      'password1',
+      true,
+    );
+    const secondAgent = await registerAndLogin(
+      app,
+      'username2',
+      'password1',
+      false,
+    );
+    const cookie = firstAgent.jar.getCookie(
+      'token',
+      new CookieAccessInfo('127.0.0.1', '/', false, false),
+    );
+    const secondCookie = secondAgent.jar.getCookie(
+      'token',
+      new CookieAccessInfo('127.0.0.1', '/', false, false),
+    );
     const token: {
       userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
-    } = jwtService.decode(
-      response2.headers['set-cookie'][0].split('token=')[1].split(';')[0],
-    );
+    } = jwtService.decode(cookie.value);
+    const secondToken: {
+      userId: string;
+      username: string;
+      activeWarehouseId: string;
+      activeRole: string;
+    } = jwtService.decode(secondCookie.value);
     const newToken: {
       userId: string;
       username: string;
       activeWarehouseId: string;
       activeRole: string;
     } = {
-      userId: token.userId,
-      username: token.username,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      activeWarehouseId: warehouseResponse.body.warehouseId,
+      userId: secondToken.userId,
+      username: secondToken.username,
+      activeWarehouseId: token.activeWarehouseId,
       activeRole: 'admin',
     };
-    const roleGuardResponse = await request(app.getHttpServer())
+    cookie.value = jwtService.sign(newToken);
+    secondAgent.jar.setCookie(cookie);
+    const roleGuardResponse = await secondAgent
       .post('/inventory')
       .send({
         itemName: 'Apple',
         amount: '1',
       })
-      .set('Cookie', `token=${jwtService.sign(newToken)}`)
       .expect(403);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe(
@@ -228,48 +169,20 @@ describe('RoleGuard (e2e)', () => {
     );
   });
   it('RoleGuard without permission', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .expect(201);
-    await request(app.getHttpServer())
-      .patch('/warehouse/users')
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    await agent
+      .patch('/warehouses/users')
       .send({
         username: 'username',
         role: 'staff',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(200);
-    const roleGuardResponse = await request(app.getHttpServer())
+    const roleGuardResponse = await agent
       .post('/inventory')
       .send({
         itemName: 'Apple',
         amount: '1',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(403);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe(
@@ -288,6 +201,8 @@ describe('RoleGuard (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
+  });
+  afterAll(async () => {
     await dataSource.destroy();
     await app.close();
   });

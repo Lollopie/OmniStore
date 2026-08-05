@@ -23,7 +23,7 @@ export default function InputField({ variant, label, fieldSize, className, setVa
   return (
     <div className={`max-w-2xl w-full`}>
       <fieldset className="fieldset w-full">
-        {label && <label htmlFor={label} className="label">
+        {label && <label htmlFor={label} className="label text-base-content">
           {label}
         </label>}
         <input

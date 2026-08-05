@@ -18,7 +18,7 @@ class MockThrottlerGuard implements CanActivate {
 describe('LogoutController (e2e)', () => {
   let app: NestExpressApplication;
   let jwtService: JwtService;
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -66,7 +66,7 @@ describe('LogoutController (e2e)', () => {
     expect(response.headers['set-cookie'][0]).toMatch(/Expires=.*1970/);
     expect(response.body).toEqual({ message: 'Logout successful' });
   });
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
   });
 });

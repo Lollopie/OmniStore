@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
@@ -10,6 +9,8 @@ import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
+import { UserEntity } from '../src/user/user.entity';
+import { registerAndLogin } from './utils/helper';
 
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -21,8 +22,9 @@ class MockThrottlerGuard implements CanActivate {
 describe('UsersController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
+  let passwordService: PasswordService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -42,6 +44,7 @@ describe('UsersController (e2e)', () => {
     app.use(cookieParser());
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
+    passwordService = moduleFixture.get(PasswordService);
   });
 
   afterEach(async () => {
@@ -55,47 +58,33 @@ describe('UsersController (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
+  });
+  afterAll(async () => {
     await app.close();
   });
-
   it('/users (DELETE) - should delete user account with correct password', async () => {
     const userData = {
       username: 'testuser',
       password: 'password123',
     };
-
-    await request(app.getHttpServer())
-      .post('/register')
-      .send(userData)
-      .expect(201);
-
-    const loginResponse = await request(app.getHttpServer())
-      .post('/login')
-      .send(userData)
-      .expect(200);
-    const user = await dataSource
-      .getRepository('user')
-      .findOneBy({ username: 'testuser' });
-    expect(user).toBeDefined();
-
-    const response = await request(app.getHttpServer())
-      .delete('/users')
-      .set('Cookie', `${loginResponse.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        userId: user?.userId,
-        password: userData.password,
-      });
+    const agent = await registerAndLogin(
+      app,
+      userData.username,
+      userData.password,
+    );
+    const response = await agent.delete('/users').send({
+      password: userData.password,
+    });
 
     expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('message');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(response.body.message).toBe('Account successfully deleted');
+    expect(response.body.message).toBe('Account deleted successfully');
 
     // Verify user is gone
     const deletedUser = await dataSource
-      .getRepository('user')
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      .findOneBy({ userId: user?.userId });
+      .getRepository(UserEntity)
+      .findOneBy({ username: userData.username });
     expect(deletedUser).toBeNull();
   });
 
@@ -105,32 +94,89 @@ describe('UsersController (e2e)', () => {
       password: 'password123',
     };
 
-    await request(app.getHttpServer())
-      .post('/register')
-      .send(userData)
-      .expect(201);
+    const agent = await registerAndLogin(
+      app,
+      userData.username,
+      userData.password,
+    );
 
-    const loginResponse = await request(app.getHttpServer())
-      .post('/login')
-      .send(userData)
-      .expect(200);
-
-    const user = await dataSource
-      .getRepository('user')
-      .findOneBy({ username: 'wrongpassuser' });
-    expect(user).toBeDefined();
-
-    const response = await request(app.getHttpServer())
-      .delete('/users')
-      .set('Cookie', `${loginResponse.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        userId: user?.userId,
-        password: 'wrongpassword',
-      });
+    const response = await agent.delete('/users').send({
+      password: 'wrongpassword',
+    });
 
     expect(response.status).toBe(401);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(response.body.message).toBe('Invalid password');
+  });
+  it('/users (PATCH) - should update password with correct password', async () => {
+    const userData = {
+      username: 'testuser',
+      password: 'password123',
+    };
+
+    const agent = await registerAndLogin(
+      app,
+      userData.username,
+      userData.password,
+    );
+
+    const response = await agent.patch('/users').send({
+      password: userData.password,
+      newPassword: 'newpassword123',
+      confirmPassword: 'newpassword123',
+    });
+
+    expect(response.status).toBe(200);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(response.body.message).toBe('Password updated successfully');
+    const user = await dataSource
+      .getRepository('user')
+      .findOneBy({ username: 'testuser' });
+    expect(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      await passwordService.verifyPassword('newpassword123', user.password),
+    ).toBe(true);
+  });
+  it('/users (PATCH) - should not update password with incorrect password', async () => {
+    const userData = {
+      username: 'testuser',
+      password: 'password123',
+    };
+
+    const agent = await registerAndLogin(
+      app,
+      userData.username,
+      userData.password,
+    );
+
+    const response = await agent.patch('/users').send({
+      password: 'wrongpassword1',
+      newPassword: 'newpassword123',
+      confirmPassword: 'newpassword123',
+    });
+    expect(response.status).toBe(401);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(response.body.message).toBe('Invalid password');
+  });
+  it('/users (PATCH) - should not update password with incorrect password', async () => {
+    const userData = {
+      username: 'testuser',
+      password: 'password123',
+    };
+
+    const agent = await registerAndLogin(
+      app,
+      userData.username,
+      userData.password,
+    );
+
+    const response = await agent.patch('/users').send({
+      password: userData.password,
+      newPassword: 'newpassword123',
+      confirmPassword: 'newpassword12',
+    });
+    expect(response.status).toBe(401);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(response.body.message).toBe('New passwords do not match');
   });
 });

@@ -18,7 +18,7 @@ export const handleAddWarehouse = async ({warehouseDto, setActiveWarehouse, addT
   };
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse`, {
+    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

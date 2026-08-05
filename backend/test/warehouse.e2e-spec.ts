@@ -9,6 +9,7 @@ import dbConfig from '../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
+import { registerAndLogin } from './utils/helper';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -18,7 +19,7 @@ class MockThrottlerGuard implements CanActivate {
 describe('WarehouseController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -40,23 +41,9 @@ describe('WarehouseController (e2e)', () => {
     dataSource = moduleFixture.get<DataSource>(DataSource);
   });
   it('Warehouse Create', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
+    const agent = await registerAndLogin(app, 'username', 'password1');
+    const warehouseResponse = await agent
+      .post('/warehouses')
       .send({
         warehouseName: 'Warehouse 1',
       })
@@ -72,33 +59,15 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse Select', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
+    const agent = await registerAndLogin(app, 'username', 'password1');
+    const warehouseResponse = await agent
+      .post('/warehouses')
       .send({
         warehouseName: 'Warehouse 1',
       })
       .expect(201);
-    const selectResponse = await request(app.getHttpServer())
-      .post('/warehouse/select')
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
+    const selectResponse = await agent
+      .post('/warehouses/select')
       .send({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         warehouseId: warehouseResponse.body.warehouseId,
@@ -112,34 +81,8 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse getUsers', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .expect(201);
-    const getUsersResponse = await request(app.getHttpServer())
-      .get('/warehouse/users')
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
-      .expect(200);
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const getUsersResponse = await agent.get('/warehouses/users').expect(200);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(getUsersResponse.body['total']).toEqual(1);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -154,73 +97,25 @@ describe('WarehouseController (e2e)', () => {
   });
 
   it('Warehouse post non-existent user', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .expect(201);
-    const postUsersResponse = await request(app.getHttpServer())
-      .post('/warehouse/users')
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const postUsersResponse = await agent
+      .post('/warehouses/users')
       .send({
         username: 'username2',
         role: 'admin',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(404);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(postUsersResponse.body.message).toEqual('User not found');
   });
   it('Warehouse post duplicate user', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .expect(201);
-    const postUsersResponse = await request(app.getHttpServer())
-      .post('/warehouse/users')
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const postUsersResponse = await agent
+      .post('/warehouses/users')
       .send({
         username: 'username',
         role: 'admin',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(409);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(postUsersResponse.body.message).toEqual(
@@ -228,20 +123,7 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse postUsers', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
     await request(app.getHttpServer())
       .post('/register')
       .send({
@@ -249,23 +131,12 @@ describe('WarehouseController (e2e)', () => {
         password: 'password1',
       })
       .expect(201);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .expect(201);
-    const postUsersResponse = await request(app.getHttpServer())
-      .post('/warehouse/users')
+    const postUsersResponse = await agent
+      .post('/warehouses/users')
       .send({
         username: 'username2',
         role: 'admin',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(201);
     expect(postUsersResponse.body).toEqual({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -276,37 +147,13 @@ describe('WarehouseController (e2e)', () => {
     });
   });
   it('Warehouse patchUsers', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .expect(201);
-    const patchUserResponse = await request(app.getHttpServer())
-      .patch('/warehouse/users')
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const patchUserResponse = await agent
+      .patch('/warehouses/users')
       .send({
         username: 'username',
         role: 'staff',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(200);
     expect(patchUserResponse.body).toEqual({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -317,56 +164,19 @@ describe('WarehouseController (e2e)', () => {
     });
   });
   it('Warehouse patch non-existent user', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .expect(201);
-    const patchUserResponse = await request(app.getHttpServer())
-      .patch('/warehouse/users')
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const patchUserResponse = await agent
+      .patch('/warehouses/users')
       .send({
         username: 'username2',
         role: 'staff',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(404);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(patchUserResponse.body.message).toEqual('User not found');
   });
   it('Warehouse patch user not in warehouse', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
     await request(app.getHttpServer())
       .post('/register')
       .send({
@@ -374,23 +184,12 @@ describe('WarehouseController (e2e)', () => {
         password: 'password1',
       })
       .expect(201);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .expect(201);
-    const postUsersResponse = await request(app.getHttpServer())
-      .patch('/warehouse/users')
+    const postUsersResponse = await agent
+      .patch('/warehouses/users')
       .send({
         username: 'username2',
         role: 'admin',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(404);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(postUsersResponse.body.message).toEqual(
@@ -398,20 +197,7 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse getUsers search', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(201);
-    const response = await request(app.getHttpServer())
-      .post('/login')
-      .send({
-        username: 'username',
-        password: 'password1',
-      })
-      .expect(200);
+    const agent = await registerAndLogin(app, 'username', 'password1', true);
     await request(app.getHttpServer())
       .post('/register')
       .send({
@@ -419,30 +205,15 @@ describe('WarehouseController (e2e)', () => {
         password: 'password1',
       })
       .expect(201);
-    const warehouseResponse = await request(app.getHttpServer())
-      .post('/warehouse')
-      .set('Cookie', `${response.headers['set-cookie'][0].split(';')[0]}`)
-      .send({
-        warehouseName: 'Warehouse 1',
-      })
-      .expect(201);
-    await request(app.getHttpServer())
-      .post('/warehouse/users')
+    await agent
+      .post('/warehouses/users')
       .send({
         username: 'username2',
         role: 'admin',
       })
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
       .expect(201);
-    const getUsersResponse = await request(app.getHttpServer())
-      .get('/warehouse/users?search=2')
-      .set(
-        'Cookie',
-        `${warehouseResponse.headers['set-cookie'][0].split(';')[0]}`,
-      )
+    const getUsersResponse = await agent
+      .get('/warehouses/users?search=2')
       .expect(200);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(getUsersResponse.body['total']).toEqual(1);
@@ -468,6 +239,8 @@ describe('WarehouseController (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
+  });
+  afterAll(async () => {
     await dataSource.destroy();
     await app.close();
   });

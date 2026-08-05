@@ -24,12 +24,12 @@
     "esModuleInterop": true,
 
     "paths": {
-        "@shared/*": ["../shared/*"],
-        "@shared": ["../shared/index.d.ts"]
+        "@shared/*": ["../shared/src/*"],
+        "@shared": ["../shared/src/index.ts"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*", "../shared/**/*", "playwright.config.ts"],
+  "include": ["src/**/*", "../shared/src/**/*", "playwright.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

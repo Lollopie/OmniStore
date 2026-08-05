@@ -20,7 +20,7 @@ describe('AuthController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let jwtService: JwtService;
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -93,6 +93,8 @@ describe('AuthController (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
+  });
+  afterAll(async () => {
     await dataSource.destroy();
     await app.close();
   });

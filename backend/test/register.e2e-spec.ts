@@ -19,7 +19,7 @@ describe('RegisterController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let passwordService: PasswordService;
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -243,6 +243,8 @@ describe('RegisterController (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
+  });
+  afterAll(async () => {
     await app.close();
   });
 });
