@@ -165,7 +165,7 @@ describe('RoleGuard (e2e)', () => {
       .expect(403);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe(
-      'You do not have a role for the active warehouse',
+      'You do not have access to the active warehouse',
     );
   });
   it('RoleGuard without permission', async () => {

@@ -30,7 +30,11 @@ import { CreateWarehouseTable1783438313000 } from './migrations/1783438313000-Cr
 import { InventoryRefactoring1783438667000 } from './migrations/1783438667000-InventoryRefactoring';
 import { CreateUserWarehouseRoleTable1783439080000 } from './migrations/1783439080000-CreateUserWarehouseRoleTable';
 import { AddRLSUserWarehouseRole1784213959000 } from './migrations/1784213959000-AddRLSUserWarehouseRole';
-
+import emailConfig from './config/email.config';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { MailService } from './mail/mail.service';
+import { join } from 'path';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -40,7 +44,7 @@ import { AddRLSUserWarehouseRole1784213959000 } from './migrations/1784213959000
         `.env`,
         '/etc/secrets/.env',
       ],
-      load: [authConfig, dbConfig],
+      load: [authConfig, dbConfig, emailConfig],
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -87,9 +91,40 @@ import { AddRLSUserWarehouseRole1784213959000 } from './migrations/1784213959000
         ),
       }),
     }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => {
+        const user = config.get<string>('email.mailUser');
+        const pass = config.get<string>('email.mailPassword');
+        return {
+          transport: {
+            host: config.get<string>('email.mailHost'),
+            port: config.get<number>('email.mailPort'),
+            secure: config.get<boolean>('email.mailSecure', false),
+            auth: user && pass ? { user, pass } : undefined,
+          },
+          defaults: {
+            from: config.get<string>('email.mailFrom'),
+          },
+          template: {
+            dir: join(__dirname, '/mail/templates'),
+            adapter: new HandlebarsAdapter(
+              {
+                uppercase: (str: string) => str.toUpperCase(),
+              },
+              {},
+            ),
+            options: {
+              strict: true,
+            },
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     ClsModule.forRoot({
       global: true,
-      middleware: { mount: true }, // Automatically sets up storage per express request
+      middleware: { mount: true },
     }),
     UsersModule,
     LoginModule,
@@ -106,6 +141,7 @@ import { AddRLSUserWarehouseRole1784213959000 } from './migrations/1784213959000
   providers: [
     RegisterService,
     PasswordService,
+    MailService,
     ThrottlerGuard,
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
   ],

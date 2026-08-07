@@ -75,7 +75,14 @@ services:
         - "6379:6379"
     networks:
         - app-network
-
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    ports:
+      - "8025:8025"  # Web interface
+      - "1025:1025"  # SMTP
+    networks:
+      - app-network
 
 volumes:
   postgres_data:

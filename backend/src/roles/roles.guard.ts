@@ -47,25 +47,27 @@ export class RolesGuard implements CanActivate {
 
     this.cls.set('warehouseId', user.activeWarehouseId);
 
-    if (!requiredRoles) return true;
-
     const userRole = await this.userWarehouseRoleService.findRole(
       user.userId,
       user.activeWarehouseId,
     );
     if (!userRole) {
       throw new ForbiddenException(
-        'You do not have a role for the active warehouse',
+        'You do not have access to the active warehouse',
       );
     }
-    const userHasRole = requiredRoles.some((role) =>
-      userRole.role?.includes(role),
-    );
-    if (!userHasRole) {
-      throw new ForbiddenException(
-        'You do not have the required role to access this resource',
+
+    if (requiredRoles?.length) {
+      const userHasRole = requiredRoles.some((role) =>
+        userRole.role?.includes(role),
       );
+      if (!userHasRole) {
+        throw new ForbiddenException(
+          'You do not have the required role to access this resource',
+        );
+      }
     }
+
     return true;
   }
 }
