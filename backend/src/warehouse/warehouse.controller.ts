@@ -22,7 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
-import { Role } from '@shared/enum/roles.enum';
+import { Role } from '@shared/enum/warehouseRoles.enum';
 
 @Controller('warehouses')
 export class WarehouseController {

@@ -1,6 +1,6 @@
 import { Reflector } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
-import { Role } from '@shared/enum/roles.enum';
+import { Role } from '@shared/enum/warehouseRoles.enum';
 import {
   BadRequestException,
   CanActivate,

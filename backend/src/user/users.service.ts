@@ -1,29 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserEntity } from './user.entity';
 import { RegisterDto } from '@shared/dto/register.dto';
 import { UnauthorizedException } from '@nestjs/common';
 import { PasswordService } from '../auth/password.service';
 import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
+import { TxRepoProvider } from '../rls/db.helper';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private dataSource: DataSource,
-    @InjectRepository(UserEntity)
-    private usersRepository: Repository<UserEntity>,
-    private passwordService: PasswordService,
+    private readonly txRepoProvider: TxRepoProvider,
+    private readonly passwordService: PasswordService,
   ) {}
   findByUsername(userName: string): Promise<UserEntity | null> {
-    return this.usersRepository.findOneBy({ username: userName });
+    const repo = this.txRepoProvider.getRepo(UserEntity);
+    return repo.findOneBy({ username: userName });
   }
   async createUser(user: RegisterDto) {
-    const newUser = this.usersRepository.create(user);
-    return await this.usersRepository.save(newUser);
+    const repo = this.txRepoProvider.getRepo(UserEntity);
+    const newUser = repo.create(user);
+    return await repo.save(newUser);
   }
   async deleteUser(userId: string, password: string) {
-    const user = await this.usersRepository.findOneBy({ userId: userId });
+    const repo = this.txRepoProvider.getRepo(UserEntity);
+    const user = await repo.findOneBy({ userId: userId });
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
@@ -36,17 +36,18 @@ export class UsersService {
       throw new UnauthorizedException('Invalid password');
     }
 
-    return await this.usersRepository.delete(userId);
+    return await repo.delete(userId);
   }
   async updatePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
       throw new UnauthorizedException('New passwords do not match');
     }
-    const user = await this.usersRepository.findOneBy({
+    const repo = this.txRepoProvider.getRepo(UserEntity);
+    const user = await repo.findOneBy({
       userId: userId,
     });
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new NotFoundException('User not found');
     }
     if (
       !(await this.passwordService.verifyPassword(
@@ -59,6 +60,6 @@ export class UsersService {
     user.password = await this.passwordService.hashPassword(
       changePasswordDto.confirmPassword,
     );
-    return await this.usersRepository.save(user);
+    return await repo.save(user);
   }
 }

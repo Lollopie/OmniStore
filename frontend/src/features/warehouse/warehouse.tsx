@@ -20,7 +20,7 @@ import { changeUserRole } from './hooks/changeUserRole.ts';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { WarehouseDto } from '@shared/dto/warehouse.dto';
 import { useForm } from 'react-hook-form';
-import { Role } from '@shared/enum/roles.enum.ts';
+import { Role } from '@shared/enum/warehouseRoles.enum.ts';
 export interface WarehouseUser {
   userId: string;
   username: string;

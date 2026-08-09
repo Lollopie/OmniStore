@@ -10,7 +10,6 @@ import dbConfig from './config/db.config';
 import { PasswordService } from './auth/password.service';
 import { LoginModule } from './login/login.module';
 import { ConfigService } from '@nestjs/config';
-import { UserBaseEntity } from './user/user-base.entity';
 import { InventoryEntity } from './inventory/inventory.entity';
 import { InventoryModule } from './inventory/inventory.module';
 import { CreateUserTable1782066103000 } from './migrations/1782066103000-CreateUserTable';
@@ -20,21 +19,25 @@ import { LogoutController } from './logout/logout.controller';
 import { HealthController } from './health/health.controller';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ClsModule } from 'nestjs-cls';
 import { UserWarehouseRoleModule } from './userWarehouseRole/userWarehouseRole.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
 import { WarehouseEntity } from './warehouse/warehouse.entity';
 import { UserWarehouseRoleEntity } from './userWarehouseRole/userWarehouseRole.entity';
 import { CreateWarehouseTable1783438313000 } from './migrations/1783438313000-CreateWarehouseTable';
-import { InventoryRefactoring1783438667000 } from './migrations/1783438667000-InventoryRefactoring';
 import { CreateUserWarehouseRoleTable1783439080000 } from './migrations/1783439080000-CreateUserWarehouseRoleTable';
-import { AddRLSUserWarehouseRole1784213959000 } from './migrations/1784213959000-AddRLSUserWarehouseRole';
 import emailConfig from './config/email.config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MailService } from './mail/mail.service';
 import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
+import { OrganizationEntity } from './organization/organization.entity';
+import { UserOrganizationRoleEntity } from './userOrganizationRole/userOrganizationRole.entity';
+import { CreateOrganizationTable1786209916000 } from './migrations/1786209916000-CreateOrganizationTable';
+import { CreateUserOrganizationRoleTable1786210080000 } from './migrations/1786210080000-CreateUserOrganizationRoleTable';
+import { CreateInviteTable1786210196000 } from './migrations/1786210196000-CreateInviteTable';
+import { RlsInterceptor } from './rls/rls.interceptor';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -58,19 +61,21 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
           database: configService.get<string>('db.databaseName'),
           entities: [
             UserEntity,
-            UserBaseEntity,
             InventoryEntity,
             WarehouseEntity,
             UserWarehouseRoleEntity,
+            OrganizationEntity,
+            UserOrganizationRoleEntity,
           ],
           synchronize: configService.get<boolean>('db.databaseSynchronize'),
           migrations: [
             CreateUserTable1782066103000,
             CreateInventoryTable1782066151000,
             CreateWarehouseTable1783438313000,
-            InventoryRefactoring1783438667000,
             CreateUserWarehouseRoleTable1783439080000,
-            AddRLSUserWarehouseRole1784213959000,
+            CreateOrganizationTable1786209916000,
+            CreateUserOrganizationRoleTable1786210080000,
+            CreateInviteTable1786210196000,
           ],
           migrationsRun: true,
         };
@@ -144,6 +149,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
     MailService,
     ThrottlerGuard,
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: RlsInterceptor },
   ],
 })
 export class AppModule {}
