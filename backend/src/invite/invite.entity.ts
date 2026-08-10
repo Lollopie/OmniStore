@@ -23,8 +23,8 @@ export class InviteEntity {
   tokenHash: string;
   @Column({ name: 'expires_at' })
   expiresAt: Date;
-  @Column()
-  consumed: Date;
+  @Column({ name: 'consumed_at' })
+  consumedAt: Date;
   @Column({ name: 'created_at' })
   createdAt: Date;
   @ManyToOne(() => OrganizationEntity, { onDelete: 'CASCADE' })

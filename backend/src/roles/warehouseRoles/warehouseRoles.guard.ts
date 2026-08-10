@@ -1,6 +1,6 @@
 import { Reflector } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
-import { Role } from '@shared/enum/warehouseRoles.enum';
+import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import {
   BadRequestException,
   CanActivate,
@@ -8,13 +8,13 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { ROLES_KEY } from './roles.decorator';
-import { AuthenticatedRequest } from '../user/user.decorator';
-import { WarehouseService } from '../warehouse/warehouse.service';
-import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
+import { ROLES_KEY } from './warehouseRoles.decorator';
+import { AuthenticatedRequest } from '../../user/user.decorator';
+import { WarehouseService } from '../../warehouse/warehouse.service';
+import { UserWarehouseRoleService } from '../../userWarehouseRole/userWarehouseRole.service';
 
 @Injectable()
-export class RolesGuard implements CanActivate {
+export class WarehouseRolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly cls: ClsService,
@@ -23,10 +23,10 @@ export class RolesGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<WarehouseRole[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     const request: AuthenticatedRequest = context
       .switchToHttp()

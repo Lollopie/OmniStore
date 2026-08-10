@@ -3,3 +3,4 @@ export * from './dto/register.dto';
 export * from './dto/warehouse.dto';
 export * from './dto/changePassword.dto'
 export * from './enum/warehouseRoles.enum';
+export * from './enum/organizationRoles.enum';

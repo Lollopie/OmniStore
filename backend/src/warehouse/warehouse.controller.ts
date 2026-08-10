@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  Patch,
   Post,
   Query,
   Res,
@@ -20,9 +19,13 @@ import express from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
-import { RolesGuard } from '../roles/roles.guard';
-import { Roles } from '../roles/roles.decorator';
-import { Role } from '@shared/enum/warehouseRoles.enum';
+import { WarehouseRolesGuard } from '../roles/warehouseRoles/warehouseRoles.guard';
+import { WarehouseRoles } from '../roles/warehouseRoles/warehouseRoles.decorator';
+import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
+import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
+import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.decorator';
+import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationRoles.guard';
+import { InviteService } from '../invite/invite.service';
 
 @Controller('warehouses')
 export class WarehouseController {
@@ -31,9 +34,11 @@ export class WarehouseController {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly userWarehouseRoleService: UserWarehouseRoleService,
+    private readonly inviteService: InviteService,
   ) {}
   @Post()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   async create(
     @Body() warehouseData: WarehouseDto,
     @userDecorator.User() userToken: userDecorator.UserToken,
@@ -70,7 +75,12 @@ export class WarehouseController {
     return { error: 'Creation failed' };
   }
   @Post('/select')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(
+    OrganizationRole.OWNER,
+    OrganizationRole.ADMIN,
+    OrganizationRole.MEMBER,
+  )
   async select(
     @Body() warehouseData: WarehouseIDDto,
     @userDecorator.User() userToken: userDecorator.UserToken,
@@ -103,8 +113,13 @@ export class WarehouseController {
     return { error: 'Selection failed' };
   }
   @Get('/users')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MANAGER)
+  @UseGuards(AuthGuard, WarehouseRolesGuard, OrganizationRolesGuard)
+  @OrganizationRoles(
+    OrganizationRole.OWNER,
+    OrganizationRole.ADMIN,
+    OrganizationRole.MEMBER,
+  )
+  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async get(@Query('search') searchTerm: string, @Query('page') page: number) {
     const limit = 10;
     return await this.userWarehouseRoleService.getUsers(
@@ -114,24 +129,13 @@ export class WarehouseController {
     );
   }
 
-  @Post('/users')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MANAGER)
-  async addUserToWarehouse(
-    @Body() warehouseUserRoleData: WarehouseUserRoleDto,
-  ) {
-    return await this.userWarehouseRoleService.addUserToWarehouse(
-      warehouseUserRoleData.username,
-      warehouseUserRoleData.role,
-    );
-  }
-
-  @Patch('/users')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MANAGER)
-  async updateUserRole(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
-    return await this.userWarehouseRoleService.updateUserRole(
-      warehouseUserRoleData.username,
+  @Post('/invite')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async inviteUser(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
+    return await this.inviteService.inviteWarehouseUser(
+      warehouseUserRoleData.email,
+      warehouseUserRoleData.warehouseId,
       warehouseUserRoleData.role,
     );
   }

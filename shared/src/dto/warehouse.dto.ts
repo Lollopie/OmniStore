@@ -30,7 +30,10 @@ export class WarehouseIDDto {
 
 export class WarehouseUserRoleDto {
   @IsValidUsername()
-  username: string;
+  email: string;
+
+  @IsUUID('7')
+  warehouseId: string;
 
   @IsEnum(WarehouseRole, { message: 'Invalid role' })
   role: WarehouseRole;

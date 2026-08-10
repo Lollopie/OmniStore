@@ -38,6 +38,9 @@ import { CreateOrganizationTable1786209916000 } from './migrations/1786209916000
 import { CreateUserOrganizationRoleTable1786210080000 } from './migrations/1786210080000-CreateUserOrganizationRoleTable';
 import { CreateInviteTable1786210196000 } from './migrations/1786210196000-CreateInviteTable';
 import { RlsInterceptor } from './rls/rls.interceptor';
+import { UserOrganizationRoleService } from './userOrganizationRole/userOrganizationRole.service';
+import { OrganizationModule } from './organization/organization.module';
+import { InviteService } from './invite/invite.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -136,6 +139,7 @@ import { RlsInterceptor } from './rls/rls.interceptor';
     InventoryModule,
     UserWarehouseRoleModule,
     WarehouseModule,
+    OrganizationModule,
   ],
   controllers: [
     RegisterController,
@@ -147,6 +151,8 @@ import { RlsInterceptor } from './rls/rls.interceptor';
     RegisterService,
     PasswordService,
     MailService,
+    UserOrganizationRoleService,
+    InviteService,
     ThrottlerGuard,
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: RlsInterceptor },

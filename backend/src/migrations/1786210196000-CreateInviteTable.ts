@@ -8,7 +8,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
                   email         text        NOT NULL,
                   org_id        uuid        NOT NULL,
                   warehouse_id  uuid,
-                  role          text        NOT NULL,
+                  role          text,
                   token_hash    text        NOT NULL    UNIQUE,
                   expires_at    timestamptz NOT NULL,
                   consumed_at   timestamptz,
