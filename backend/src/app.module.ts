@@ -12,8 +12,6 @@ import { LoginModule } from './login/login.module';
 import { ConfigService } from '@nestjs/config';
 import { InventoryEntity } from './inventory/inventory.entity';
 import { InventoryModule } from './inventory/inventory.module';
-import { CreateUserTable1782066103000 } from './migrations/1782066103000-CreateUserTable';
-import { CreateInventoryTable1782066151000 } from './migrations/1782066151000-CreateInventoryTable';
 import { AuthController } from './auth/auth.controller';
 import { LogoutController } from './logout/logout.controller';
 import { HealthController } from './health/health.controller';
@@ -25,8 +23,6 @@ import { UserWarehouseRoleModule } from './userWarehouseRole/userWarehouseRole.m
 import { WarehouseModule } from './warehouse/warehouse.module';
 import { WarehouseEntity } from './warehouse/warehouse.entity';
 import { UserWarehouseRoleEntity } from './userWarehouseRole/userWarehouseRole.entity';
-import { CreateWarehouseTable1783438313000 } from './migrations/1783438313000-CreateWarehouseTable';
-import { CreateUserWarehouseRoleTable1783439080000 } from './migrations/1783439080000-CreateUserWarehouseRoleTable';
 import emailConfig from './config/email.config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MailService } from './mail/mail.service';
@@ -34,13 +30,12 @@ import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { OrganizationEntity } from './organization/organization.entity';
 import { UserOrganizationRoleEntity } from './userOrganizationRole/userOrganizationRole.entity';
-import { CreateOrganizationTable1786209916000 } from './migrations/1786209916000-CreateOrganizationTable';
-import { CreateUserOrganizationRoleTable1786210080000 } from './migrations/1786210080000-CreateUserOrganizationRoleTable';
-import { CreateInviteTable1786210196000 } from './migrations/1786210196000-CreateInviteTable';
 import { RlsInterceptor } from './rls/rls.interceptor';
 import { UserOrganizationRoleService } from './userOrganizationRole/userOrganizationRole.service';
 import { OrganizationModule } from './organization/organization.module';
 import { InviteService } from './invite/invite.service';
+import { TxRepoProvider } from './rls/db.helper';
+import { GuardDBService } from './utils/guardDB.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -71,16 +66,7 @@ import { InviteService } from './invite/invite.service';
             UserOrganizationRoleEntity,
           ],
           synchronize: configService.get<boolean>('db.databaseSynchronize'),
-          migrations: [
-            CreateUserTable1782066103000,
-            CreateInventoryTable1782066151000,
-            CreateWarehouseTable1783438313000,
-            CreateUserWarehouseRoleTable1783439080000,
-            CreateOrganizationTable1786209916000,
-            CreateUserOrganizationRoleTable1786210080000,
-            CreateInviteTable1786210196000,
-          ],
-          migrationsRun: true,
+          migrationsRun: false,
         };
       },
     }),
@@ -153,6 +139,8 @@ import { InviteService } from './invite/invite.service';
     MailService,
     UserOrganizationRoleService,
     InviteService,
+    TxRepoProvider,
+    GuardDBService,
     ThrottlerGuard,
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: RlsInterceptor },

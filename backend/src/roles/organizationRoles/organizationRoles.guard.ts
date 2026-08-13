@@ -1,6 +1,5 @@
 import { Reflector } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
-import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import {
   BadRequestException,
   CanActivate,
@@ -9,21 +8,20 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ROLES_KEY } from './organizationRoles.decorator';
-import { AuthenticatedRequest } from '../../user/user.decorator';
-import { OrganizationService } from '../../organization/organization.service';
-import { UserOrganizationRoleService } from '../../userOrganizationRole/userOrganizationRole.service';
+import { AuthenticatedRequest, UserToken } from '../../user/user.decorator';
+import { GuardDBService } from '../../utils/guardDB.service';
+import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 
 @Injectable()
 export class OrganizationRolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly cls: ClsService,
-    private readonly organizationService: OrganizationService,
-    private readonly userOrganizationRoleService: UserOrganizationRoleService,
+    private readonly guardDBService: GuardDBService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<WarehouseRole[]>(
+    const requiredRoles = this.reflector.getAllAndOverride<OrganizationRole[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );
@@ -31,24 +29,18 @@ export class OrganizationRolesGuard implements CanActivate {
     const request: AuthenticatedRequest = context
       .switchToHttp()
       .getRequest<AuthenticatedRequest>();
-    const user: {
-      userId: string;
-      username: string;
-      orgId: string;
-      activeWarehouseId: string;
-      activeRole: string;
-    } = request['user'];
+    const user: UserToken = request['user'];
     if (!user) return false;
     if (!user.orgId) {
       throw new BadRequestException('No organization found');
     }
-    if (!(await this.organizationService.findOne(user.orgId))) {
+    if (!(await this.guardDBService.getOrg(user.orgId))) {
       throw new BadRequestException('Organization not found');
     }
 
     this.cls.set('orgId', user.orgId);
 
-    const userRole = await this.userOrganizationRoleService.findRole(
+    const userRole: OrganizationRole = await this.guardDBService.getUserOrgRole(
       user.userId,
       user.orgId,
     );
@@ -59,9 +51,8 @@ export class OrganizationRolesGuard implements CanActivate {
     }
 
     if (requiredRoles?.length) {
-      const userHasRole = requiredRoles.some((role) =>
-        userRole.role?.includes(role),
-      );
+      const userHasRole = requiredRoles.includes(userRole);
+
       if (!userHasRole) {
         throw new ForbiddenException(
           'You do not have the required role to access this resource',

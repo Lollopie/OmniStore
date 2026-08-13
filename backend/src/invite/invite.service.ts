@@ -44,7 +44,7 @@ export class InviteService {
     const userWarehouseRoleRepo = this.txRepoProvider.getRepo(
       UserWarehouseRoleEntity,
     );
-
+    //TODO: Check why token should be hashed
     const invite = await inviteRepo.findOne({
       where: { tokenHash: token, consumedAt: IsNull() },
       lock: { mode: 'pessimistic_write' },

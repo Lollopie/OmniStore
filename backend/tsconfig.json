@@ -14,15 +14,21 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@shared": ["../shared/src/index.ts"],
-      "@shared/*": ["../shared/src/*"]
+      "@shared": ["../shared/dist/index.js"],
+      "@shared/*": [
+        "../shared/dist/*",
+        "../shared/dist/*.js",
+        "../shared/src/*",
+        "../shared/src/*.ts"
+      ]
     },
-    "incremental": true,
+    "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["src/**/*", "../shared/src/**/*"],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

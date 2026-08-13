@@ -82,6 +82,7 @@ describe('UserWarehouseRoleService', () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
+        email: 'test@example.org',
         username: 'jane',
         password: 'hashed',
       });
@@ -106,6 +107,7 @@ describe('UserWarehouseRoleService', () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
+        email: 'test@example.org',
         username: 'jane',
         password: 'hashed',
       });
@@ -126,6 +128,7 @@ describe('UserWarehouseRoleService', () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
+        email: 'test@example.org',
         username: 'jane',
         password: 'hashed',
       });
@@ -155,6 +158,7 @@ describe('UserWarehouseRoleService', () => {
       repository.findOneBy.mockResolvedValue(null);
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
+        email: 'test@example.org',
         username: 'jane',
         password: 'hashed',
       });

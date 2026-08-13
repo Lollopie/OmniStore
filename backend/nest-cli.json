@@ -4,13 +4,7 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "builder": "webpack",
-    "tsConfigPath": "tsconfig.json",
-    "assets": [
-      {
-        "include": "mail/templates/**/*",
-        "outDir": "dist"
-      }
-    ]
+    "builder": "tsc",
+    "tsConfigPath": "tsconfig.json"
   }
 }

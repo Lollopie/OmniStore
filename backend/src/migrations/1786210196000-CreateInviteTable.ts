@@ -22,9 +22,6 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
             ALTER TABLE "invite" ENABLE ROW LEVEL SECURITY;
     `);
     await queryRunner.query(`
-            ALTER TABLE "invite" FORCE ROW LEVEL SECURITY;
-    `);
-    await queryRunner.query(`
             CREATE OR REPLACE FUNCTION is_org_admin(check_user_id UUID, check_org_id UUID)
             RETURNS BOOLEAN
             LANGUAGE sql
@@ -41,7 +38,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
             
             -- lock the function down so it can't be called arbitrarily to probe other users
             REVOKE ALL ON FUNCTION is_org_admin FROM PUBLIC;
-            GRANT EXECUTE ON FUNCTION is_org_admin TO app_user;
+            GRANT EXECUTE ON FUNCTION is_org_admin TO nestjs_app_user;
     `);
     await queryRunner.query(`
             CREATE POLICY invite_org_and_org_admin ON user_org_role

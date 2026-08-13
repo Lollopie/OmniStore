@@ -86,6 +86,7 @@ describe('LoginService (Unit Test)', () => {
     it('should throw an error if provided with a wrong auth', async () => {
       usersServiceMock.findByUsername.mockResolvedValue({
         userId: '123e4567-e89b-12d3-a456-426614174000',
+        email: 'test@example.org',
         username: 'test',
         password: await passwordService.hashPassword('password1'),
       });
@@ -102,6 +103,7 @@ describe('LoginService (Unit Test)', () => {
       // Program the mock to simulate a successful DB insertion
       usersServiceMock.findByUsername.mockResolvedValue({
         userId: '123e4567-e89b-12d3-a456-426614174000',
+        email: 'test@example.org',
         username: 'test',
         password: await passwordService.hashPassword('password1'),
       });

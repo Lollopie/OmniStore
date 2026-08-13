@@ -16,9 +16,6 @@ export class CreateInventoryTable1782066151000 implements MigrationInterface {
             ALTER TABLE "inventory" ENABLE ROW LEVEL SECURITY;
     `);
     await queryRunner.query(`
-            ALTER TABLE "inventory" FORCE ROW LEVEL SECURITY;
-    `);
-    await queryRunner.query(`
       CREATE POLICY "warehouse_isolation_policy" ON "inventory"
       FOR ALL
       USING (warehouse_id = current_setting('app.current_warehouse_id')::uuid);

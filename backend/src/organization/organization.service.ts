@@ -4,9 +4,7 @@ import { TxRepoProvider } from '../rls/db.helper';
 import { OrganizationEntity } from './organization.entity';
 import { UserEntity } from '../user/user.entity';
 import { PasswordService } from '../auth/password.service';
-import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
-import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
-
+import { mapRow } from '../utils/helper';
 @Injectable()
 export class OrganizationService {
   constructor(
@@ -16,24 +14,18 @@ export class OrganizationService {
   async createOrganization(data: OrganizationDto) {
     const organizationRepo = this.txRepoProvider.getRepo(OrganizationEntity);
     const userRepo = this.txRepoProvider.getRepo(UserEntity);
-    const userOrgRoleRepo = this.txRepoProvider.getRepo(
-      UserOrganizationRoleEntity,
-    );
-    const org = organizationRepo.create({ name: data.name });
     const user = userRepo.create({
       username: data.ownerUsername,
       email: data.ownerEmail,
       password: await this.passwordService.hashPassword(data.ownerPassword),
     });
-    const userOrgRole = userOrgRoleRepo.create({
-      userId: user.userId,
-      orgId: org.orgId,
-      role: OrganizationRole.OWNER,
-    });
-    await organizationRepo.save(org);
-    await userRepo.save(user);
-    await userOrgRoleRepo.save(userOrgRole);
-    return { message: 'Organization created successfully' };
+    const savedUser = await userRepo.save(user);
+    const [rawOrg]: OrganizationEntity[] = await organizationRepo.query(
+      `SELECT * FROM create_organization($1, $2)`,
+      [data.name, savedUser.userId],
+    );
+    const org = mapRow(organizationRepo, rawOrg);
+    return { user: savedUser, organization: org };
   }
   async findOne(id: string): Promise<OrganizationEntity | null> {
     const organizationRepo = this.txRepoProvider.getRepo(OrganizationEntity);

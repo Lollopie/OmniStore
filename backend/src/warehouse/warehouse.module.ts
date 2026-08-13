@@ -7,6 +7,11 @@ import { UserWarehouseRoleEntity } from '../userWarehouseRole/userWarehouseRole.
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.module';
+import { TxRepoProvider } from '../rls/db.helper';
+import { OrganizationModule } from '../organization/organization.module';
+import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
+import { InviteModule } from '../invite/invite.module';
+import { GuardDBService } from '../utils/guardDB.service';
 
 @Module({
   imports: [
@@ -24,8 +29,15 @@ import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.
       }),
     }),
     UserWarehouseRoleModule,
+    OrganizationModule,
+    InviteModule,
   ],
-  providers: [WarehouseService],
+  providers: [
+    WarehouseService,
+    TxRepoProvider,
+    UserOrganizationRoleService,
+    GuardDBService,
+  ],
   exports: [TypeOrmModule, WarehouseService],
   controllers: [WarehouseController],
 })
