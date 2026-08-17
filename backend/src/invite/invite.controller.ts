@@ -1,6 +1,6 @@
 import { Body, Controller, Param, Post } from '@nestjs/common';
 import { InviteService } from './invite.service';
-import { RegisterDto } from '@shared';
+import { RegisterDto } from '@shared/dto/register.dto';
 
 @Controller('invite')
 export class InviteController {

@@ -45,8 +45,6 @@ export class WarehouseRolesGuard implements CanActivate {
       throw new BadRequestException('Active Warehouse not found');
     }
 
-    this.cls.set('warehouseId', user.activeWarehouseId);
-
     const userRole = await this.userWarehouseRoleService.findRole(
       user.userId,
       user.activeWarehouseId,

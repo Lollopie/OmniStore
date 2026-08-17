@@ -15,7 +15,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
                   created_at    timestamptz             DEFAULT NOW(),
                   CONSTRAINT "PK_invite" PRIMARY KEY (invite_id),
                   CONSTRAINT "FK_org" FOREIGN KEY (org_id) REFERENCES organization (org_id) ON DELETE CASCADE ON UPDATE CASCADE,
-                  CONSTRAINT "FK_warehouse" FOREIGN KEY (warehouse_id) REFERENCES warehouse (warehouse_id) ON DELETE CASCADE ON UPDATE CASCADE
+                  CONSTRAINT "FK_warehouse_org" FOREIGN KEY (warehouse_id, org_id) REFERENCES warehouse (warehouse_id, org_id) ON DELETE CASCADE ON UPDATE CASCADE
        )`,
     );
     await queryRunner.query(`
@@ -41,7 +41,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
             GRANT EXECUTE ON FUNCTION is_org_admin TO nestjs_app_user;
     `);
     await queryRunner.query(`
-            CREATE POLICY invite_org_and_org_admin ON user_org_role
+            CREATE POLICY invite_org_and_org_admin ON invite
                 USING (
                     org_id = current_setting('app.current_org_id', true)::uuid
                     AND is_org_admin(

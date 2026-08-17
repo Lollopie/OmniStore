@@ -4,10 +4,9 @@ import {
   MinLength,
   MaxLength,
   IsUUID,
-  IsEnum,
+  IsEnum, IsNotEmpty, IsEmail,
 } from 'class-validator';
 import { WarehouseRole } from '../enum/warehouseRoles.enum'
-import { IsValidUsername } from '../decorators/isValidUsername.decorator';
 
 export class WarehouseDto {
   @IsString()
@@ -29,7 +28,9 @@ export class WarehouseIDDto {
 }
 
 export class WarehouseUserRoleDto {
-  @IsValidUsername()
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail({}, { message: 'Invalid email address' })
   email: string;
 
   @IsUUID('7')

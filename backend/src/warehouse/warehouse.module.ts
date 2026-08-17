@@ -12,6 +12,7 @@ import { OrganizationModule } from '../organization/organization.module';
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
 import { InviteModule } from '../invite/invite.module';
 import { GuardDBService } from '../utils/guardDB.service';
+import { CookieService } from '../auth/cookie.service';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { GuardDBService } from '../utils/guardDB.service';
     TxRepoProvider,
     UserOrganizationRoleService,
     GuardDBService,
+    CookieService,
   ],
   exports: [TypeOrmModule, WarehouseService],
   controllers: [WarehouseController],

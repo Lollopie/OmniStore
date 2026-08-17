@@ -9,7 +9,8 @@ export class CreateWarehouseTable1782066150500 implements MigrationInterface {
                   name          text        NOT NULL, 
                   created_at    timestamptz             DEFAULT NOW(),
                   CONSTRAINT "PK_warehouse" PRIMARY KEY (warehouse_id),
-                  CONSTRAINT "FK_org_id" FOREIGN KEY (org_id) REFERENCES "organization"(org_id) ON DELETE CASCADE
+                  CONSTRAINT "FK_org_id" FOREIGN KEY (org_id) REFERENCES "organization"(org_id) ON DELETE CASCADE,
+                  CONSTRAINT "UQ_warehouse_id_org" UNIQUE (warehouse_id, org_id)
       )`,
     );
     await queryRunner.query(`

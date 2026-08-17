@@ -36,6 +36,8 @@ import { OrganizationModule } from './organization/organization.module';
 import { InviteService } from './invite/invite.service';
 import { TxRepoProvider } from './rls/db.helper';
 import { GuardDBService } from './utils/guardDB.service';
+import { CookieService } from './auth/cookie.service';
+import { InviteEntity } from './invite/invite.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -64,6 +66,7 @@ import { GuardDBService } from './utils/guardDB.service';
             UserWarehouseRoleEntity,
             OrganizationEntity,
             UserOrganizationRoleEntity,
+            InviteEntity,
           ],
           synchronize: configService.get<boolean>('db.databaseSynchronize'),
           migrationsRun: false,
@@ -142,6 +145,7 @@ import { GuardDBService } from './utils/guardDB.service';
     TxRepoProvider,
     GuardDBService,
     ThrottlerGuard,
+    CookieService,
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: RlsInterceptor },
   ],

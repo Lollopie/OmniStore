@@ -9,9 +9,13 @@ export class UserOrganizationRoleService {
     userId: string,
     orgId: string,
   ): Promise<UserOrganizationRoleEntity | null> {
-    const userOrganizationRoleRepo = this.txRepoProvider.getRepo(
-      UserOrganizationRoleEntity,
-    );
-    return await userOrganizationRoleRepo.findOne({ where: { userId, orgId } });
+    const repo = this.txRepoProvider.getRepo(UserOrganizationRoleEntity);
+    return await repo.findOne({ where: { userId, orgId } });
+  }
+  async findByUserId(
+    userId: string,
+  ): Promise<UserOrganizationRoleEntity | null> {
+    const repo = this.txRepoProvider.getRepo(UserOrganizationRoleEntity);
+    return await repo.findOne({ where: { userId: userId } });
   }
 }

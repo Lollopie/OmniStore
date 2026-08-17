@@ -21,7 +21,7 @@ export class RlsInterceptor implements NestInterceptor {
         const userId: string = this.cls.get('userId');
         const orgId: string = this.cls.get('orgId');
         const warehouseId: string = this.cls.get('warehouseId');
-
+        console.log(userId, orgId, warehouseId);
         if (userId) {
           await manager.query(
             `SELECT set_config('app.current_user_id', $1, true)`,

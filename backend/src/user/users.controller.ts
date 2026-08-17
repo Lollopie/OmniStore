@@ -22,7 +22,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async updatePassword(
     @Body() body: ChangePasswordDto,
-    @userDecorator.User() userToken: userDecorator.UserToken,
+    @userDecorator.User() userToken: userDecorator.Cookie,
   ) {
     await this.usersService.updatePassword(userToken.userId, body);
     return { message: 'Password updated successfully' };
@@ -32,7 +32,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async deleteAccount(
     @Body() body: { password: string },
-    @userDecorator.User() userToken: userDecorator.UserToken,
+    @userDecorator.User() userToken: userDecorator.Cookie,
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const { password } = body;

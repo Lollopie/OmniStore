@@ -8,7 +8,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ROLES_KEY } from './organizationRoles.decorator';
-import { AuthenticatedRequest, UserToken } from '../../user/user.decorator';
+import { AuthenticatedRequest, Cookie } from '../../user/user.decorator';
 import { GuardDBService } from '../../utils/guardDB.service';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 
@@ -29,7 +29,7 @@ export class OrganizationRolesGuard implements CanActivate {
     const request: AuthenticatedRequest = context
       .switchToHttp()
       .getRequest<AuthenticatedRequest>();
-    const user: UserToken = request['user'];
+    const user: Cookie = request['user'];
     if (!user) return false;
     if (!user.orgId) {
       throw new BadRequestException('No organization found');
@@ -37,8 +37,6 @@ export class OrganizationRolesGuard implements CanActivate {
     if (!(await this.guardDBService.getOrg(user.orgId))) {
       throw new BadRequestException('Organization not found');
     }
-
-    this.cls.set('orgId', user.orgId);
 
     const userRole: OrganizationRole = await this.guardDBService.getUserOrgRole(
       user.userId,

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  InternalServerErrorException,
   Post,
   Query,
   Res,
@@ -26,6 +27,9 @@ import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.decorator';
 import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationRoles.guard';
 import { InviteService } from '../invite/invite.service';
+import { ClsService } from 'nestjs-cls';
+import { Cookie } from '../user/user.decorator';
+import { CookieService } from '../auth/cookie.service';
 
 @Controller('warehouses')
 export class WarehouseController {
@@ -35,13 +39,15 @@ export class WarehouseController {
     private readonly configService: ConfigService,
     private readonly userWarehouseRoleService: UserWarehouseRoleService,
     private readonly inviteService: InviteService,
+    private readonly clsService: ClsService,
+    private readonly cookieService: CookieService,
   ) {}
   @Post()
   @UseGuards(AuthGuard, OrganizationRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   async create(
     @Body() warehouseData: WarehouseDto,
-    @userDecorator.User() userToken: userDecorator.UserToken,
+    @userDecorator.User() userToken: userDecorator.Cookie,
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const warehouse = await this.warehouseService.createWarehouse(
@@ -50,21 +56,14 @@ export class WarehouseController {
       'admin',
     );
     if (warehouse) {
-      const payload = {
+      const cookie = {
         userId: userToken.userId,
         username: userToken.username,
+        orgId: this.clsService.get<string>('orgId'),
         activeWarehouseId: warehouse.warehouseId,
         activeRole: 'admin',
       };
-      const token = {
-        Authorization: await this.jwtService.signAsync(payload),
-      };
-      res.cookie('token', token.Authorization, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
-      });
+      this.cookieService.createAndSendCookie(cookie, res);
       const response: { name: string; warehouseId: string; role: string } = {
         name: warehouse.name,
         warehouseId: warehouse.warehouseId,
@@ -83,7 +82,7 @@ export class WarehouseController {
   )
   async select(
     @Body() warehouseData: WarehouseIDDto,
-    @userDecorator.User() userToken: userDecorator.UserToken,
+    @userDecorator.User() userToken: userDecorator.Cookie,
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const response = await this.userWarehouseRoleService.findRole(
@@ -91,21 +90,14 @@ export class WarehouseController {
       warehouseData.warehouseId,
     );
     if (response) {
-      const payload = {
+      const cookie: Cookie = {
         userId: userToken.userId,
         username: userToken.username,
+        orgId: this.clsService.get<string>('orgId'),
         activeWarehouseId: response.warehouseId,
         activeRole: response.role,
       };
-      const token = {
-        Authorization: await this.jwtService.signAsync(payload),
-      };
-      res.cookie('token', token.Authorization, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
-      });
+      this.cookieService.createAndSendCookie(cookie, res);
       return {
         activeRole: response.role,
       };
@@ -133,10 +125,14 @@ export class WarehouseController {
   @UseGuards(AuthGuard, OrganizationRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   async inviteUser(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
-    return await this.inviteService.inviteWarehouseUser(
+    const invite = await this.inviteService.inviteWarehouseUser(
       warehouseUserRoleData.email,
       warehouseUserRoleData.warehouseId,
       warehouseUserRoleData.role,
     );
+    if (invite) {
+      return { message: 'Invite send successfully.' };
+    }
+    throw new InternalServerErrorException('Invalid invite');
   }
 }

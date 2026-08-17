@@ -3,7 +3,7 @@ import { TxRepoProvider } from '../rls/db.helper';
 import { InviteEntity } from './invite.entity';
 import { ClsService } from 'nestjs-cls';
 import * as crypto from 'crypto';
-import { RegisterDto } from '@shared';
+import { RegisterDto } from '@shared/dto/register.dto';
 import { UserEntity } from '../user/user.entity';
 import { PasswordService } from '../auth/password.service';
 import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
@@ -20,7 +20,7 @@ export class InviteService {
   async inviteWarehouseUser(email: string, warehouseId: string, role: string) {
     const repo = this.txRepoProvider.getRepo(InviteEntity);
     const orgId: string = this.clsService.get('orgId');
-    const tokenHash = crypto.randomBytes(32).toString('hex');
+    const rawToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
     const invitationDurationDays = 7;
     expiresAt.setDate(expiresAt.getDate() + invitationDurationDays);
@@ -30,9 +30,9 @@ export class InviteService {
       warehouseId,
       role,
       expiresAt,
-      tokenHash,
+      tokenHash: crypto.createHash('sha256').update(rawToken).digest('hex'),
     });
-    //TODO: send invite E-Mail
+    //TODO: send raw Token via invite E-Mail
     return await repo.save(invite);
   }
   async acceptInvite(token: string, registerDto: RegisterDto) {
