@@ -15,6 +15,7 @@ export default defineConfig({
     alias: {
       '@shared': path.resolve(__dirname, '../shared/src'),
     },
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
   },
   server: {
     fs: {

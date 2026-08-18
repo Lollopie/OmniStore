@@ -7,7 +7,7 @@ import express from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { Cookie } from '../user/user.decorator';
 import { ConfigService } from '@nestjs/config';
-import { CookieService } from '../auth/cookie.service';
+import { AuthService } from '../auth/auth.service';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -15,7 +15,7 @@ export class OrganizationController {
     private readonly organizationService: OrganizationService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly cookieService: CookieService,
+    private readonly cookieService: AuthService,
   ) {}
   @Post('/register')
   async register(

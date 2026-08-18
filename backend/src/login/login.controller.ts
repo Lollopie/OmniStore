@@ -11,14 +11,14 @@ import { LoginService } from './login.service';
 import { RegisterDto } from '@shared/dto/register.dto';
 import { ConfigService } from '@nestjs/config';
 import { Cookie } from '../user/user.decorator';
-import { CookieService } from '../auth/cookie.service';
+import { AuthService } from '../auth/auth.service';
 
 @Controller('login')
 export class LoginController {
   constructor(
     private readonly loginService: LoginService,
     private readonly configService: ConfigService,
-    private readonly cookieService: CookieService,
+    private readonly cookieService: AuthService,
   ) {}
   @Post()
   @HttpCode(HttpStatus.OK)

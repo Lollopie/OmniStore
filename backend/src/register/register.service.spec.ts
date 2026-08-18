@@ -2,12 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RegisterService } from './register.service';
 import { UsersService } from '../user/users.service';
 import { BadRequestException } from '@nestjs/common';
-import { PasswordService } from '../auth/password.service';
 import { ConfigService } from '@nestjs/config';
+import { AuthService } from '../auth/auth.service';
 describe('LoginService (Unit Test)', () => {
   let registerService: RegisterService;
   let usersServiceMock: jest.Mocked<UsersService>;
-  let passwordService: PasswordService;
+  let authService: AuthService;
   beforeEach(async () => {
     const mockUserService = {
       createUser: jest.fn(),
@@ -17,7 +17,7 @@ describe('LoginService (Unit Test)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RegisterService,
-        PasswordService,
+        AuthService,
         {
           provide: ConfigService,
           useValue: {
@@ -36,7 +36,7 @@ describe('LoginService (Unit Test)', () => {
     }).compile();
 
     registerService = module.get<RegisterService>(RegisterService);
-    passwordService = module.get<PasswordService>(PasswordService);
+    authService = module.get<AuthService>(AuthService);
     usersServiceMock = module.get(UsersService);
   });
 
@@ -50,7 +50,7 @@ describe('LoginService (Unit Test)', () => {
         userId: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.org',
         username: 'test',
-        password: await passwordService.hashPassword('password1'),
+        password: await authService.hashPassword('password1'),
       });
       const invalidData = {
         username: 'test',
@@ -68,7 +68,7 @@ describe('LoginService (Unit Test)', () => {
         userId: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.org',
         username: 'test',
-        password: await passwordService.hashPassword('password1'),
+        password: await authService.hashPassword('password1'),
       });
 
       const validData = { username: 'test', password: 'password1' };

@@ -1,18 +1,12 @@
 import { Module } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { OrganizationController } from './organization.controller';
-import { PasswordService } from '../auth/password.service';
 import { TxRepoProvider } from '../rls/db.helper';
-import { CookieService } from '../auth/cookie.service';
+import { AuthService } from '../auth/auth.service';
 
 @Module({
   imports: [],
-  providers: [
-    OrganizationService,
-    PasswordService,
-    TxRepoProvider,
-    CookieService,
-  ],
+  providers: [OrganizationService, AuthService, TxRepoProvider],
   exports: [OrganizationService],
   controllers: [OrganizationController],
 })

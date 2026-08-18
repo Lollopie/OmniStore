@@ -3,7 +3,6 @@ import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { CanActivate, Injectable, ValidationPipe } from '@nestjs/common';
-import { PasswordService } from '../src/auth/password.service';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
@@ -11,6 +10,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { UserEntity } from '../src/user/user.entity';
 import { registerAndLogin } from './utils/helper';
+import { AuthService } from '../src/auth/auth.service';
 
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -22,7 +22,7 @@ class MockThrottlerGuard implements CanActivate {
 describe('UsersController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
-  let passwordService: PasswordService;
+  let authService: AuthService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -33,7 +33,7 @@ describe('UsersController (e2e)', () => {
         }),
         AppModule,
       ],
-      providers: [PasswordService],
+      providers: [AuthService],
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
@@ -44,7 +44,7 @@ describe('UsersController (e2e)', () => {
     app.use(cookieParser());
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
-    passwordService = moduleFixture.get(PasswordService);
+    authService = moduleFixture.get(AuthService);
   });
 
   afterEach(async () => {
@@ -134,7 +134,7 @@ describe('UsersController (e2e)', () => {
       .findOneBy({ username: 'testuser' });
     expect(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      await passwordService.verifyPassword('newpassword123', user.password),
+      await authService.verifyPassword('newpassword123', user.password),
     ).toBe(true);
   });
   it('/users (PATCH) - should not update password with incorrect password', async () => {

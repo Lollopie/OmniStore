@@ -8,7 +8,7 @@ export default function Login() {
     <AuthForm
       title="Login"
       buttonText="Login"
-      endpoint="login"
+      endpoint="/login"
       successMessage='Login successful!'
       onSuccess={() => setIsAuthenticated(true)}
       handleResponse={(data) => {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
-import { RegisterDto } from '@shared/dto/register.dto.ts';
+import { RegisterDto } from '@shared/dto/register.dto';
 import InputField from '../../../components/InputField.tsx';
 import Button from '../../../components/Button.tsx';
 import { PasswordInput } from '../../../components/PasswordInput.tsx';
@@ -39,7 +39,7 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
     const password = registerDto.password;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/${endpoint}`, {
+      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: trimmedUsername, password }),

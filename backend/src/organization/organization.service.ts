@@ -3,13 +3,13 @@ import { OrganizationDto } from '@shared/dto/organization.dto';
 import { TxRepoProvider } from '../rls/db.helper';
 import { OrganizationEntity } from './organization.entity';
 import { UserEntity } from '../user/user.entity';
-import { PasswordService } from '../auth/password.service';
 import { mapRow } from '../utils/helper';
+import { AuthService } from '../auth/auth.service';
 @Injectable()
 export class OrganizationService {
   constructor(
     private readonly txRepoProvider: TxRepoProvider,
-    private readonly passwordService: PasswordService,
+    private readonly authService: AuthService,
   ) {}
   async createOrganization(data: OrganizationDto) {
     const organizationRepo = this.txRepoProvider.getRepo(OrganizationEntity);
@@ -17,7 +17,7 @@ export class OrganizationService {
     const user = userRepo.create({
       username: data.ownerUsername,
       email: data.ownerEmail,
-      password: await this.passwordService.hashPassword(data.ownerPassword),
+      password: await this.authService.hashPassword(data.ownerPassword),
     });
     const savedUser = await userRepo.save(user);
     const [rawOrg]: OrganizationEntity[] = await organizationRepo.query(

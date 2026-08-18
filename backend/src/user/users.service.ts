@@ -2,21 +2,21 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserEntity } from './user.entity';
 import { RegisterDto } from '@shared/dto/register.dto';
 import { UnauthorizedException } from '@nestjs/common';
-import { PasswordService } from '../auth/password.service';
 import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
 import { TxRepoProvider } from '../rls/db.helper';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly txRepoProvider: TxRepoProvider,
-    private readonly passwordService: PasswordService,
+    private readonly authService: AuthService,
   ) {}
   findByUsername(userName: string): Promise<UserEntity | null> {
     const repo = this.txRepoProvider.getRepo(UserEntity);
     return repo.findOneBy({ username: userName });
   }
-  async createUser(user: RegisterDto) {
+  async createUser(user: RegisterDto): Promise<UserEntity> {
     const repo = this.txRepoProvider.getRepo(UserEntity);
     const newUser = repo.create(user);
     return await repo.save(newUser);
@@ -28,7 +28,7 @@ export class UsersService {
       throw new UnauthorizedException('User not found');
     }
 
-    const isPasswordCorrect = await this.passwordService.verifyPassword(
+    const isPasswordCorrect = await this.authService.verifyPassword(
       password,
       user.password,
     );
@@ -50,14 +50,14 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     if (
-      !(await this.passwordService.verifyPassword(
+      !(await this.authService.verifyPassword(
         changePasswordDto.password,
         user.password,
       ))
     ) {
       throw new UnauthorizedException('Invalid password');
     }
-    user.password = await this.passwordService.hashPassword(
+    user.password = await this.authService.hashPassword(
       changePasswordDto.confirmPassword,
     );
     return await repo.save(user);

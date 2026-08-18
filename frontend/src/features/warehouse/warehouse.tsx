@@ -20,7 +20,7 @@ import { changeUserRole } from './hooks/changeUserRole.ts';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { WarehouseDto } from '@shared/dto/warehouse.dto';
 import { useForm } from 'react-hook-form';
-import { Role } from '@shared/enum/warehouseRoles.enum.ts';
+import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 export interface WarehouseUser {
   userId: string;
   username: string;
@@ -221,7 +221,7 @@ const WarehouseManager = () => {
                             })
                           }}
                         >
-                          {Object.values(Role).map((role) => (
+                          {Object.values(WarehouseRole).map((role) => (
                             <option key={role} value={role}>
                               {role}
                             </option>

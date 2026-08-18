@@ -12,6 +12,7 @@ import { AccountSettings } from './features/settings/components/AccountSettings.
 import { WarehouseSettings } from './features/settings/components/WarehouseSettings.tsx';
 import PreferenceSettings from './features/settings/components/PreferenceSettings.tsx';
 import { AuthProvider, useAuth } from './features/auth/authContext/';
+import InviteManager from './features/invite/invite.tsx';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -47,6 +48,7 @@ function AppContent() {
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
               <Route path="/logout" element={<Navigate to="/login" replace />} />
+              <Route path="/invite/:token" element={<InviteManager />} />
             </Route>
 
             <Route element={<ProtectedRoute />}>

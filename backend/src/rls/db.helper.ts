@@ -20,4 +20,13 @@ export class TxRepoProvider {
     }
     return manager.getRepository(entity);
   }
+  getManager(): EntityManager {
+    const manager: EntityManager = this.cls.get('entityManager');
+    if (!manager) {
+      throw new Error(
+        'No transactional EntityManager in CLS — RlsInterceptor did not run',
+      );
+    }
+    return manager;
+  }
 }

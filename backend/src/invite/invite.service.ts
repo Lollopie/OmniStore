@@ -5,17 +5,15 @@ import { ClsService } from 'nestjs-cls';
 import * as crypto from 'crypto';
 import { RegisterDto } from '@shared/dto/register.dto';
 import { UserEntity } from '../user/user.entity';
-import { PasswordService } from '../auth/password.service';
-import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
-import { UserWarehouseRoleEntity } from '../userWarehouseRole/userWarehouseRole.entity';
-import { IsNull } from 'typeorm';
+import { AuthService } from '../auth/auth.service';
+import { mapRow } from '../utils/helper';
 
 @Injectable()
 export class InviteService {
   constructor(
     private readonly txRepoProvider: TxRepoProvider,
     private readonly clsService: ClsService,
-    private readonly passwordService: PasswordService,
+    private readonly authService: AuthService,
   ) {}
   async inviteWarehouseUser(email: string, warehouseId: string, role: string) {
     const repo = this.txRepoProvider.getRepo(InviteEntity);
@@ -24,71 +22,51 @@ export class InviteService {
     const expiresAt = new Date();
     const invitationDurationDays = 7;
     expiresAt.setDate(expiresAt.getDate() + invitationDurationDays);
+    const token = this.authService.hashToken(rawToken);
+    await repo.query(`SELECT set_config('app.current_token_hash', $1, true)`, [
+      token,
+    ]);
     const invite = repo.create({
       email,
       orgId,
       warehouseId,
       role,
       expiresAt,
-      tokenHash: crypto.createHash('sha256').update(rawToken).digest('hex'),
+      tokenHash: token,
     });
-    //TODO: send raw Token via invite E-Mail
-    return await repo.save(invite);
+    return { invite: await repo.save(invite), rawToken: rawToken };
   }
-  async acceptInvite(token: string, registerDto: RegisterDto) {
+  async acceptInvite(rawToken: string, registerDto: RegisterDto) {
     const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
     const userRepo = this.txRepoProvider.getRepo(UserEntity);
-    const userOrgRoleRepo = this.txRepoProvider.getRepo(
-      UserOrganizationRoleEntity,
-    );
-    const userWarehouseRoleRepo = this.txRepoProvider.getRepo(
-      UserWarehouseRoleEntity,
-    );
-    //TODO: Check why token should be hashed
-    const invite = await inviteRepo.findOne({
-      where: { tokenHash: token, consumedAt: IsNull() },
-      lock: { mode: 'pessimistic_write' },
-    });
-    if (!invite || invite.expiresAt < new Date()) {
-      throw new BadRequestException('Invite invalid or expired');
-    }
-
-    await inviteRepo.update(
-      { inviteId: invite.inviteId, consumedAt: IsNull() },
-      { consumedAt: new Date() },
-    );
-
+    const token = this.authService.hashToken(rawToken);
+    const [invite]: InviteEntity[] = await this.txRepoProvider
+      .getManager()
+      .query<InviteEntity[]>(`SELECT * FROM consume_invite($1)`, [token])
+      .catch(() => {
+        throw new BadRequestException('Invite invalid or expired');
+      });
+    const mappedInvite = mapRow(inviteRepo, invite);
     let user = await userRepo.findOne({
-      where: { email: invite.email },
+      where: { email: mappedInvite.email },
     });
     if (!user) {
       user = userRepo.create({
-        email: invite.email,
+        email: mappedInvite.email,
         username: registerDto.username,
-        password: await this.passwordService.hashPassword(registerDto.password),
+        password: await this.authService.hashPassword(registerDto.password),
       });
       await userRepo.save(user);
     }
 
-    await userOrgRoleRepo
-      .createQueryBuilder()
-      .insert()
-      .values({ userId: user.userId, orgId: invite.orgId, role: 'MEMBER' })
-      .orIgnore()
-      .execute();
-
-    if (invite.warehouseId && invite.role) {
-      await userWarehouseRoleRepo
-        .createQueryBuilder()
-        .insert()
-        .values({
-          userId: user.userId,
-          warehouseId: invite.warehouseId,
-          role: invite.role,
-        })
-        .orUpdate(['role'], ['user_id', 'warehouse_id'])
-        .execute();
-    }
+    await this.txRepoProvider
+      .getManager()
+      .query(`SELECT grant_invite_role($1, $2, $3, $4)`, [
+        user.userId,
+        mappedInvite.orgId,
+        mappedInvite.warehouseId,
+        mappedInvite.role,
+      ]);
 
     return user;
   }

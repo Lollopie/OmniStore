@@ -4,11 +4,10 @@ import { LoginController } from './login.controller';
 import { UsersModule } from '../user/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PasswordService } from '../auth/password.service';
 import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.module';
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
 import { TxRepoProvider } from '../rls/db.helper';
-import { CookieService } from '../auth/cookie.service';
+import { AuthService } from '../auth/auth.service';
 @Module({
   imports: [
     UsersModule,
@@ -27,10 +26,9 @@ import { CookieService } from '../auth/cookie.service';
   ],
   providers: [
     LoginService,
-    PasswordService,
+    AuthService,
     UserOrganizationRoleService,
     TxRepoProvider,
-    CookieService
   ],
   controllers: [LoginController],
 })

@@ -4,11 +4,11 @@ import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { CanActivate, Injectable, ValidationPipe } from '@nestjs/common';
-import { PasswordService } from '../src/auth/password.service';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { AuthService } from '../src/auth/auth.service';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -18,7 +18,7 @@ class MockThrottlerGuard implements CanActivate {
 describe('RegisterController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
-  let passwordService: PasswordService;
+  let authService: AuthService;
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -28,7 +28,7 @@ describe('RegisterController (e2e)', () => {
         }),
         AppModule,
       ],
-      providers: [PasswordService],
+      providers: [AuthService],
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
@@ -38,7 +38,7 @@ describe('RegisterController (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
-    passwordService = moduleFixture.get(PasswordService);
+    authService = moduleFixture.get(AuthService);
   });
 
   // it('/register (GET)', () => {
@@ -204,7 +204,7 @@ describe('RegisterController (e2e)', () => {
       .findOneBy({ username: 'test' });
     expect(user).toBeDefined();
     if (user && typeof user['password'] === 'string') {
-      const isMatch = await passwordService.verifyPassword(
+      const isMatch = await authService.verifyPassword(
         userData.password,
         user.password,
       );

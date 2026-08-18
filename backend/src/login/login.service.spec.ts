@@ -2,17 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LoginService } from './login.service';
 import { UsersService } from '../user/users.service';
 import { UnauthorizedException } from '@nestjs/common';
-import { PasswordService } from '../auth/password.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import authConfig from '../config/auth.config';
 import dbConfig from '../config/db.config';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
+import { AuthService } from '../auth/auth.service';
 
 describe('LoginService (Unit Test)', () => {
   let loginService: LoginService;
   let usersServiceMock: jest.Mocked<UsersService>;
-  let passwordService: PasswordService;
+  let authService: AuthService;
   let userWarehouseRoleServiceMock: jest.Mocked<UserWarehouseRoleService>;
   beforeEach(async () => {
     const mockUserService = {
@@ -23,7 +23,7 @@ describe('LoginService (Unit Test)', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PasswordService,
+        AuthService,
         {
           provide: ConfigService,
           useValue: {
@@ -62,7 +62,7 @@ describe('LoginService (Unit Test)', () => {
     }).compile();
 
     loginService = module.get<LoginService>(LoginService);
-    passwordService = module.get<PasswordService>(PasswordService);
+    authService = module.get<AuthService>(AuthService);
     usersServiceMock = module.get(UsersService);
     userWarehouseRoleServiceMock = module.get(UserWarehouseRoleService);
   });
@@ -88,7 +88,7 @@ describe('LoginService (Unit Test)', () => {
         userId: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.org',
         username: 'test',
-        password: await passwordService.hashPassword('password1'),
+        password: await authService.hashPassword('password1'),
       });
       const invalidData = {
         username: 'test',
@@ -105,7 +105,7 @@ describe('LoginService (Unit Test)', () => {
         userId: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.org',
         username: 'test',
-        password: await passwordService.hashPassword('password1'),
+        password: await authService.hashPassword('password1'),
       });
       userWarehouseRoleServiceMock.getUserWarehouses.mockResolvedValue(null);
       const validData = {

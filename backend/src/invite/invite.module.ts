@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { InviteService } from './invite.service';
 import { InviteController } from './invite.controller';
-import { PasswordService } from '../auth/password.service';
 import { TxRepoProvider } from '../rls/db.helper';
+import { AuthService } from '../auth/auth.service';
 
 @Module({
   imports: [],
-  providers: [InviteService, PasswordService, TxRepoProvider],
+  providers: [InviteService, AuthService, TxRepoProvider],
   exports: [InviteService],
   controllers: [InviteController],
 })

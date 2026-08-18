@@ -17,7 +17,7 @@ interface InputFieldProps extends React.HTMLProps<HTMLInputElement> {
   setValue?: (value: string) => void;
 }
 
-export default function InputField({ variant, label, fieldSize, className, setValue, ...props }: InputFieldProps) {
+export default function aInputField({ variant, label, fieldSize, className, setValue, ...props }: InputFieldProps) {
   const baseInputFieldStyle = "input focus:outline-none focus:ring-1";
   const variantStyle = variant ? VARIANTS[variant] : VARIANTS['primary'];
   return (

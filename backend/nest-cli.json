@@ -5,6 +5,12 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "builder": "tsc",
-    "tsConfigPath": "tsconfig.json"
+    "tsConfigPath": "tsconfig.json",
+    "assets": [
+      {
+        "include": "mail/templates/*.hbs",
+        "watchAssets": true
+      }
+    ]
   }
 }

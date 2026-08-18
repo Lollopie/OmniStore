@@ -17,8 +17,6 @@ import {
 import { AuthGuard } from '../auth/auth.guard';
 import * as userDecorator from '../user/user.decorator';
 import express from 'express';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 import { WarehouseRolesGuard } from '../roles/warehouseRoles/warehouseRoles.guard';
 import { WarehouseRoles } from '../roles/warehouseRoles/warehouseRoles.decorator';
@@ -29,18 +27,24 @@ import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationR
 import { InviteService } from '../invite/invite.service';
 import { ClsService } from 'nestjs-cls';
 import { Cookie } from '../user/user.decorator';
-import { CookieService } from '../auth/cookie.service';
+import { AuthService } from '../auth/auth.service';
+import { MailService } from '../mail/mail.service';
+import { InviteContext } from '../mail/interfaces/mail-contexts.interface';
+import { ConfigService } from '@nestjs/config';
+import { InviteEntity } from '../invite/invite.entity';
+import { OrganizationService } from '../organization/organization.service';
 
 @Controller('warehouses')
 export class WarehouseController {
   constructor(
     private readonly warehouseService: WarehouseService,
-    private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly userWarehouseRoleService: UserWarehouseRoleService,
     private readonly inviteService: InviteService,
     private readonly clsService: ClsService,
-    private readonly cookieService: CookieService,
+    private readonly cookieService: AuthService,
+    private readonly orgService: OrganizationService,
   ) {}
   @Post()
   @UseGuards(AuthGuard, OrganizationRolesGuard)
@@ -125,12 +129,22 @@ export class WarehouseController {
   @UseGuards(AuthGuard, OrganizationRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   async inviteUser(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
-    const invite = await this.inviteService.inviteWarehouseUser(
-      warehouseUserRoleData.email,
-      warehouseUserRoleData.warehouseId,
-      warehouseUserRoleData.role,
-    );
+    const invite: { invite: InviteEntity; rawToken: string } =
+      await this.inviteService.inviteWarehouseUser(
+        warehouseUserRoleData.email,
+        warehouseUserRoleData.warehouseId,
+        warehouseUserRoleData.role,
+      );
     if (invite) {
+      const context: InviteContext = {
+        organizationName:
+          (await this.orgService.findOne(invite.invite.orgId))?.name ||
+          'Organization',
+        verificationUrl: `${this.configService.get('app.frontendUrl')}/invite/${invite.rawToken}`,
+        expiresInHours:
+          this.configService.get('auth.inviteTokenExpiresIn') || 24,
+      };
+      await this.mailService.sendInviteEmail(invite.invite.email, context);
       return { message: 'Invite send successfully.' };
     }
     throw new InternalServerErrorException('Invalid invite');

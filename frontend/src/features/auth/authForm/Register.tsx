@@ -5,7 +5,7 @@ export default function Register() {
     <AuthForm
       title="Create an Account"
       buttonText="Register"
-      endpoint="register"
+      endpoint="/register"
       successMessage="Registration successful! You can now log in."
       onSuccess={() => {}}
       handleResponse={() => {}}

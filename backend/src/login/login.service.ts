@@ -1,15 +1,15 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../user/users.service';
 import { RegisterDto } from '@shared/dto/register.dto';
-import { PasswordService } from '../auth/password.service';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
 import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
+import { AuthService } from '../auth/auth.service';
 @Injectable()
 export class LoginService {
   constructor(
     private readonly usersService: UsersService,
-    private readonly passwordService: PasswordService,
+    private readonly authService: AuthService,
     private readonly userWarehouseRoleService: UserWarehouseRoleService,
     private readonly userOrganizationRoleService: UserOrganizationRoleService,
   ) {}
@@ -24,7 +24,7 @@ export class LoginService {
       .then(async (user) => {
         if (user) {
           if (
-            await this.passwordService.verifyPassword(
+            await this.authService.verifyPassword(
               loginData.password,
               user.password,
             )

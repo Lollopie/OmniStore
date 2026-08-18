@@ -7,7 +7,6 @@ import { UsersModule } from './user/users.module';
 import { ConfigModule } from '@nestjs/config';
 import authConfig from './config/auth.config';
 import dbConfig from './config/db.config';
-import { PasswordService } from './auth/password.service';
 import { LoginModule } from './login/login.module';
 import { ConfigService } from '@nestjs/config';
 import { InventoryEntity } from './inventory/inventory.entity';
@@ -36,8 +35,9 @@ import { OrganizationModule } from './organization/organization.module';
 import { InviteService } from './invite/invite.service';
 import { TxRepoProvider } from './rls/db.helper';
 import { GuardDBService } from './utils/guardDB.service';
-import { CookieService } from './auth/cookie.service';
+import { AuthService } from './auth/auth.service';
 import { InviteEntity } from './invite/invite.entity';
+import appConfig from './config/app.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -47,7 +47,7 @@ import { InviteEntity } from './invite/invite.entity';
         `.env`,
         '/etc/secrets/.env',
       ],
-      load: [authConfig, dbConfig, emailConfig],
+      load: [appConfig, authConfig, dbConfig, emailConfig],
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -138,14 +138,13 @@ import { InviteEntity } from './invite/invite.entity';
   ],
   providers: [
     RegisterService,
-    PasswordService,
     MailService,
     UserOrganizationRoleService,
     InviteService,
     TxRepoProvider,
     GuardDBService,
     ThrottlerGuard,
-    CookieService,
+    AuthService,
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: RlsInterceptor },
   ],

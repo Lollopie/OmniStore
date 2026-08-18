@@ -22,39 +22,103 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
             ALTER TABLE "invite" ENABLE ROW LEVEL SECURITY;
     `);
     await queryRunner.query(`
-            CREATE OR REPLACE FUNCTION is_org_admin(check_user_id UUID, check_org_id UUID)
-            RETURNS BOOLEAN
-            LANGUAGE sql
-            SECURITY DEFINER
-            STABLE
-            AS $$
-              SELECT EXISTS (
-                SELECT 1 FROM user_org_role
-                WHERE user_id = check_user_id
-                  AND org_id = check_org_id
-                  AND role IN ('OWNER', 'ADMIN')
-              );
-            $$;
-            
-            -- lock the function down so it can't be called arbitrarily to probe other users
-            REVOKE ALL ON FUNCTION is_org_admin FROM PUBLIC;
-            GRANT EXECUTE ON FUNCTION is_org_admin TO nestjs_app_user;
+        CREATE OR REPLACE FUNCTION consume_invite(raw_token_hash TEXT)
+        RETURNS invite
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        AS $$
+        DECLARE
+          found_invite invite;
+        BEGIN
+          SELECT * INTO found_invite
+          FROM invite
+          WHERE token_hash = raw_token_hash
+            AND consumed_at IS NULL
+            AND expires_at > now()
+          FOR UPDATE;
+        
+          IF NOT FOUND THEN
+            RAISE EXCEPTION 'invite_invalid_or_expired';
+          END IF;
+        
+          UPDATE invite SET consumed_at = now() WHERE invite_id = found_invite.invite_id;
+        
+          RETURN found_invite;
+        END;
+        $$;
+        
+        REVOKE ALL ON FUNCTION consume_invite FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION consume_invite TO nestjs_app_user;
     `);
     await queryRunner.query(`
-            CREATE POLICY invite_org_and_org_admin ON invite
-                USING (
-                    org_id = current_setting('app.current_org_id', true)::uuid
-                    AND is_org_admin(
-                         current_setting('app.current_user_id', true)::uuid,
-                         current_setting('app.current_org_id', true)::uuid
-                       )
-                );
+        CREATE OR REPLACE FUNCTION grant_invite_role(new_user_id UUID, invite_org_id UUID, invite_warehouse_id UUID, invite_role TEXT)
+        RETURNS user_org_role
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        AS $$
+        DECLARE
+          new_user_org_role user_org_role;
+        BEGIN        
+          INSERT INTO user_org_role (user_id, org_id, role)
+          VALUES (new_user_id, invite_org_id, 'MEMBER') RETURNING * INTO new_user_org_role;
+          
+          IF invite_warehouse_id IS NOT NULL AND invite_role IS NOT NULL THEN
+            INSERT INTO user_warehouse_role (user_id, warehouse_id, role)
+            VALUES (new_user_id, invite_warehouse_id, invite_role)
+            ON CONFLICT (user_id, warehouse_id) DO UPDATE SET role = EXCLUDED.role;
+          END IF;
+          RETURN new_user_org_role;
+        END;
+        $$;
+        
+        REVOKE ALL ON FUNCTION grant_invite_role FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION grant_invite_role TO nestjs_app_user;
+    `);
+    await queryRunner.query(`
+        CREATE OR REPLACE FUNCTION is_org_admin(check_user_id UUID, check_org_id UUID)
+        RETURNS BOOLEAN
+        LANGUAGE sql
+        SECURITY DEFINER
+        STABLE
+        AS $$
+          SELECT EXISTS (
+            SELECT 1 FROM user_org_role
+            WHERE user_id = check_user_id
+              AND org_id = check_org_id
+              AND role IN ('OWNER', 'ADMIN')
+          );
+        $$;
+        
+        -- lock the function down so it can't be called arbitrarily to probe other users
+        REVOKE ALL ON FUNCTION is_org_admin FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION is_org_admin TO nestjs_app_user;
+    `);
+    await queryRunner.query(`
+        CREATE POLICY invite_org_and_org_admin ON "invite"
+            FOR INSERT
+            WITH CHECK (
+                org_id = current_setting('app.current_org_id', true)::uuid
+                AND is_org_admin(
+                     current_setting('app.current_user_id', true)::uuid,
+                     current_setting('app.current_org_id', true)::uuid
+                   )
+            );
+    `);
+    await queryRunner.query(`
+        CREATE POLICY invite_select ON "invite"
+            FOR SELECT
+            USING (
+                token_hash = current_setting('app.current_token_hash', true)::text
+            );
     `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       DROP POLICY "invite_org_and_org_admin" ON "invite";
+    `);
+    await queryRunner.query(`
+      DROP POLICY "invite_select" ON "invite";
     `);
     await queryRunner.query(`DROP TABLE "invite"`);
   }
