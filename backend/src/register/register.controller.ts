@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { RegisterService } from './register.service';
-import { RegisterDto } from '@shared/dto/register.dto';
+import { RegisterEmailDto } from '@shared/dto/register.dto';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '../mail/mail.service';
 @Controller('register')
@@ -11,16 +11,18 @@ export class RegisterController {
     private readonly mailService: MailService,
   ) {}
   @Post()
-  async register(@Body() user: RegisterDto) {
+  async register(@Body() user: RegisterEmailDto) {
     const response = await this.registerService.register(user);
-    if (response) {
-      return { success: true };
+    if (!response) {
+      return { error: 'Register failed' };
     }
-    await this.mailService.sendVerificationEmail('example@example.org', {
-      userName: user.username,
-      verificationUrl: 'http://localhost:3000/verify-email',
-      expiresInHours: 24,
+    await this.mailService.sendVerificationEmail(user.email, {
+      verificationUrl:
+        `${this.configService.get<string>('app.frontendUrl')}/register/verify?token=` +
+        response.rawToken,
+      expiresInMinutes:
+        this.configService.get<number>('email.registerTokenExpiresIn') || 30,
     });
-    return { error: 'Register failed' };
+    return { success: true };
   }
 }

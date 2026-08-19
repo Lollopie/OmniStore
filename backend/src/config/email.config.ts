@@ -10,4 +10,6 @@ export default registerAs('email', () => ({
   resendSecret: process.env.RESEND_SECRET || 'resendSecret',
   inviteTokenExpiresIn:
     parseInt(process.env.INVITE_TOKEN_EXPIRATION_HOURS!, 10) || 24,
+  registerTokenExpiresIn:
+    parseInt(process.env.REGISTER_TOKEN_EXPIRATION_MINUTES!, 10) || 30,
 }));

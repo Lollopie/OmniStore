@@ -1,15 +1,24 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Query,
+  Post,
+  BadRequestException,
+} from '@nestjs/common';
 import { InviteService } from './invite.service';
 import { RegisterDto } from '@shared/dto/register.dto';
 
 @Controller('invite')
 export class InviteController {
   constructor(private readonly inviteService: InviteService) {}
-  @Post('/:inviteToken')
+  @Post('accept')
   async acceptInvite(
-    @Param('inviteToken') inviteToken: string,
+    @Query('token') inviteToken: string,
     @Body() registerDto: RegisterDto,
   ) {
+    if (!inviteToken) {
+      throw new BadRequestException('Invite token is required');
+    }
     return await this.inviteService.acceptInvite(inviteToken, registerDto);
   }
 }

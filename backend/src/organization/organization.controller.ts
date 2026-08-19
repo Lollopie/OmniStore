@@ -4,18 +4,16 @@ import { OrganizationService } from './organization.service';
 import { UserEntity } from '../user/user.entity';
 import { OrganizationEntity } from './organization.entity';
 import express from 'express';
-import { JwtService } from '@nestjs/jwt';
 import { Cookie } from '../user/user.decorator';
-import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth/auth.service';
+import { MailService } from '../mail/mail.service';
 
 @Controller('organizations')
 export class OrganizationController {
   constructor(
     private readonly organizationService: OrganizationService,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-    private readonly cookieService: AuthService,
+    private readonly mailService: MailService,
+    private readonly authService: AuthService,
   ) {}
   @Post('/register')
   async register(
@@ -34,7 +32,7 @@ export class OrganizationController {
       activeWarehouseId: '',
       activeRole: '',
     };
-    this.cookieService.createAndSendCookie(cookie, res);
+    this.authService.createAndSendCookie(cookie, res);
     return { message: 'Organization created successfully.' };
     //TODO: Send E-Mail Authentication
   }

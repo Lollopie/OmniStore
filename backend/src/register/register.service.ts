@@ -1,25 +1,17 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { UserEntity } from '../user/user.entity';
-import { UsersService } from '../user/users.service';
-import { RegisterDto } from '@shared/dto/register.dto';
-import { AuthService } from '../auth/auth.service';
+import { Injectable } from '@nestjs/common';
+import { RegisterEmailDto } from '@shared/dto/register.dto';
+import { InviteService } from '../invite/invite.service';
+import { InviteEntity } from '../invite/invite.entity';
 @Injectable()
 export class RegisterService {
   constructor(
-    private readonly usersService: UsersService,
-    private readonly authService: AuthService,
+    private readonly inviteService: InviteService,
   ) {}
-  async register(registerData: RegisterDto): Promise<UserEntity> {
-    return await this.usersService
-      .findByUsername(registerData.username)
-      .then(async (user) => {
-        if (user) {
-          throw new BadRequestException('Username already exists');
-        }
-        registerData.password = await this.authService.hashPassword(
-          registerData.password,
-        );
-        return await this.usersService.createUser(registerData);
-      });
+  async register(
+    registerData: RegisterEmailDto,
+  ): Promise<{ invite: InviteEntity; rawToken: string } | null> {
+    return await this.inviteService.inviteOrganizationRegister(
+      registerData.email,
+    );
   }
 }

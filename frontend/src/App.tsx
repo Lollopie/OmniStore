@@ -48,7 +48,7 @@ function AppContent() {
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
               <Route path="/logout" element={<Navigate to="/login" replace />} />
-              <Route path="/invite/:token" element={<InviteManager />} />
+              <Route path="/invite/accept" element={<InviteManager />} />
             </Route>
 
             <Route element={<ProtectedRoute />}>

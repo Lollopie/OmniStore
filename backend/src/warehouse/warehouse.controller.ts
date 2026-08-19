@@ -140,7 +140,7 @@ export class WarehouseController {
         organizationName:
           (await this.orgService.findOne(invite.invite.orgId))?.name ||
           'Organization',
-        verificationUrl: `${this.configService.get('app.frontendUrl')}/invite/${invite.rawToken}`,
+        verificationUrl: `${this.configService.get('app.frontendUrl')}/invite/accept?token=${invite.rawToken}`,
         expiresInHours:
           this.configService.get('auth.inviteTokenExpiresIn') || 24,
       };

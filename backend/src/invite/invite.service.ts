@@ -7,6 +7,8 @@ import { RegisterDto } from '@shared/dto/register.dto';
 import { UserEntity } from '../user/user.entity';
 import { AuthService } from '../auth/auth.service';
 import { mapRow } from '../utils/helper';
+import { WarehouseEntity } from '../warehouse/warehouse.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class InviteService {
@@ -14,19 +16,26 @@ export class InviteService {
     private readonly txRepoProvider: TxRepoProvider,
     private readonly clsService: ClsService,
     private readonly authService: AuthService,
+    private readonly configService: ConfigService,
   ) {}
   async inviteWarehouseUser(email: string, warehouseId: string, role: string) {
-    const repo = this.txRepoProvider.getRepo(InviteEntity);
+    const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
+    const warehouseRepo = this.txRepoProvider.getRepo(WarehouseEntity);
     const orgId: string = this.clsService.get('orgId');
+    const warehouse = await warehouseRepo.findOne({
+      where: { warehouseId, orgId },
+    });
+    if (!warehouse) {
+      throw new BadRequestException('Warehouse not found');
+    }
     const rawToken = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    const invitationDurationDays = 7;
-    expiresAt.setDate(expiresAt.getDate() + invitationDurationDays);
+    const invitationDurationHours =
+      this.configService.get<number>('email.inviteTokenExpiresIn') || 24;
+    const expiresAt = new Date(
+      Date.now() + invitationDurationHours * 60 * 60 * 1000,
+    );
     const token = this.authService.hashToken(rawToken);
-    await repo.query(`SELECT set_config('app.current_token_hash', $1, true)`, [
-      token,
-    ]);
-    const invite = repo.create({
+    const invite = inviteRepo.create({
       email,
       orgId,
       warehouseId,
@@ -34,7 +43,7 @@ export class InviteService {
       expiresAt,
       tokenHash: token,
     });
-    return { invite: await repo.save(invite), rawToken: rawToken };
+    return { invite: await inviteRepo.save(invite), rawToken: rawToken };
   }
   async acceptInvite(rawToken: string, registerDto: RegisterDto) {
     const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
@@ -42,7 +51,10 @@ export class InviteService {
     const token = this.authService.hashToken(rawToken);
     const [invite]: InviteEntity[] = await this.txRepoProvider
       .getManager()
-      .query<InviteEntity[]>(`SELECT * FROM consume_invite($1)`, [token])
+      .query<InviteEntity[]>(`SELECT * FROM consume_invite($1, $2)`, [
+        token,
+        true,
+      ])
       .catch(() => {
         throw new BadRequestException('Invite invalid or expired');
       });
@@ -69,5 +81,25 @@ export class InviteService {
       ]);
 
     return user;
+  }
+  async inviteOrganizationRegister(email: string) {
+    const userRepo = this.txRepoProvider.getRepo(UserEntity);
+    const user = await userRepo.findOne({ where: { email } });
+    if (user) {
+      throw new BadRequestException('User already exists');
+    }
+    const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const registerDurationMinutes =
+      this.configService.get<number>('email.registerTokenExpiresIn') || 30;
+    const expiresAt = new Date(
+      Date.now() + registerDurationMinutes * 60 * 1000,
+    );
+    const token = this.authService.hashToken(rawToken);
+    const [invite]: InviteEntity[] = await inviteRepo.query<InviteEntity[]>(
+      `SELECT create_org_registration($1, $2, $3)`,
+      [email, token, expiresAt],
+    );
+    return { invite: invite, rawToken: rawToken };
   }
 }

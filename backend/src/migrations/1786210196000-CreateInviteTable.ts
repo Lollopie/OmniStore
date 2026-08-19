@@ -6,7 +6,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
       `CREATE TABLE "invite" (
                   invite_id     uuid        NOT NULL    DEFAULT uuidv7(),
                   email         text        NOT NULL,
-                  org_id        uuid        NOT NULL,
+                  org_id        uuid,
                   warehouse_id  uuid,
                   role          text,
                   token_hash    text        NOT NULL    UNIQUE,
@@ -22,7 +22,10 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
             ALTER TABLE "invite" ENABLE ROW LEVEL SECURITY;
     `);
     await queryRunner.query(`
-        CREATE OR REPLACE FUNCTION consume_invite(raw_token_hash TEXT)
+        CREATE OR REPLACE FUNCTION consume_invite(
+          raw_token_hash TEXT,
+          require_org BOOLEAN DEFAULT NULL
+        )
         RETURNS invite
         LANGUAGE plpgsql
         SECURITY DEFINER
@@ -35,6 +38,11 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
           WHERE token_hash = raw_token_hash
             AND consumed_at IS NULL
             AND expires_at > now()
+            AND (
+                require_org IS NULL 
+                OR (require_org IS TRUE AND org_id IS NOT NULL)
+                OR (require_org IS FALSE AND org_id IS NULL)
+            )
           FOR UPDATE;
         
           IF NOT FOUND THEN
@@ -94,9 +102,25 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
         GRANT EXECUTE ON FUNCTION is_org_admin TO nestjs_app_user;
     `);
     await queryRunner.query(`
+        CREATE OR REPLACE FUNCTION create_org_registration(reg_email TEXT, reg_token_hash TEXT, reg_expires_at TIMESTAMPTZ)
+        RETURNS invite
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        AS $$
+        DECLARE
+          new_invite invite;
+        BEGIN        
+          INSERT INTO invite (email, token_hash, expires_at)
+          VALUES (reg_email, reg_token_hash, reg_expires_at)
+          RETURNING * INTO new_invite;
+          
+          RETURN new_invite;
+        END;
+        $$;
+    `);
+    await queryRunner.query(`
         CREATE POLICY invite_org_and_org_admin ON "invite"
-            FOR INSERT
-            WITH CHECK (
+            USING (
                 org_id = current_setting('app.current_org_id', true)::uuid
                 AND is_org_admin(
                      current_setting('app.current_user_id', true)::uuid,
@@ -104,21 +128,11 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
                    )
             );
     `);
-    await queryRunner.query(`
-        CREATE POLICY invite_select ON "invite"
-            FOR SELECT
-            USING (
-                token_hash = current_setting('app.current_token_hash', true)::text
-            );
-    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       DROP POLICY "invite_org_and_org_admin" ON "invite";
-    `);
-    await queryRunner.query(`
-      DROP POLICY "invite_select" ON "invite";
     `);
     await queryRunner.query(`DROP TABLE "invite"`);
   }
