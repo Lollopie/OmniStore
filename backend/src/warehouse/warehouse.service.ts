@@ -18,6 +18,7 @@ export class WarehouseService {
     role: string,
   ): Promise<WarehouseEntity> {
     const orgId = this.clsService.get<string>('orgId');
+    //TODO: Check why this is needed, it should be able to just use repos
     const [rawWh]: WarehouseEntity[] = await this.dataSource.query(
       `SELECT * FROM create_warehouse($1, $2, $3, $4)`,
       [orgId, warehouseData.warehouseName, userId, role],

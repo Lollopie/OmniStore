@@ -5,6 +5,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
 import { TxRepoProvider } from '../rls/db.helper';
 import { AuthService } from '../auth/auth.service';
+import { Cookie } from './user.decorator';
 
 @Injectable()
 export class UsersService {
@@ -37,6 +38,22 @@ export class UsersService {
     }
 
     return await repo.delete(userId);
+  }
+  async getCookieInfo(username: string) {
+    const repo = this.txRepoProvider.getRepo(UserEntity);
+    const cookieInfo: {
+      user_id: string;
+      username: string;
+      org_id: string;
+      org_role: string;
+      warehouse_id: string;
+      warehouse_name: string;
+      warehouse_role: string;
+    }[] = await repo.query('SELECT * FROM get_cookie_info($1)', [username]);
+    if (!cookieInfo) {
+      throw new UnauthorizedException('User not found');
+    }
+    return cookieInfo;
   }
   async updatePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {

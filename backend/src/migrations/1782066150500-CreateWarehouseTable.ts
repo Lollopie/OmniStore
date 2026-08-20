@@ -47,7 +47,7 @@ export class CreateWarehouseTable1782066150500 implements MigrationInterface {
     await queryRunner.query(`
       CREATE POLICY "warehouse_isolation_policy" ON "warehouse"
       FOR ALL
-      USING (org_id = current_setting('app.current_org_id')::uuid);
+      USING (org_id = current_setting('app.current_org_id', true)::uuid);
     `);
   }
 

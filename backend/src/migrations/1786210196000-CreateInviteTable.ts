@@ -119,6 +119,21 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
         $$;
     `);
     await queryRunner.query(`
+        CREATE OR REPLACE FUNCTION validate_invite(invite_token_hash TEXT)
+        RETURNS invite
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        AS $$
+        DECLARE
+          found_invite invite;
+        BEGIN        
+          SELECT * FROM invite WHERE token_hash = invite_token_hash INTO found_invite;
+          
+          RETURN found_invite;
+        END;
+        $$;
+    `);
+    await queryRunner.query(`
         CREATE POLICY invite_org_and_org_admin ON "invite"
             USING (
                 org_id = current_setting('app.current_org_id', true)::uuid

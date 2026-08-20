@@ -48,7 +48,7 @@ export default function Register() {
           <h2 className="mb-6 text-2xl font-bold text-base-400">Register</h2>
           {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
           {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
-          <div className="space-y-4">
+          <div className="space-y-4 pb-4">
             <InputField
               label="Email"
               type="email"

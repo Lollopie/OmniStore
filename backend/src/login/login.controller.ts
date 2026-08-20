@@ -9,7 +9,6 @@ import {
 import express from 'express';
 import { LoginService } from './login.service';
 import { RegisterDto } from '@shared/dto/register.dto';
-import { ConfigService } from '@nestjs/config';
 import { Cookie } from '../user/user.decorator';
 import { AuthService } from '../auth/auth.service';
 
@@ -17,7 +16,6 @@ import { AuthService } from '../auth/auth.service';
 export class LoginController {
   constructor(
     private readonly loginService: LoginService,
-    private readonly configService: ConfigService,
     private readonly cookieService: AuthService,
   ) {}
   @Post()
@@ -33,40 +31,31 @@ export class LoginController {
     userId: string;
     username: string;
   }> {
-    const userInfo: {
-      warehouses: { warehouseId: string; name: string; role: string }[] | null;
-      orgId: string;
-      userId: string;
-      username: string;
-    } = await this.loginService.login(user);
+    const userInfo = await this.loginService.login(user);
+    const warehouses = userInfo.map((info) => ({
+      warehouseId: info.warehouse_id,
+      name: info.warehouse_name,
+      role: info.warehouse_role,
+    }));
+    const activeWarehouse =
+      warehouses && warehouses[0] ? warehouses[0].name : null;
+    const activeRole = warehouses && warehouses[0] ? warehouses[0].role : null;
     const cookie: Cookie = {
-      userId: userInfo.userId,
-      username: userInfo.username,
-      orgId: userInfo.userId,
-      activeWarehouseId:
-        userInfo.warehouses && userInfo.warehouses[0]
-          ? userInfo.warehouses[0].warehouseId
-          : '',
-      activeRole:
-        userInfo.warehouses && userInfo.warehouses[0]
-          ? userInfo.warehouses[0].role
-          : '',
+      userId: userInfo[0].user_id,
+      username: userInfo[0].username,
+      orgId: userInfo[0].org_id,
+      activeWarehouseId: activeWarehouse ? activeWarehouse : '',
+      activeRole: activeRole ? activeRole : '',
     };
     this.cookieService.createAndSendCookie(cookie, res);
 
     return {
       message: 'Authentication successful',
-      warehouses: userInfo.warehouses,
-      activeWarehouse:
-        userInfo.warehouses && userInfo.warehouses[0]
-          ? userInfo.warehouses[0].name
-          : null,
-      activeRole:
-        userInfo.warehouses && userInfo.warehouses[0]
-          ? userInfo.warehouses[0].role
-          : null,
-      userId: userInfo.userId,
-      username: userInfo.username,
+      warehouses: warehouses,
+      activeWarehouse: activeWarehouse,
+      activeRole: activeRole,
+      userId: userInfo[0].user_id,
+      username: userInfo[0].username,
     };
   }
 }

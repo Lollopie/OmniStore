@@ -102,4 +102,16 @@ export class InviteService {
     );
     return { invite: invite, rawToken: rawToken };
   }
+  async validateInvite(rawToken: string) {
+    const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
+    const token = this.authService.hashToken(rawToken);
+    const [invite]: InviteEntity[] = await inviteRepo.query<InviteEntity[]>(
+      `SELECT * FROM validate_invite($1)`,
+      [token],
+    );
+    if (!invite) {
+      throw new BadRequestException('Invite invalid or expired');
+    }
+    return mapRow(inviteRepo, invite);
+  }
 }
