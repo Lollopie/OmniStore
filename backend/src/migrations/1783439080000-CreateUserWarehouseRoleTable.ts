@@ -16,6 +16,20 @@ export class CreateUserWarehouseRoleTable1783439080000 implements MigrationInter
             ALTER TABLE "user_warehouse_role" ENABLE ROW LEVEL SECURITY;
     `);
     await queryRunner.query(`
+        CREATE OR REPLACE FUNCTION get_user_warehouse_role(check_user_id UUID, check_warehouse_id UUID)
+        RETURNS TEXT
+        LANGUAGE sql
+        SECURITY DEFINER
+        STABLE
+        AS $$
+          SELECT role FROM user_warehouse_role
+          WHERE user_id = check_user_id AND warehouse_id = check_warehouse_id;
+        $$;
+        
+        REVOKE ALL ON FUNCTION get_user_warehouse_role FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION get_user_warehouse_role TO nestjs_app_user;
+    `);
+    await queryRunner.query(`
             CREATE OR REPLACE FUNCTION is_org_admin(check_user_id UUID, check_org_id UUID)
             RETURNS BOOLEAN
             LANGUAGE sql

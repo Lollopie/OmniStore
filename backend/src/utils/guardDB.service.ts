@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
+import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 
 @Injectable()
 export class GuardDBService {
@@ -9,12 +10,11 @@ export class GuardDBService {
     userId: string,
     orgId: string,
   ): Promise<OrganizationRole> {
-    const [row]: { role: keyof typeof OrganizationRole }[] =
-      await this.dataSource.query(`SELECT get_user_org_role($1, $2) AS role`, [
-        userId,
-        orgId,
-      ]);
-    return OrganizationRole[row.role];
+    const [row]: { role: OrganizationRole }[] = await this.dataSource.query(
+      `SELECT get_user_org_role($1, $2) AS role`,
+      [userId, orgId],
+    );
+    return row.role;
   }
   async getOrg(orgId: string): Promise<string> {
     const [row]: { name: string }[] = await this.dataSource.query(
@@ -22,5 +22,22 @@ export class GuardDBService {
       [orgId],
     );
     return row.name;
+  }
+  async findWarehouse(warehouseId: string): Promise<string> {
+    const [row]: { name: string }[] = await this.dataSource.query(
+      `SELECT get_warehouse($1) AS name`,
+      [warehouseId],
+    );
+    return row.name;
+  }
+  async getUserWarehouseRole(
+    userId: string,
+    warehouseId: string,
+  ): Promise<WarehouseRole> {
+    const [row]: { role: WarehouseRole }[] = await this.dataSource.query(
+      `SELECT get_user_warehouse_role($1, $2) AS role`,
+      [userId, warehouseId],
+    );
+    return row.role;
   }
 }

@@ -3,14 +3,12 @@ import { WarehouseDto } from '@shared/dto/warehouse.dto';
 import { WarehouseEntity } from './warehouse.entity';
 import { TxRepoProvider } from '../rls/db.helper';
 import { ClsService } from 'nestjs-cls';
-import { DataSource } from 'typeorm';
-import { mapRow } from '../utils/helper';
+import { UserWarehouseRoleEntity } from '../userWarehouseRole/userWarehouseRole.entity';
 @Injectable()
 export class WarehouseService {
   constructor(
     private readonly txRepoProvider: TxRepoProvider,
     private readonly clsService: ClsService,
-    private readonly dataSource: DataSource,
   ) {}
   async createWarehouse(
     warehouseData: WarehouseDto,
@@ -18,12 +16,22 @@ export class WarehouseService {
     role: string,
   ): Promise<WarehouseEntity> {
     const orgId = this.clsService.get<string>('orgId');
-    //TODO: Check why this is needed, it should be able to just use repos
-    const [rawWh]: WarehouseEntity[] = await this.dataSource.query(
-      `SELECT * FROM create_warehouse($1, $2, $3, $4)`,
-      [orgId, warehouseData.warehouseName, userId, role],
+    const repo = this.txRepoProvider.getRepo(WarehouseEntity);
+    const userWarehouseRoleRepo = this.txRepoProvider.getRepo(
+      UserWarehouseRoleEntity,
     );
-    return mapRow(this.txRepoProvider.getRepo(WarehouseEntity), rawWh);
+    const warehouse = repo.create({
+      name: warehouseData.warehouseName,
+      orgId,
+    });
+    const savedWarehouse = await repo.save(warehouse);
+    const userWarehouseRole = userWarehouseRoleRepo.create({
+      userId,
+      warehouseId: savedWarehouse.warehouseId,
+      role,
+    });
+    await userWarehouseRoleRepo.save(userWarehouseRole);
+    return savedWarehouse;
   }
   findOne(warehouseId: string): Promise<WarehouseEntity | null> {
     const warehouseRepo = this.txRepoProvider.getRepo(WarehouseEntity);

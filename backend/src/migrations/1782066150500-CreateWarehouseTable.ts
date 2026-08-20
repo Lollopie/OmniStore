@@ -17,32 +17,18 @@ export class CreateWarehouseTable1782066150500 implements MigrationInterface {
             ALTER TABLE "warehouse" ENABLE ROW LEVEL SECURITY;
     `);
     await queryRunner.query(`
-        CREATE OR REPLACE FUNCTION create_warehouse(
-          wh_org_id UUID,
-          wh_name TEXT,
-          creator_user_id UUID,
-          user_role TEXT
-        )
-        RETURNS warehouse
-        LANGUAGE plpgsql
-        SECURITY DEFINER
-        AS $$
-        DECLARE
-          new_wh warehouse;
-        BEGIN
-          INSERT INTO warehouse (org_id, name)
-          VALUES (wh_org_id, wh_name)
-          RETURNING * INTO new_wh;
-        
-          INSERT INTO user_warehouse_role (user_id, warehouse_id, role)
-          VALUES (creator_user_id, new_wh.warehouse_id, user_role);
-        
-          RETURN new_wh;
-        END;
-        $$;
-        
-        REVOKE ALL ON FUNCTION create_warehouse FROM PUBLIC;
-        GRANT EXECUTE ON FUNCTION create_warehouse TO nestjs_app_user;
+      CREATE OR REPLACE FUNCTION get_warehouse(check_warehouse_id UUID)
+      RETURNS TEXT
+      LANGUAGE sql
+      SECURITY DEFINER
+      STABLE
+      AS $$
+        SELECT name FROM warehouse
+        WHERE warehouse_id = check_warehouse_id;
+      $$;
+      
+      REVOKE ALL ON FUNCTION get_warehouse FROM PUBLIC;
+      GRANT EXECUTE ON FUNCTION get_warehouse TO nestjs_app_user;
     `);
     await queryRunner.query(`
       CREATE POLICY "warehouse_isolation_policy" ON "warehouse"

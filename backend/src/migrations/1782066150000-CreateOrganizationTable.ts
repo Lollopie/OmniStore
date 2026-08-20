@@ -41,7 +41,7 @@ export class CreateOrganizationTable1782066150000 implements MigrationInterface 
         RETURNING * INTO new_org;
       
         INSERT INTO user_org_role (user_id, org_id, role)
-        VALUES (owner_user_id, new_org.org_id, 'OWNER');
+        VALUES (owner_user_id, new_org.org_id, 'owner');
       
         RETURN new_org;
       END;

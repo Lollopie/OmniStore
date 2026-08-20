@@ -109,7 +109,7 @@ export class WarehouseController {
     return { error: 'Selection failed' };
   }
   @Get('/users')
-  @UseGuards(AuthGuard, WarehouseRolesGuard, OrganizationRolesGuard)
+  @UseGuards(AuthGuard, OrganizationRolesGuard, WarehouseRolesGuard)
   @OrganizationRoles(
     OrganizationRole.OWNER,
     OrganizationRole.ADMIN,
