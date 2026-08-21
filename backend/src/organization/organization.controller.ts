@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post, Query, Res } from '@nestjs/common';
 import { OrganizationDto } from '@shared/dto/organization.dto';
 import { OrganizationService } from './organization.service';
 import { UserEntity } from '../user/user.entity';
@@ -17,6 +17,7 @@ export class OrganizationController {
   ) {}
   @Post('/register')
   async register(
+    @Query('token') token: string,
     @Body() data: OrganizationDto,
     @Res({ passthrough: true }) res: express.Response,
   ) {
@@ -24,7 +25,7 @@ export class OrganizationController {
       user,
       organization,
     }: { user: UserEntity; organization: OrganizationEntity } =
-      await this.organizationService.createOrganization(data);
+      await this.organizationService.createOrganization(token, data);
     const cookie: Cookie = {
       username: user.username,
       userId: user.userId,

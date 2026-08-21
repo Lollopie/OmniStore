@@ -32,11 +32,16 @@ export class LoginController {
     username: string;
   }> {
     const userInfo = await this.loginService.login(user);
-    const warehouses = userInfo.map((info) => ({
-      warehouseId: info.warehouse_id,
-      name: info.warehouse_name,
-      role: info.warehouse_role,
-    }));
+    const warehouses = userInfo
+      .map((info) => ({
+        warehouseId: info.warehouse_id,
+        name: info.warehouse_name,
+        role: info.warehouse_role,
+      }))
+      .filter(
+        (info) =>
+          info.warehouseId !== null && info.name !== null && info.role !== null,
+      );
     const activeWarehouse =
       warehouses && warehouses[0] ? warehouses[0].name : null;
     const activeRole = warehouses && warehouses[0] ? warehouses[0].role : null;

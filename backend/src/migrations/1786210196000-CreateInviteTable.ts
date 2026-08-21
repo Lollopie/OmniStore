@@ -127,7 +127,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
         DECLARE
           found_invite invite;
         BEGIN        
-          SELECT * FROM invite WHERE token_hash = invite_token_hash INTO found_invite;
+          SELECT * FROM invite WHERE token_hash = invite_token_hash AND consumed_at IS NULL INTO found_invite;
           
           RETURN found_invite;
         END;

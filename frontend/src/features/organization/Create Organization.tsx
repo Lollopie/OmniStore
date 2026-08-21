@@ -68,9 +68,9 @@ const CreateOrganization = () => {
     const trimmedUsername = organizationDto.ownerUsername.trim();
     const password = organizationDto.ownerPassword;
     const organizationName = organizationDto.name.trim();
-
+    const token = new URLSearchParams(window.location.search).get("token");
     try {
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/register`, {
+      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/register?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ownerEmail: email, ownerUsername: trimmedUsername, ownerPassword: password, name: organizationName }),
