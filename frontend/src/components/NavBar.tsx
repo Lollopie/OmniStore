@@ -2,10 +2,11 @@ import { Link } from 'react-router';
 import React, { useEffect, useRef } from 'react';
 import Logo from './Logo.tsx';
 import { useAuth } from '../features/auth/authContext/';
+import Button from './Button.tsx';
 // export interface NavBarProps {
 // }
 export default function NavBar() {
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const { isAuthenticated, logout } = useAuth();
   const handleLogout= async () => {
@@ -25,63 +26,83 @@ export default function NavBar() {
     }
   }
   useEffect(() => {
-    const menu: HTMLDivElement | null = mobileMenuRef.current;
-    if (!menu){
+    const dialog: HTMLDialogElement | null = dialogRef.current;
+    if (!dialog){
       return;
     }
-    menu.classList.toggle('hidden', !isOpen);
+    if (isOpen) {
+      dialog.showModal();
+    } else {
+      dialog.close();
+    }
   }, [isOpen]);
   return (
-    <nav className="flex justify-center py-2 px-4 bg-base-100 border-accent border lg:rounded-2xl">
-      <div className="max-w-5xl hidden md:flex navbar">
-        <div className="flex-1">
-            <Logo />
-        </div>
-        <div className="flex-none">
-          {!isAuthenticated &&
-            <>
-              <Link to="/login" className="btn btn-ghost">Login</Link>
-              <Link to="/register" className="btn btn-primary mr-5">Register</Link>
-            </>
-          }
-          {isAuthenticated &&
-            <>
-              <Link to={"/inventory"} className="btn btn-ghost">Inventory</Link>
-              <Link to={"/settings"} className="btn btn-ghost">Settings</Link>
-              <Link to="/logout" onClick={handleLogout} className="btn btn-ghost mr-5">Logout</Link>
-            </>
-          }
-        </div>
-      </div>
-      <div className="md:hidden flex flex-col mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
-        <div className="flex flex-row items-center justify-between container">
-          <div className="md:hidden flex items-center">
-            <button id="mobile-menu-btn"
-                    className="outline-none text-base-400 hover:text-base-300 transition-colors duration-200" onClick={() => setIsOpen(!isOpen)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor">
-                <use href="icons.svg#hamburger-menu-icon" />
-              </svg>
-            </button>
-          </div>
-          <Logo />
-        </div>
-        <div id="mobile-menu"
-             className="hidden md:hidden bg-base-100 px-4 pt-2 pb-4 mt-4 space-y-1 border-t border-base-200" ref={mobileMenuRef}>
-          {!isAuthenticated &&
-            <div className="flex flex-col">
-              <Link to="/login" className="btn btn-ghost">Login</Link>
-              <Link to="/register" className="btn btn-accent">Register</Link>
+    <header className="navbar lg:max-w-5xl mx-auto rounded-2xl bg-base-100 border-accent border lg:rounded-2xl px-5
+                        flex-row-reverse md:flex-row justify-between">
+      <Logo />
+      <nav>
+        <ul className="hidden md:flex py-2 gap-5">
+            {!isAuthenticated &&
+              <>
+                <li><Link to="/login" className="btn btn-ghost">Login</Link></li>
+                <li><Link to="/register" className="btn btn-primary mr-5">Register</Link></li>
+              </>
+            }
+            {isAuthenticated &&
+              <>
+                <li><Link to="/inventory" className="btn btn-ghost">Inventory</Link></li>
+                <li><Link to="/settings" className="btn btn-ghost">Settings</Link></li>
+                <li><Link to="/logout" onClick={handleLogout} className="btn btn-ghost mr-5">Logout</Link></li>
+              </>
+            }
+          </ul>
+        <div className="md:hidden">
+          <dialog
+              ref={dialogRef}
+              onClose={() => setIsOpen(false)}
+              className="modal bg-base-900/50 backdrop-blur-lg p-6 rounded-2xl w-full m-auto">
+            <div className="modal-box">
+              <div className="flex justify-between items-center mb-8">
+                <Logo />
+                <Button variant="ghost" className="btn-circle" onClick={() => setIsOpen(false)}>
+                  <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </Button>
+              </div>
+              <ul className="flex flex-col gap-4 text-lg font-medium my-auto">
+                {!isAuthenticated ? (
+                  <>
+                    <li><Link to="/login" onClick={() => setIsOpen(false)} className="btn btn-outline btn-lg w-full">Login</Link></li>
+                    <li><Link to="/register" onClick={() => setIsOpen(false)} className="btn btn-primary btn-lg w-full">Register</Link></li>
+                  </>
+                ) : (
+                  <>
+                    <li><Link to="/inventory" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Inventory</Link></li>
+                    <li><Link to="/settings" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Settings</Link></li>
+                    <div className="divider my-4"></div>
+                    <li>
+                      <Button onClick={() => { handleLogout(); setIsOpen(false); }} variant="danger" className="w-full">
+                        Logout
+                      </Button>
+                    </li>
+                  </>
+                )}
+              </ul>
             </div>
-          }
-          {isAuthenticated &&
-            <div className="flex flex-col">
-              <Link to={"/inventory"} className="btn btn-ghost">Inventory</Link>
-              <Link to={"/settings"} className="btn btn-ghost">Settings</Link>
-              <Link to="/logout" onClick={handleLogout} className="btn btn-ghost">Logout</Link>
-            </div>
-          }
+          </dialog>
+          <Button
+            variant="ghost"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isOpen}
+            aria-label="Open navigation menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor">
+              <use href="/icons.svg#hamburger-menu-icon" />
+            </svg>
+          </Button>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 }

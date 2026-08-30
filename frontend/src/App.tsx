@@ -27,11 +27,9 @@ function GuestRoute() {
 }
 export function AppLayout() {
   return (
-    <div className="min-h-screen bg-base-200">
-      <header className="w-full lg:max-w-3/5 mx-auto py-3 rounded-2xl">
-        <NavBar />
-      </header>
-      <main className="h-full py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-base-200 pt-5">
+      <NavBar />
+      <main className="py-6 px-4 sm:px-6 lg:px-8">
         <Outlet />
       </main>
     </div>

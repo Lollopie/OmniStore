@@ -5,6 +5,7 @@ const VARIANTS = {
   danger: "btn-error",
   add: "btn-accent",
   info: "btn-info",
+  ghost: "btn-ghost",
 }
 const Labels = {
   primary: "",
