@@ -1,6 +1,5 @@
 import InputField from '../../../components/InputField.tsx';
 import Button from '../../../components/Button.tsx';
-import MainPage from '../../../components/MainPage.tsx';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { RegisterEmailDto } from '@shared/dto/register.dto';
 import { useForm } from 'react-hook-form';
@@ -42,25 +41,21 @@ export default function Register() {
     }
   };
   return (
-    <MainPage>
-      <div className="w-full max-w-md rounded-lg height:90%">
-        <form onSubmit={handleSubmit((data) => submit(data))}>
-          <h2 className="mb-6 text-2xl font-bold text-base-400">Register</h2>
-          {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
-          {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
-          <div className="space-y-4 pb-4">
-            <InputField
-              label="Email"
-              type="email"
-              {...register('email')}
-            />
-            {errors.email && <p className="mb-4 text-sm text-error font-medium">{errors.email.message}</p>}
-          </div>
-          <Button type="submit">
-            Register
-          </Button>
-        </form>
-      </div>
-    </MainPage>
+    <div className="mx-auto max-w-md">
+      <form onSubmit={handleSubmit((data) => submit(data))}>
+        <h2 className="mb-6 text-2xl font-bold">Register</h2>
+        {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
+        {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
+        <InputField
+          label="Email"
+          type="email"
+          {...register('email')}
+        />
+        {errors.email && <p className="mb-4 text-sm text-error font-medium">{errors.email.message}</p>}
+        <Button type="submit" className="mt-4">
+          Register
+        </Button>
+      </form>
+    </div>
   );
 }

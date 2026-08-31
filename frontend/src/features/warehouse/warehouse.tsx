@@ -4,7 +4,6 @@ import Button from '../../components/Button.tsx';
 import { WarehouseSelector } from './components/warehouseSelector.tsx';
 import { handleAddWarehouse } from './hooks/handleAddWarehouse.ts';
 import { getUsers } from './hooks/getUsers.ts';
-import MainPage from '../../components/MainPage.tsx';
 import TableHead from '../../components/TableHead.tsx';
 import TableDataCell from '../../components/TableDataCell.tsx';
 import AddButton from '../../components/AddButton.tsx';
@@ -86,164 +85,147 @@ const WarehouseManager = () => {
     navigator.clipboard.writeText(text);
   };
   return (
-    <MainPage>
-      <div className="max-w-2xl w-full">
-        <div className="flex flex-col overflow-hidden">
-          <dialog
-            ref={dialogRef}
-            onClose={() => setIsOpen(false)}
-            className="modal"
+    <section className="max-w-2xl mx-auto">
+      <dialog
+        ref={dialogRef}
+        onClose={() => setIsOpen(false)}
+        className="modal backdrop-blur-md"
+      >
+        <div className="modal-box sm:px-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-base-400">Add Warehouse</h2>
+            <Button
+              size="md"
+              variant="ghost"
+              onClick={() => setIsOpen(false)}
+              children='X'
+            />
+          </div>
+
+          <form
+            onSubmit={handleSubmit((data) => {
+              handleAddWarehouse({warehouseDto: data, setActiveWarehouse, addToast });
+              setIsOpen(false);
+            })}
+            className="pt-4"
           >
-            <div className="modal-box">
-              <header className="flex items-center justify-between sm:px-4">
-                <h2 className="text-lg font-semibold text-base-400">Add Warehouse</h2>
-                <Button
-                  size={"md"}
-                  className="bg-base-100 text-base-300 border-none"
-                  variant={"primary"}
-                  onClick={() => setIsOpen(false)}
-                  children={'X'}
-                />
-              </header>
+            <InputField label={"Warehouse Name"} type={"text"} {...register('warehouseName')} />
+            {errors.warehouseName && <p className="text-error text-sm">{errors.warehouseName.message}</p>}
 
-              <form
-                onSubmit={handleSubmit((data) => {
-                  handleAddWarehouse({warehouseDto: data, setActiveWarehouse, addToast });
-                  setIsOpen(false);
-                })}
-                className="flex flex-col items-center"
-              >
-                <div className="w-full px-4 flex flex-col mt-3">
-                  <InputField label={"Warehouse Name"} type={"text"} {...register('warehouseName')} />
-                  {errors.warehouseName && <p className="text-error text-sm">{errors.warehouseName.message}</p>}
-                </div>
+            <section className="flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">
+              <Button children={"Cancel"} variant={"danger"} size={"sm"} onClick={() => setIsOpen(false)} type={"button"} />
+              <Button children={"Add"} variant={"add"} size={"sm"} type={"submit"} />
+            </section>
+          </form>
+        </div>
+      </dialog>
 
-                <footer className="w-full flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">
-                  <Button children={"Cancel"} variant={"danger"} size={"sm"} onClick={() => setIsOpen(false)} type={"button"} className="w-full sm:w-auto" />
-                  <Button children={"Add"} variant={"add"} size={"sm"} type={"submit"} className="w-full sm:w-auto" />
-                </footer>
-              </form>
-            </div>
-          </dialog>
+      <div className="mx-auto bg-base-100 rounded-xl border border-base-300 p-4 sm:p-8 overflow-scroll">
+        <div className="pb-6 mb-6 border-b border-base-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <WarehouseSelector
+            selectedWarehouse={activeWarehouse.warehouseId}
+            setActiveWarehouse={setActiveWarehouse}
+            addToast={addToast}
+          />
+          <AddButton className="btn-sm sm:btn-md" onClick={() => setIsOpen(true)} />
         </div>
 
-        <div className="w-full max-w-2xl mx-auto bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 sm:p-8 overflow-scroll">
-          <div className="space-y-6">
-            <div className="w-full pb-6 border-b border-base-300">
-              <div className="w-full flex flex-col sm:flex-row sm:items-center sm:gap-3">
-                <div className="flex-3">
-                  <WarehouseSelector
-                    selectedWarehouse={activeWarehouse.warehouseId}
-                    setActiveWarehouse={setActiveWarehouse}
-                    addToast={addToast}
-                  />
-                </div>
-                <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
-                  <AddButton className="w-full btn-sm sm:btn-md sm:w-auto" onClick={() => setIsOpen(true)} />
-                </div>
-              </div>
-            </div>
+        <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-            <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-
-            {activeWarehouse.role === 'admin' ? (
-              <div className="w-full flex flex-col sm:flex-row gap-2 justify-between items-stretch md:items-center mb-4">
-                <InputField
-                  className="w-full sm:max-w-xs md:flex-3 input-sm placeholder-base-300"
-                  type="text"
-                  placeholder="Username to add"
-                  value={newUsername}
-                  setValue={setNewUsername}
-                />
-                <Button
-                  variant={"add"}
-                  size={"sm"}
-                  className="flex-none"
-                  onClick={async () => {
-                    await addUser({ newUsername, setUsers, setNewUsername, addToast });
-                  }}
-                  children={"Add user"}
-                />
-              </div>
-            ) : null}
+        {activeWarehouse.role === 'admin' ? (
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center my-4">
+            <InputField
+              fieldsetClassName="w-full sm:max-w-xs"
+              inputClassName="input-sm w-full placeholder-base-300"
+              type="text"
+              placeholder="Username to add"
+              value={newUsername}
+              setValue={setNewUsername}
+            />
+            <Button
+              variant={"add"}
+              size={"sm"}
+              onClick={async () => {
+                await addUser({ newUsername, setUsers, setNewUsername, addToast });
+              }}
+              children={"Add user"}
+            />
           </div>
+        ) : null}
 
-          <div className="mt-8 overflow-x-auto border border-base-300 rounded-lg">
-            <table className="table min-w-full divide-y divide-base-300">
-              <thead className="bg-base-100">
-              <tr>
-                <TableHead children="Id" variant="first" />
-                <TableHead children="Name" />
-                <TableHead children="Role" />
+        <table className="table mt-8 border border-base-300 rounded-md">
+          <thead>
+            <tr>
+              <TableHead children="Id" variant="first"/>
+              <TableHead children="Name" />
+              <TableHead children="Role" />
+            </tr>
+          </thead>
+          <tbody>
+          {users.length === 0 ? (
+            <tr className="hover:bg-base-300/50 transition-colors">
+              <td colSpan={3} className="text-center p-3 text-base-300">
+                No users in warehouse.
+              </td>
+            </tr>
+          ) : (
+            users.map((user: WarehouseUser) => (
+              <tr key={user.userId} className="hover:bg-base-300/50 transition-colors">
+                <TableDataCell className="font-mono" children={
+                  <div className="flex items-center gap-2">
+                    <span className="hidden sm:block sm:max-w-[120px] truncate" title={user.userId}>
+                        {user.userId}
+                    </span>
+                    <Button
+                      onClick={() => {copyToClipboard(user.userId); addToast('Copied to clipboard!','success',2000);}}
+                      title="Copy Full ID"
+                      className="bg-base-200 border-base-400 text-base-300"
+                      size="sm"
+                      children={
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <use href="/icons.svg#copy-icon" />
+                        </svg>
+                      }
+                    />
+                  </div>
+                } />
+                <TableDataCell children={user.username} />
+                <TableDataCell>
+                  {activeWarehouse.role === 'admin' ? (
+                    <select
+                      className="select select-sm focus:outline-none focus:ring-none focus:border-none"
+                      value={user.role}
+                      onChange={async (e) => {
+                        await changeUserRole({
+                          user,
+                          newRole: e.target.value,
+                          setUsers,
+                          setActiveWarehouse,
+                          addToast
+                        })
+                      }}
+                    >
+                      {Object.values(WarehouseRole).map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    user.role
+                  )}
+                </TableDataCell>
               </tr>
-              </thead>
-              <tbody className="divide-y divide-base-300 bg-base-100">
-              {users.length === 0 ? (
-                <tr className="hover:bg-base-300/50 transition-colors">
-                  <td colSpan={3} className="text-center p-3 text-base-300">
-                    No users in warehouse.
-                  </td>
-                </tr>
-              ) : (
-                users.map((user: WarehouseUser) => (
-                  <tr key={user.userId} className="hover:bg-base-300/50 transition-colors">
-                    <TableDataCell className="font-mono text-base-400" children={
-                      <div className="flex items-center gap-2">
-                        <span className="hidden sm:block sm:max-w-[120px] truncate" title={user.userId}>
-                            {user.userId}
-                        </span>
-                        <Button
-                          onClick={() => {copyToClipboard(user.userId); addToast('Copied to clipboard!','success',2000);}}
-                          title="Copy Full ID"
-                          className="bg-base-200 hover:bg-base-400 border-base-400 text-base-300"
-                          size="sm"
-                          children={
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <use href="icons.svg#copy-icon" />
-                            </svg>
-                          }
-                        />
-                      </div>
-                    } />
-                    <TableDataCell className="font-medium text-base-400" children={user.username} />
-                    <TableDataCell>
-                      {activeWarehouse.role === 'admin' ? (
-                        <select
-                          className="select select-sm font-medium focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                          value={user.role}
-                          onChange={async (e) => {
-                            await changeUserRole({
-                              user,
-                              newRole: e.target.value,
-                              setUsers,
-                              setActiveWarehouse,
-                              addToast
-                            })
-                          }}
-                        >
-                          {Object.values(WarehouseRole).map((role) => (
-                            <option key={role} value={role}>
-                              {role}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        user.role
-                      )}
-                    </TableDataCell>
-                  </tr>
-                ))
-              )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <footer className="mt-4 px-4">
-          <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / usersPerPage)} searchParams={searchParams} setSearchParams={setSearchParams} />
-        </footer>
+            ))
+          )}
+          </tbody>
+        </table>
       </div>
-    </MainPage>
+
+      <section className="mt-4">
+        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / usersPerPage)} searchParams={searchParams} setSearchParams={setSearchParams} />
+      </section>
+    </section>
   );
     };
 

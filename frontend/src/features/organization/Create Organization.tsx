@@ -1,4 +1,3 @@
-import MainPage from '../../components/MainPage';
 import { useEffect, useState } from 'react';
 import { useToast } from '../toast';
 import Register from '../auth/authForm/Register.tsx';
@@ -10,14 +9,10 @@ import { OrganizationDto } from '@shared/dto/organization.dto.ts';
 import { useForm } from 'react-hook-form';
 export function InvalidToken() {
   return (
-    <div className="min-w-full">
-      <p className="flex justify-center">
-        <div className="max-w-md w-full">
-          <h2 className="text-lg">
-            Invalid token. Please try again.
-          </h2>
-        </div>
-      </p>
+    <div>
+      <h2 className="text-lg mb-4">
+        Invalid token. Please try again.
+      </h2>
       <Register />
     </div>
   );
@@ -92,47 +87,48 @@ const CreateOrganization = () => {
     }
   };
   return (
-    <MainPage>
+    <section className="max-w-md mx-auto">
       {verifying ? <p>Verifying token...</p> : tokenValid ?
-        <section className="min-w-full flex justify-center">
-          <div className="max-w-md w-full">
-            <form onSubmit={handleSubmit((data) => submit(data))}>
-              <h2 className="mb-6 text-2xl font-bold text-base-400">Create Organization</h2>
+        <form onSubmit={handleSubmit((data) => submit(data))}>
+          <h2 className="mb-6 text-2xl font-bold">Create Organization</h2>
 
-              {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
-              {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
-              <div className="space-y-4">
-                <InputField label="Email" value={email} disabled className="bg-base-100" type="email" {...register('ownerEmail')}/>
-                <InputField
-                  label="Username"
-                  type="text"
-                  {...register('ownerUsername')}
-                />
-                {errors.ownerUsername && <p className="mb-4 text-sm text-error font-medium">{errors.ownerUsername.message}</p>}
-                <PasswordInput
-                  className="last:mb-6"
-                  label="Password"
-                  type="password"
-                  {...register('ownerPassword')}
-                />
-                {errors.ownerPassword && <p className="mb-4 text-sm text-error font-medium">{errors.ownerPassword.message}</p>}
-                <InputField
-                  label="Organization Name"
-                  type="text"
-                  className="last:mb-6"
-                  {...register('name')}
-                />
-                {errors.name && <p className="mb-4 text-sm text-error font-medium">{errors.name.message}</p>}
-              </div>
-              <Button type="submit">
-                Create
-              </Button>
-            </form>
+          {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
+          {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
+          <div className="flex flex-col gap-2">
+            <InputField
+              label="Email"
+              value={email}
+              disabled
+              inputClassName="bg-base-100"
+              type="email"
+              {...register('ownerEmail')}
+            />
+            <InputField
+              label="Username"
+              type="text"
+              {...register('ownerUsername')}
+            />
+            {errors.ownerUsername && <p className="text-sm text-error font-medium">{errors.ownerUsername.message}</p>}
+            <PasswordInput
+              label="Password"
+              type="password"
+              {...register('ownerPassword')}
+            />
+            {errors.ownerPassword && <p className="text-sm text-error font-medium">{errors.ownerPassword.message}</p>}
+            <InputField
+              label="Organization Name"
+              type="text"
+              {...register('name')}
+            />
+            {errors.name && <p className="text-sm text-error font-medium">{errors.name.message}</p>}
+            <Button type="submit" className="mt-4 self-start">
+              Create
+            </Button>
           </div>
-        </section>
+        </form>
         :
         <InvalidToken />}
-    </MainPage>
+    </section>
   );
 };
 

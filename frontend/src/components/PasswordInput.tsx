@@ -15,9 +15,9 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
     };
 
     return (
-      <div className="flex flex-col gap-1 w-full max-w-2xl mb-4">
+      <fieldset className="fieldset">
         {label && (
-          <label htmlFor={props.id || 'password-input'} className="text-sm font-medium text-base-content">
+          <label htmlFor={props.id || 'password-input'} className="label text-base-content">
             {label}
           </label>
         )}
@@ -36,7 +36,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             aria-pressed={showPassword}
             size='xs'
-            className="btn-ghost hover: absolute right-2 p-1 text-base-200 rounded"
+            className="btn-ghost absolute right-2 p-1 rounded"
           >
             {showPassword ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
         </div>
 
         {error && <span className="text-xs text-error">{error}</span>}
-      </div>
+      </fieldset>
     );
   }
 );

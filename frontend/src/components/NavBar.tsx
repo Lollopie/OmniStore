@@ -56,41 +56,41 @@ export default function NavBar() {
               </>
             }
           </ul>
-        <div className="md:hidden">
-          <dialog
-              ref={dialogRef}
-              onClose={() => setIsOpen(false)}
-              className="modal bg-base-900/50 backdrop-blur-lg p-6 rounded-2xl w-full m-auto">
-            <div className="modal-box">
-              <div className="flex justify-between items-center mb-8">
-                <Logo />
-                <Button variant="ghost" className="btn-circle" onClick={() => setIsOpen(false)}>
-                  <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </Button>
-              </div>
-              <ul className="flex flex-col gap-4 text-lg font-medium my-auto">
-                {!isAuthenticated ? (
-                  <>
-                    <li><Link to="/login" onClick={() => setIsOpen(false)} className="btn btn-outline btn-lg w-full">Login</Link></li>
-                    <li><Link to="/register" onClick={() => setIsOpen(false)} className="btn btn-primary btn-lg w-full">Register</Link></li>
-                  </>
-                ) : (
-                  <>
-                    <li><Link to="/inventory" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Inventory</Link></li>
-                    <li><Link to="/settings" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Settings</Link></li>
-                    <div className="divider my-4"></div>
-                    <li>
-                      <Button onClick={() => { handleLogout(); setIsOpen(false); }} variant="danger" className="w-full">
-                        Logout
-                      </Button>
-                    </li>
-                  </>
-                )}
-              </ul>
+        <dialog
+          ref={dialogRef}
+          onClose={() => setIsOpen(false)}
+          className="modal bg-base-900/50 backdrop-blur-lg p-6 rounded-2xl w-full m-auto">
+          <div className="modal-box">
+            <div className="flex justify-between items-center mb-8">
+              <Logo />
+              <Button variant="ghost" className="btn-circle" onClick={() => setIsOpen(false)}>
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </Button>
             </div>
-          </dialog>
+            <ul className="flex flex-col gap-4 text-lg font-medium my-auto">
+              {!isAuthenticated ? (
+                <>
+                  <li><Link to="/login" onClick={() => setIsOpen(false)} className="btn btn-outline btn-lg w-full">Login</Link></li>
+                  <li><Link to="/register" onClick={() => setIsOpen(false)} className="btn btn-primary btn-lg w-full">Register</Link></li>
+                </>
+              ) : (
+                <>
+                  <li><Link to="/inventory" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Inventory</Link></li>
+                  <li><Link to="/settings" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Settings</Link></li>
+                  <div className="divider my-4"></div>
+                  <li>
+                    <Button onClick={() => { handleLogout(); setIsOpen(false); }} variant="danger" className="w-full">
+                      Logout
+                    </Button>
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
+        </dialog>
+        <div className="md:hidden">
           <Button
             variant="ghost"
             onClick={() => setIsOpen(!isOpen)}

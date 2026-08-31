@@ -4,7 +4,6 @@ import { handleAddItem } from './hooks/handleAddItem.ts';
 import Button from '../../components/Button.tsx';
 import { generatePagination } from '../../hooks/generatePagination.ts';
 import { useSearchParams } from 'react-router';
-import MainPage from '../../components/MainPage.tsx';
 import AddButton from '../../components/AddButton.tsx';
 import TableHead from '../../components/TableHead.tsx';
 import TableDataCell from '../../components/TableDataCell.tsx';
@@ -77,122 +76,124 @@ const InventoryManager = () => {
     }
   }, [selectedItem]);
   return (
-    <MainPage>
-      <div className="max-w-2xl w-full overflow-hidden">
-        {addItemIsOpen && (
-          <Modal dialogRef={addItemDialogRef} title="Add Item" onClose={() => setAddItemIsOpen(false)}>
-            <ItemForm
-              submitLabel="Add"
-              onCancel={() => setAddItemIsOpen(false)}
-              onSubmit={(data) => {
-                handleAddItem({itemName: data.itemName, amount: data.amount.toString(), setRefreshIndex, addToast});
-              setAddItemIsOpen(false);
+    <div className="max-w-2xl mx-auto">
+      {addItemIsOpen && (
+        <Modal dialogRef={addItemDialogRef} title="Add Item" onClose={() => setAddItemIsOpen(false)}>
+          <ItemForm
+            submitLabel="Add"
+            onCancel={() => setAddItemIsOpen(false)}
+            onSubmit={(data) => {
+              handleAddItem({itemName: data.itemName, amount: data.amount.toString(), setRefreshIndex, addToast});
+            setAddItemIsOpen(false);
+          }}
+        />
+      </Modal>)}
+      {updateItemIsOpen && (
+        <Modal
+        dialogRef={updateItemDialogRef}
+        title="Update Item"
+        onClose={() => {setUpdateItemIsOpen(false);setSelectedItem(null)}}
+      >
+        {selectedItem && (
+          <ItemForm
+            key={selectedItem.itemId}
+            submitLabel="Update"
+            onCancel={() => {setUpdateItemIsOpen(false);setSelectedItem(null)}}
+            onSubmit={(data) => {
+              handleUpdateItem({
+                itemId: selectedItem.itemId,
+                itemName: data.itemName,
+                amount: data.amount.toString(),
+                setRefreshIndex,
+                addToast
+              });
+              setSelectedItem(null);
             }}
           />
-        </Modal>)}
-        {updateItemIsOpen && (
-          <Modal
-          dialogRef={updateItemDialogRef}
-          title="Update Item"
-          onClose={() => {setUpdateItemIsOpen(false);setSelectedItem(null)}}
-        >
-          {selectedItem && (
-            <ItemForm
-              key={selectedItem.itemId}
-              submitLabel="Update"
-              onCancel={() => {setUpdateItemIsOpen(false);setSelectedItem(null)}}
-              onSubmit={(data) => {
-                handleUpdateItem({
-                  itemId: selectedItem.itemId,
-                  itemName: data.itemName,
-                  amount: data.amount.toString(),
-                  setRefreshIndex,
-                  addToast
-                });
-                setSelectedItem(null);
-              }}
-            />
+        )}
+      </Modal>)}
+      <section className="bg-base-100 rounded-xl border border-base-300 p-4 sm:p-8 overflow-scroll">
+        <div className="pb-6 mb-6 border-b border-base-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <fieldset className="fieldset sm:max-w-xs w-full">
+            <legend className="fieldset-legend ml-1">Sort by:</legend>
+            <select className="select select-sm focus:border-none focus:outline-none focus:ring-2 focus:ring-accent w-full"
+                    name="sort"
+                    id="sort"
+                    onChange={(e) => {setSort(e.target.value)}}>
+              <option value="new">New</option>
+              <option value="old">Old</option>
+              <option value="itemName asc">Name Ascending</option>
+              <option value="itemName desc">Name Descending</option>
+              <option value="amount asc">Amount Ascending</option>
+              <option value="amount desc">Amount Descending</option>
+            </select>
+          </fieldset>
+          {(readStoredValue('activeRole') === 'admin' ||
+            readStoredValue('activeRole') === 'manager') && (
+              <AddButton onClick={() => setAddItemIsOpen(true)} className="btn-sm sm:btn-md" />
           )}
-        </Modal>)}
-        <div className="w-full max-w-2xl mx-auto bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 sm:p-8 overflow-scroll">
-         <div className="space-y-6">
-          <div className="w-full pb-6 border-b border-base-300">
-            <div className="w-full">
-              <div className="flex flex-col sm:flex-row md:items-center md:gap-3">
-                <fieldset className="flex-3 fieldset flex flex-row justify-left md:items-center gap-3">
-                  <legend className="fieldset-legend ml-1">Sort by:</legend>
-                  <select className="select select-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                          name="sort"
-                          id="sort"
-                          onChange={(e) => {setSort(e.target.value)}}>
-                    <option value="new">New</option>
-                    <option value="old">Old</option>
-                    <option value="itemName asc">Name Ascending</option>
-                    <option value="itemName desc">Name Descending</option>
-                    <option value="amount asc">Amount Ascending</option>
-                    <option value="amount desc">Amount Descending</option>
-                  </select>
-                </fieldset>
-                {(readStoredValue('activeRole') === 'admin' ||
-                  readStoredValue('activeRole') === 'manager') && (
-                  <div className="flex flex-1 pt-2 justify-center sm:justify-end sm:pt-0">
-                    <AddButton onClick={() => setAddItemIsOpen(true)} />
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </div>
-          <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          {loading && <p>Loading inventory...</p>}
         </div>
-          {!loading && (
-            <div className="mt-8 overflow-hidden border border-base-300 rounded-lg">
-              <table className="table min-w-full divide-y divide-base-300">
-                <thead className="bg-base-100">
-                <tr>
-                  <TableHead children="Name" variant="first" />
-                  <TableHead children="Amount" />
-                  {readStoredValue('activeRole') === 'admin' && <TableHead children="" />}
+        <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        {loading && <p>Loading inventory...</p>}
+        {!loading && (
+          <table className="mt-8 border border-base-300 rounded-lg table">
+            <thead>
+              <tr>
+                <TableHead children="Name" variant="first" />
+                <TableHead children="Amount" />
+                {readStoredValue('activeRole') === 'admin' && <TableHead children="" />}
+              </tr>
+            </thead>
+            <tbody>
+            {inventory.length === 0 ? (
+              <tr className="hover:bg-base-300/50 transition-colors">
+                <TableDataCell colSpan={readStoredValue('activeRole') === 'admin' ? 3 : 2} children="No items in inventory." className="text-center p-3 text-base-300"/>
+              </tr>
+            ) : (
+              inventory.map((item: InventoryItem) => (
+                <tr key={item.itemId} className="hover:bg-base-300/50 transition-colors">
+                  <TableDataCell children={item.itemName} />
+                  <TableDataCell children={item.amount} />
+                  {readStoredValue('activeRole') === 'admin' && (
+                    <TableDataCell children={
+                      <div className="flex justify-end items-center gap-2">
+                        <Button
+                          onClick={() => {
+                            setUpdateItemIsOpen(true);
+                            setSelectedItem(item)
+                          }}
+                          children={<Edit size={16} className="stroke-current" />}
+                          variant="info"
+                          size="xs"
+                        />
+                      <Button
+                        onClick={() => handleDeleteItem(
+                          {
+                            itemId: item.itemId,
+                            itemName: item.itemName,
+                            amount: item.amount.toString(),
+                            setRefreshIndex,
+                            addToast
+                          }
+                        )}
+                        children={<Trash size={16}/>}
+                        variant={"danger"}
+                        size={"xs"}
+                      />
+                    </div>}
+                   />
+                  )}
                 </tr>
-                </thead>
-                <tbody className="divide-y divide-base-300 bg-base-100">
-                {inventory.length === 0 ? (
-                  <tr className="hover:bg-base-300/50 transition-colors">
-                    <TableDataCell colSpan={readStoredValue('activeRole') === 'admin' ? 3 : 2} children="No items in inventory." className="text-center p-3 text-base-300"/>
-                  </tr>
-                ) : (
-                  inventory.map((item: InventoryItem) => (
-                    <tr key={item.itemId} className="hover:bg-base-300/50 transition-colors">
-                      <TableDataCell children={item.itemName} className="text-base-400"/>
-                      <TableDataCell children={item.amount} className="text-base-400"/>
-                      {readStoredValue('activeRole') === 'admin' && (
-                        <TableDataCell children={
-                          <div className="flex justify-end items-center gap-2">
-                            <Button onClick={() => {setUpdateItemIsOpen(true);setSelectedItem(item)}}
-                                    children={<Edit size={16} className="stroke-current" />}
-                                    variant={"info"}
-                                  size={"xs"} />
-                          <Button onClick={() => handleDeleteItem({itemId: item.itemId, itemName: item.itemName, amount: item.amount.toString(), setRefreshIndex, addToast})}
-                                  children={<Trash size={16}/>}
-                                  variant={"danger"}
-                                  size={"xs"} />
-                        </div>}
-                                     className="text-base-400"/>
-                      )}
-                    </tr>
-                  ))
-                )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      <footer>
-        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalInventory / itemsPerPage)} searchParams={searchParams} setSearchParams={setSearchParams} />
-      </footer>
-      </div>
-    </MainPage>
+              ))
+            )}
+            </tbody>
+          </table>
+        )}
+      </section>
+    <section className="mt-4">
+      <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalInventory / itemsPerPage)} searchParams={searchParams} setSearchParams={setSearchParams} />
+    </section>
+    </div>
   );
 };
 

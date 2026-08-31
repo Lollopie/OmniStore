@@ -116,42 +116,39 @@ export const AccountSettings = () => {
   };
 
   return (
-    <div className="p-4 max-w-4xl">
-      <h2 className="text-2xl font-bold mb-2">Account Settings</h2>
-      <p className="text-base-content/70 mb-6">Manage your profile and authentication settings.</p>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold">Account Settings</h1>
+      <p className="text-base-content/70">Manage your profile and authentication settings.</p>
 
-      <div className="card border border-primary/30 bg-primary/5 shadow-sm mb-6">
-        <div className="card-body">
+      <section className="card border border-primary/30 bg-primary/5">
+        <div className="card-body gap-4">
           <h3 className="card-title text-primary">Change Password</h3>
-          <p className="text-sm text-base-content/80 mb-4">
+          <p className="text-sm text-base-content/80">
             Update your current password to keep your account secure.
           </p>
           <form onSubmit={handleSubmit((data) => {handleUpdatePassword(data)})} className="space-y-4">
-            <div className="form-control">
-              <PasswordInput
-                className="input input-bordered w-full focus:input-primary"
-                placeholder="Current Password"
-                {...register('password')}
-              />
-              {errors.password && <p className="text-xs text-error">{errors.password.message}</p>}
-            </div>
-            <div className="form-control">
-              <PasswordInput
-                className="input input-bordered w-full focus:input-primary"
-                placeholder="New Password"
-                {...register('newPassword')}
-              />
-              {errors.newPassword && <p className="text-xs text-error">{errors.newPassword.message}</p>}
-            </div>
-            <div className="form-control">
-              <PasswordInput
-                className="input input-bordered w-full focus:input-primary"
-                placeholder="Confirm New Password"
-                {...register('confirmPassword')}
-              />
-              {errors.confirmPassword && <p className="text-xs text-error">{errors.confirmPassword.message}</p>}
-            </div>
-            <div className="card-actions justify-end mt-4">
+            <PasswordInput
+              className="input input-bordered w-full focus:input-primary"
+              placeholder="Current Password"
+              label="Current Password"
+              {...register('password')}
+            />
+            {errors.password && <p className="text-xs text-error">{errors.password.message}</p>}
+            <PasswordInput
+              className="input input-bordered w-full focus:input-primary"
+              placeholder="New Password"
+              label="New Password"
+              {...register('newPassword')}
+            />
+            {errors.newPassword && <p className="text-xs text-error">{errors.newPassword.message}</p>}
+            <PasswordInput
+              className="input input-bordered w-full focus:input-primary"
+              placeholder="Confirm New Password"
+              label="Confirm New Password"
+              {...register('confirmPassword')}
+            />
+            {errors.confirmPassword && <p className="text-xs text-error">{errors.confirmPassword.message}</p>}
+            <div className="card-actions justify-end">
               <Button
                 type="submit"
                 variant="primary"
@@ -168,44 +165,40 @@ export const AccountSettings = () => {
             </div>
           </form>
         </div>
-      </div>
+      </section>
 
-      <div className="card border border-error/30 bg-error/5 shadow-sm">
-        <div className="card-body">
+      <section className="card border border-error/30 bg-error/5">
+        <div className="card-body gap-4">
           <h3 className="card-title text-error">Danger Zone</h3>
           <p className="text-sm text-base-content/80">
             Deleting your account is permanent. All associated data will be permanently removed.
           </p>
-          <div className="card-actions justify-end mt-4">
+          <div className="card-actions justify-end">
             <Button variant={"danger"} onClick={handleOpenModal}>
               Delete Account
             </Button>
           </div>
         </div>
-      </div>
+      </section>
 
       <Modal dialogRef={dialogRef} title="Delete Account" onClose={handleCloseModal}>
-        <form onSubmit={handleDeleteAccount} className="space-y-4 pt-4">
+        <form onSubmit={handleDeleteAccount} className="space-y-4 p-4">
           <p className="text-sm text-base-content/80">
             This action cannot be undone. Please enter your password to confirm deletion:
           </p>
 
-          <div className="form-control">
-            <InputField
-              variant="danger"
-              type="password"
-              className="input input-bordered w-full focus:input-error"
-              placeholder="Enter your password"
-              value={password}
-              setValue={(e) => setPassword(e)}
-              autoFocus
-            />
-          </div>
-
+          <InputField
+            variant="danger"
+            type="password"
+            inputClassName="w-full"
+            placeholder="Enter your password"
+            value={password}
+            setValue={(e) => setPassword(e)}
+          />
           <div className="modal-action">
             <Button
-              variant="primary"
-              className="btn btn-ghost text-base-content"
+              type="button"
+              variant="ghost"
               onClick={handleCloseModal}
               disabled={isDeleting}
             >

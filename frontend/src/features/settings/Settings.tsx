@@ -1,5 +1,4 @@
 import { NavLink, Outlet } from "react-router";
-import MainPage from '../../components/MainPage.tsx';
 
 const SETTINGS_NAV = [
   { path: "account", label: "Account" },
@@ -9,32 +8,32 @@ const SETTINGS_NAV = [
 
 export const SettingsLayout = () => {
   return (
-    <MainPage>
-      <div className="h-full w-full max-w-5xl flex gap-6">
-        <div className="w-56 shrink-0">
-          <div className="bg-base-100 rounded-box">
-            <ul className="menu w-full p-2">
-              {SETTINGS_NAV.map((item) => (
-                <li key={item.path} className="mb-1">
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) => (isActive ? "active" : "")}
-                  >
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="h-full flex-1">
-          <div className="h-full card bg-base-100 w-full shadow-sm p-6">
-            <Outlet />
-          </div>
-        </div>
-
-      </div>
-    </MainPage>
+    <section className="mx-auto max-w-5xl flex gap-6 items-start">
+      <section className="flex-1 bg-base-100 rounded-box">
+        <nav>
+          <ul className="menu w-full">
+            {SETTINGS_NAV.map((item) => (
+              <li key={item.path} className="mb-1">
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `btn w-full justify-start ${
+                      isActive
+                        ? "bg-base-200"
+                        : "btn-ghost"
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </section>
+      <aside className="flex-4 card bg-base-100 p-10">
+        <Outlet />
+      </aside>
+    </section>
   );
 };
