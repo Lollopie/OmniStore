@@ -38,9 +38,9 @@ export function AppLayout() {
 
 export function HomeLayout() {
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-base-200 pt-5">
       <Outlet />
-    </div>  
+    </div>
   );
 }
 function AppContent() {

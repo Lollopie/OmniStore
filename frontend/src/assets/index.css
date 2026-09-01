@@ -2,15 +2,16 @@
 @plugin "daisyui";
 
 
+
 @plugin "daisyui/theme" {
     name: "omnistore-light";
     default: false;
     prefersdark: false;
     color-scheme: "light";
-    --color-base-100: oklch(96% 0.007 247.896);
-    --color-base-200: oklch(92% 0.013 255.508);
+    --color-base-100: oklch(92% 0.013 255.508);
+    --color-base-200: oklch(98% 0.003 247.858);
     --color-base-300: oklch(72% 0.219 149.579);
-    --color-base-content: oklch(12% 0.042 264.695);
+    --color-base-content: oklch(37% 0.044 257.287);
     --color-primary: oklch(69% 0.17 162.48);
     --color-primary-content: oklch(100% 0 0);
     --color-secondary: oklch(68% 0.169 237.323);
@@ -18,7 +19,7 @@
     --color-accent: oklch(55% 0.288 302.321);
     --color-accent-content: oklch(98% 0.031 120.757);
     --color-neutral: oklch(70% 0.04 256.788);
-    --color-neutral-content: oklch(98% 0.018 155.826);
+    --color-neutral-content: oklch(98% 0.016 73.684);
     --color-info: oklch(58% 0.158 241.966);
     --color-info-content: oklch(97% 0.013 236.62);
     --color-success: oklch(76% 0.233 130.85);
@@ -36,6 +37,7 @@
     --depth: 0;
     --noise: 0;
 }
+
 
 
 @plugin "daisyui/theme" {
@@ -71,4 +73,25 @@
     --border: 1.5px;
     --depth: 0;
     --noise: 0;
+}
+
+@property --speed {
+    syntax: '<time>';
+    inherits: true;
+    initial-value: 25s;
+}
+
+@keyframes infinite-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+}
+
+.animate-infinite-scroll {
+    animation: infinite-scroll 25s linear infinite;
+    transition: all 5s ease-out;
+}
+
+.marquee-wrapper:hover .animate-infinite-scroll {
+    animation-play-state: paused;
+
 }
