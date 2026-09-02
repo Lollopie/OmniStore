@@ -6,11 +6,14 @@ import { UserEntity } from '../user/user.entity';
 import { mapRow } from '../utils/helper';
 import { AuthService } from '../auth/auth.service';
 import { InviteEntity } from '../invite/invite.entity';
+import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
+import { ClsService } from 'nestjs-cls';
 @Injectable()
 export class OrganizationService {
   constructor(
     private readonly txRepoProvider: TxRepoProvider,
     private readonly authService: AuthService,
+    private readonly clsService: ClsService,
   ) {}
   async createOrganization(rawToken: string, data: OrganizationDto) {
     const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
@@ -44,5 +47,44 @@ export class OrganizationService {
   async findOne(id: string): Promise<OrganizationEntity | null> {
     const organizationRepo = this.txRepoProvider.getRepo(OrganizationEntity);
     return await organizationRepo.findOne({ where: { orgId: id } });
+  }
+  async getUsers(searchTerm: string, page: number) {
+    const userOrganizationRoleRepo = this.txRepoProvider.getRepo(
+      UserOrganizationRoleEntity,
+    );
+    const orgId: string = this.clsService.get('orgId');
+    const limit: number = 10;
+    const skip = (page - 1) * limit;
+    const queryBuilder = userOrganizationRoleRepo
+      .createQueryBuilder('user_org_role')
+      .innerJoin('UserEntity', 'user', 'user.userId = user_org_role.userId')
+      .where('user_org_role.orgId = :orgId', {
+        orgId,
+      });
+    const cleanedTerm = searchTerm?.trim();
+    if (cleanedTerm) {
+      queryBuilder.andWhere('user.username ILIKE :search', {
+        search: `%${cleanedTerm}%`,
+      });
+    }
+    const total = await queryBuilder.getCount();
+    const rawResults: {
+      userId: string;
+      username: string;
+      role: string;
+    }[] = await queryBuilder
+      .select([
+        'user.userId AS "userId"',
+        'user.username AS username',
+        'user_org_role.role AS role',
+      ])
+      .offset(skip)
+      .limit(limit)
+      .getRawMany();
+
+    return {
+      data: rawResults,
+      total,
+    };
   }
 }

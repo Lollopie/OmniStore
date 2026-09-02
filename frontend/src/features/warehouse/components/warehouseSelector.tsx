@@ -16,7 +16,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
   const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const warehouseId = event.target.value;
     const activeWarehouse = getWarehouseFromWarehouseId(warehouseId);
-    const response: SelectResponse = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/select`, {
+    const response: SelectResponse = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses/select`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

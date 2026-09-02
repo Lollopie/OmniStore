@@ -5,15 +5,10 @@ import {
   PasswordResetContext,
   VerificationEmailContext,
 } from './interfaces/mail-contexts.interface';
-import { Resend } from 'resend';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MailService {
-  constructor(
-    private readonly mailerService: MailerService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly mailerService: MailerService) {}
   async sendEmail(
     to: string,
     subject: string,
@@ -22,24 +17,12 @@ export class MailService {
       [name: string]: any;
     },
   ): Promise<void> {
-    if (process.env.NODE_ENV == 'prod') {
-      const resend = new Resend(this.configService.get('email.resendSecret'));
-      //TODO: Figure out how to send emails with resend and templates
-      await resend.emails.send({
-        from: 'onboarding@resend.dev',
-        to: to,
-        subject: subject,
-        html: '<p>Congrats on sending your <strong>first email</strong>!</p>',
-      });
-    }
-    if (process.env.NODE_ENV == 'dev') {
-      await this.mailerService.sendMail({
-        to,
-        subject,
-        template,
-        context,
-      });
-    }
+    await this.mailerService.sendMail({
+      to,
+      subject,
+      template,
+      context,
+    });
   }
   async sendVerificationEmail(
     to: string,

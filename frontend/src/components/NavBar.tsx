@@ -50,6 +50,8 @@ export default function NavBar() {
             }
             {isAuthenticated &&
               <>
+                <li><Link to="/organizations" className="btn btn-ghost">Organization</Link></li>
+                <li><Link to="/warehouses" className="btn btn-ghost">Warehouses</Link></li>
                 <li><Link to="/inventory" className="btn btn-ghost">Inventory</Link></li>
                 <li><Link to="/settings" className="btn btn-ghost">Settings</Link></li>
                 <li><Link to="/logout" onClick={handleLogout} className="btn btn-ghost mr-5">Logout</Link></li>
@@ -77,6 +79,8 @@ export default function NavBar() {
                 </>
               ) : (
                 <>
+                  <li><Link to="/organizations" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Organization</Link></li>
+                  <li><Link to="/warehouses" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Warehouses</Link></li>
                   <li><Link to="/inventory" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Inventory</Link></li>
                   <li><Link to="/settings" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Settings</Link></li>
                   <div className="divider my-4"></div>

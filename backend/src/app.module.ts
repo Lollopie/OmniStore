@@ -92,7 +92,12 @@ import appConfig from './config/app.config';
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
         const user = config.get<string>('email.mailUser');
-        const pass = config.get<string>('email.mailPassword');
+        let pass: string | undefined;
+        if (user == 'resend') {
+          pass = config.get<string>('email.resendSecret');
+        } else {
+          pass = config.get<string>('email.mailPassword');
+        }
         return {
           transport: {
             host: config.get<string>('email.mailHost'),

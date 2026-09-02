@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   InternalServerErrorException,
+  Patch,
   Post,
   Query,
   Res,
@@ -12,6 +13,7 @@ import { WarehouseService } from './warehouse.service';
 import {
   WarehouseDto,
   WarehouseIDDto,
+  WarehouseInviteDto,
   WarehouseUserRoleDto,
 } from '@shared/dto/warehouse.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -128,12 +130,12 @@ export class WarehouseController {
   @Post('/invite')
   @UseGuards(AuthGuard, OrganizationRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
-  async inviteUser(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
+  async inviteUser(@Body() warehouseInviteData: WarehouseInviteDto) {
     const invite: { invite: InviteEntity; rawToken: string } =
       await this.inviteService.inviteWarehouseUser(
-        warehouseUserRoleData.email,
-        warehouseUserRoleData.warehouseId,
-        warehouseUserRoleData.role,
+        warehouseInviteData.email,
+        warehouseInviteData.warehouseId,
+        warehouseInviteData.role,
       );
     if (invite) {
       const context: InviteContext = {
@@ -148,5 +150,14 @@ export class WarehouseController {
       return { message: 'Invite send successfully.' };
     }
     throw new InternalServerErrorException('Invalid invite');
+  }
+  @Patch('/users')
+  @UseGuards(AuthGuard, WarehouseRolesGuard)
+  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
+  async updateUserRole(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
+    return await this.userWarehouseRoleService.updateUserRole(
+      warehouseUserRoleData.username,
+      warehouseUserRoleData.role,
+    );
   }
 }

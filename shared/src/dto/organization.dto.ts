@@ -1,6 +1,7 @@
 import { IsValidUsername } from '../decorators/isValidUsername.decorator';
 import { IsValidPassword } from '../decorators/isValidPassword.decorator';
-import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { OrganizationRole } from '../enum/organizationRoles.enum';
 
 export class OrganizationDto {
   @IsString()
@@ -26,4 +27,13 @@ export class OrganizationDto {
     message: 'Illegal Organization name',
   })
   name: string;
+}
+export class OrganizationUpdateRoleDto {
+  @IsValidUsername()
+  username: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(OrganizationRole, { message: 'Invalid role' })
+  role: string;
 }

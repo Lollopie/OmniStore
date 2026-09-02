@@ -20,6 +20,7 @@ import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { WarehouseDto } from '@shared/dto/warehouse.dto';
 import { useForm } from 'react-hook-form';
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
+import { copyToClipboard } from '../../utils/copyToClipboard.ts';
 export interface WarehouseUser {
   userId: string;
   username: string;
@@ -81,9 +82,6 @@ const WarehouseManager = () => {
   useEffect(() => {
     generatePagination(Number(page), Math.max(Math.ceil(totalUsers / usersPerPage), 1), setPages);
   }, [page, totalUsers]);
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
   return (
     <section className="max-w-2xl mx-auto">
       <dialog

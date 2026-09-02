@@ -20,6 +20,8 @@ export default function Login() {
         localStorage.setItem('activeRole', JSON.stringify(data.activeRole));
         localStorage.setItem('userId', JSON.stringify(data.userId));
         localStorage.setItem('username', JSON.stringify(data.username));
+        localStorage.setItem('orgId', JSON.stringify(data.orgId));
+        localStorage.setItem('orgRole', JSON.stringify(data.orgRole));
       }}
     />
   );

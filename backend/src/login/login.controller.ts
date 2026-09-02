@@ -25,6 +25,8 @@ export class LoginController {
     @Res({ passthrough: true }) res: express.Response,
   ): Promise<{
     message: string;
+    orgId: string;
+    orgRole: string;
     warehouses: { warehouseId: string; name: string; role: string }[] | null;
     activeWarehouse: string | null;
     activeRole: string | null;
@@ -42,22 +44,24 @@ export class LoginController {
         (info) =>
           info.warehouseId !== null && info.name !== null && info.role !== null,
       );
-    const activeWarehouse =
-      warehouses && warehouses[0] ? warehouses[0].name : null;
+    const activeWarehouseId =
+      warehouses && warehouses[0] ? warehouses[0].warehouseId : null;
     const activeRole = warehouses && warehouses[0] ? warehouses[0].role : null;
     const cookie: Cookie = {
       userId: userInfo[0].user_id,
       username: userInfo[0].username,
       orgId: userInfo[0].org_id,
-      activeWarehouseId: activeWarehouse ? activeWarehouse : '',
+      activeWarehouseId: activeWarehouseId ? activeWarehouseId : '',
       activeRole: activeRole ? activeRole : '',
     };
     this.cookieService.createAndSendCookie(cookie, res);
 
     return {
       message: 'Authentication successful',
+      orgId: userInfo[0].org_id,
+      orgRole: userInfo[0].org_role,
       warehouses: warehouses,
-      activeWarehouse: activeWarehouse,
+      activeWarehouse: activeWarehouseId,
       activeRole: activeRole,
       userId: userInfo[0].user_id,
       username: userInfo[0].username,

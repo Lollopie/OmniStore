@@ -8,6 +8,8 @@ import { PasswordInput } from '../../../components/PasswordInput.tsx';
 
 type LoginResponse = {
   warehouses: { warehouseId: string; name: string; role: string }[] | null;
+  orgId: string;
+  orgRole: string;
   activeWarehouse: string | null;
   activeRole: string | null;
   message?: string;

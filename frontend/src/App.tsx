@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from './features/auth/authContext/';
 import InviteManager from './features/invite/invite.tsx';
 import Homepage from './features/homepage/Homepage.tsx';
 import CreateOrganization from './features/organization/Create Organization.tsx';
+import Organization from './features/organization/organization.tsx';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -23,7 +24,7 @@ function ProtectedRoute() {
 
 function GuestRoute() {
   const { isAuthenticated } = useAuth();
-  return !isAuthenticated ? <Outlet /> : <Navigate to="/warehouse" replace />;
+  return !isAuthenticated ? <Outlet /> : <Navigate to="/organizations" replace />;
 }
 export function AppLayout() {
   return (
@@ -73,7 +74,8 @@ function AppContent() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route path="/warehouse" element={<Warehouse />} />
+            <Route path="/organizations" element={<Organization />} />
+            <Route path="/warehouses" element={<Warehouse />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/settings" element={<SettingsLayout />}>
               <Route index element={<Navigate to="account" replace />} />
