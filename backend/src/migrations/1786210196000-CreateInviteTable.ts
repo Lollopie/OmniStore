@@ -68,7 +68,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
           new_user_org_role user_org_role;
         BEGIN        
           INSERT INTO user_org_role (user_id, org_id, role)
-          VALUES (new_user_id, invite_org_id, 'MEMBER') RETURNING * INTO new_user_org_role;
+          VALUES (new_user_id, invite_org_id, 'member') RETURNING * INTO new_user_org_role;
           
           IF invite_warehouse_id IS NOT NULL AND invite_role IS NOT NULL THEN
             INSERT INTO user_warehouse_role (user_id, warehouse_id, role)
@@ -93,7 +93,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
             SELECT 1 FROM user_org_role
             WHERE user_id = check_user_id
               AND org_id = check_org_id
-              AND role IN ('OWNER', 'ADMIN')
+              AND role IN ('owner', 'admin')
           );
         $$;
         

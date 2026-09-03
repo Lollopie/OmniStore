@@ -22,8 +22,14 @@ import express from 'express';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 import { WarehouseRolesGuard } from '../roles/warehouseRoles/warehouseRoles.guard';
 import { WarehouseRoles } from '../roles/warehouseRoles/warehouseRoles.decorator';
-import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
-import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
+import {
+  ORG_WAREHOUSE_INVITATION_PERMISSIONS,
+  WAREHOUSE_INVITATION_PERMISSIONS,
+  WarehouseRole,
+} from '@shared/enum/warehouseRoles.enum';
+import {
+  OrganizationRole,
+} from '@shared/enum/organizationRoles.enum';
 import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.decorator';
 import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationRoles.guard';
 import { InviteService } from '../invite/invite.service';
@@ -127,14 +133,26 @@ export class WarehouseController {
     );
   }
 
-  @Post('/invite')
+  @Post('/invites')
   @UseGuards(AuthGuard, OrganizationRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   async inviteUser(@Body() warehouseInviteData: WarehouseInviteDto) {
+    const warehouseRole: WarehouseRole =
+      this.clsService.get<WarehouseRole>('warehouseRole');
+    const orgRole: OrganizationRole =
+      this.clsService.get<OrganizationRole>('orgRole');
+    const allowedRoles = [
+      ...(WAREHOUSE_INVITATION_PERMISSIONS[warehouseRole] || []),
+      ...(ORG_WAREHOUSE_INVITATION_PERMISSIONS[orgRole] || []),
+    ];
+    if (!allowedRoles.includes(warehouseInviteData.role)) {
+      throw new InternalServerErrorException(
+        'You do not have permission to invite users with this role',
+      );
+    }
     const invite: { invite: InviteEntity; rawToken: string } =
       await this.inviteService.inviteWarehouseUser(
         warehouseInviteData.email,
-        warehouseInviteData.warehouseId,
         warehouseInviteData.role,
       );
     if (invite) {
@@ -153,7 +171,7 @@ export class WarehouseController {
   }
   @Patch('/users')
   @UseGuards(AuthGuard, WarehouseRolesGuard)
-  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
+  @WarehouseRoles(WarehouseRole.ADMIN)
   async updateUserRole(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
     return await this.userWarehouseRoleService.updateUserRole(
       warehouseUserRoleData.username,

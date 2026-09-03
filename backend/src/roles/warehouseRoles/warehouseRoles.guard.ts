@@ -61,6 +61,7 @@ export class WarehouseRolesGuard implements CanActivate {
         );
       }
     }
+    this.clsService.set('warehouseRole', userRole);
     return true;
   }
 }

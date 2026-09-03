@@ -44,9 +44,6 @@ export class WarehouseInviteDto {
   @IsEmail({}, { message: 'Invalid email address' })
   email: string;
 
-  @IsUUID('7')
-  warehouseId: string;
-
   @IsEnum(WarehouseRole, { message: 'Invalid role' })
   role: WarehouseRole;
 }

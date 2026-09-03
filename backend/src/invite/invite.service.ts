@@ -18,10 +18,11 @@ export class InviteService {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
-  async inviteWarehouseUser(email: string, warehouseId: string, role: string) {
+  async inviteWarehouseUser(email: string, role: string) {
     const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
     const warehouseRepo = this.txRepoProvider.getRepo(WarehouseEntity);
     const orgId: string = this.clsService.get('orgId');
+    const warehouseId: string = this.clsService.get('warehouseId');
     const warehouse = await warehouseRepo.findOne({
       where: { warehouseId, orgId },
     });

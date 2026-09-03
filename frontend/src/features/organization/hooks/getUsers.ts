@@ -32,7 +32,7 @@ export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller,
   }
   else {
     if (activeRole == 'member'){
-      setUsers([{userId: JSON.parse(localStorage.getItem('userId') || ''), username: JSON.parse(localStorage.getItem('username') || ''), role: JSON.parse(localStorage.getItem('activeRole') || '')}])
+      setUsers([{userId: JSON.parse(localStorage.getItem('userId') || ''), username: JSON.parse(localStorage.getItem('username') || ''), role: JSON.parse(localStorage.getItem('orgRole') || '')}])
       setTotalUsers(1);
     }
     else {

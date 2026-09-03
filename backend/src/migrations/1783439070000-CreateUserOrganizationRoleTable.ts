@@ -40,7 +40,7 @@ export class CreateUserOrganizationRoleTable1783439070000 implements MigrationIn
             SELECT 1 FROM user_org_role
             WHERE user_id = check_user_id
               AND org_id = check_org_id
-              AND role IN ('OWNER', 'ADMIN')
+              AND role IN ('owner', 'admin')
           );
         $$;
 

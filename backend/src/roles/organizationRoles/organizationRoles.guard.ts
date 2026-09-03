@@ -16,7 +16,7 @@ import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 export class OrganizationRolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private readonly cls: ClsService,
+    private readonly clsService: ClsService,
     private readonly guardDBService: GuardDBService,
   ) {}
 
@@ -57,7 +57,7 @@ export class OrganizationRolesGuard implements CanActivate {
         );
       }
     }
-
+    this.clsService.set('orgRole', userRole);
     return true;
   }
 }

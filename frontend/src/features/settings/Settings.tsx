@@ -2,7 +2,6 @@ import { NavLink, Outlet } from "react-router";
 
 const SETTINGS_NAV = [
   { path: "account", label: "Account" },
-  { path: "warehouses", label: "Warehouses" },
   { path: "preferences", label: "Preferences" },
 ];
 
