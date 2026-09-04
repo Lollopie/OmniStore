@@ -7,19 +7,23 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { UserWarehouseRoleEntity } from './userWarehouseRole.entity';
 import { DataSource } from 'typeorm';
 import { TxRepoProvider } from '../rls/db.helper';
+import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
 
 describe('UserWarehouseRoleService', () => {
   let service: UserWarehouseRoleService;
   let clsService: jest.Mocked<ClsService>;
   let usersService: jest.Mocked<UsersService>;
-  let repository: {
+  let userWarehouseRoleRepository: {
     findOneBy: jest.Mock;
     save: jest.Mock;
     createQueryBuilder: jest.Mock;
   };
+  let userOrganizationRoleRepository: {
+    findOneBy: jest.Mock;
+  };
 
   beforeEach(async () => {
-    repository = {
+    userWarehouseRoleRepository = {
       findOneBy: jest.fn(),
       save: jest.fn(),
       createQueryBuilder: jest.fn().mockReturnValue({
@@ -33,9 +37,20 @@ describe('UserWarehouseRoleService', () => {
         getRawMany: jest.fn().mockResolvedValue([]),
       }),
     };
+    userOrganizationRoleRepository = {
+      findOneBy: jest.fn(),
+    };
     const mockEntityManager = {
       query: jest.fn().mockResolvedValue([{}]),
-      getRepo: jest.fn().mockImplementation(() => repository),
+      getRepo: jest.fn().mockImplementation((entity) => {
+        if (entity === UserWarehouseRoleEntity) {
+          return userWarehouseRoleRepository;
+        }
+        if (entity === UserOrganizationRoleEntity) {
+          return userOrganizationRoleRepository;
+        }
+        throw new Error('Unexpected entity type');
+      }),
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -58,8 +73,12 @@ describe('UserWarehouseRoleService', () => {
         },
         {
           provide: getRepositoryToken(UserWarehouseRoleEntity),
-          useValue: repository,
+          useValue: userWarehouseRoleRepository,
         },
+        {
+          provide: getRepositoryToken(UserOrganizationRoleEntity),
+          useValue: userOrganizationRoleRepository,
+        }
       ],
     }).compile();
 
@@ -81,17 +100,22 @@ describe('UserWarehouseRoleService', () => {
         username: 'jane',
         password: 'hashed',
       });
-      repository.findOneBy.mockResolvedValue(null);
-      repository.save.mockResolvedValue({
+      userWarehouseRoleRepository.findOneBy.mockResolvedValue(null);
+      userWarehouseRoleRepository.save.mockResolvedValue({
         userId: 'user-1',
         warehouseId: 'warehouse-1',
         role: 'staff',
+      });
+      userOrganizationRoleRepository.findOneBy.mockResolvedValue({
+        userId: 'user-1',
+        orgId: 'org-1',
+        role: 'member',
       });
 
       const result = await service.addUserToWarehouse('jane', 'staff');
 
       expect(result.role).toBe('staff');
-      expect(repository.save).toHaveBeenCalledWith({
+      expect(userWarehouseRoleRepository.save).toHaveBeenCalledWith({
         userId: 'user-1',
         warehouseId: 'warehouse-1',
         role: 'staff',
@@ -106,12 +130,16 @@ describe('UserWarehouseRoleService', () => {
         username: 'jane',
         password: 'hashed',
       });
-      repository.findOneBy.mockResolvedValue({
+      userWarehouseRoleRepository.findOneBy.mockResolvedValue({
         userId: 'user-1',
         warehouseId: 'warehouse-1',
         role: 'staff',
       });
-
+      userOrganizationRoleRepository.findOneBy.mockResolvedValue({
+        userId: 'user-1',
+        orgId: 'org-1',
+        role: 'member',
+      });
       await expect(
         service.addUserToWarehouse('jane', 'manager'),
       ).rejects.toThrow(ConflictException);
@@ -127,12 +155,12 @@ describe('UserWarehouseRoleService', () => {
         username: 'jane',
         password: 'hashed',
       });
-      repository.findOneBy.mockResolvedValue({
+      userWarehouseRoleRepository.findOneBy.mockResolvedValue({
         userId: 'user-1',
         warehouseId: 'warehouse-1',
         role: 'staff',
       });
-      repository.save.mockResolvedValue({
+      userWarehouseRoleRepository.save.mockResolvedValue({
         userId: 'user-1',
         warehouseId: 'warehouse-1',
         role: 'manager',
@@ -141,7 +169,7 @@ describe('UserWarehouseRoleService', () => {
       const result = await service.updateUserRole('jane', 'manager');
 
       expect(result.role).toBe('manager');
-      expect(repository.save).toHaveBeenCalledWith({
+      expect(userWarehouseRoleRepository.save).toHaveBeenCalledWith({
         userId: 'user-1',
         warehouseId: 'warehouse-1',
         role: 'manager',
@@ -150,7 +178,7 @@ describe('UserWarehouseRoleService', () => {
 
     it('should throw when the user is not assigned to the warehouse', async () => {
       clsService.get.mockReturnValue('warehouse-1');
-      repository.findOneBy.mockResolvedValue(null);
+      userWarehouseRoleRepository.findOneBy.mockResolvedValue(null);
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
         email: 'test@example.org',
