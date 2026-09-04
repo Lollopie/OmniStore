@@ -32,6 +32,7 @@ export class WarehouseUserRoleDto {
   @IsValidUsername()
   username: string;
 
+  @IsNotEmpty()
   @IsEnum(WarehouseRole, { message: 'Invalid role' })
   role: WarehouseRole;
 }
@@ -41,6 +42,7 @@ export class WarehouseInviteDto {
   @IsEmail({}, { message: 'Invalid email address' })
   email: string;
 
+  @IsNotEmpty()
   @IsEnum(WarehouseRole, { message: 'Invalid role' })
   role: WarehouseRole;
 }

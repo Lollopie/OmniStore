@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   InternalServerErrorException,
   Patch,
@@ -132,8 +133,9 @@ export class WarehouseController {
   }
 
   @Post('/invites')
-  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @UseGuards(AuthGuard, OrganizationRolesGuard, WarehouseRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async inviteUser(@Body() warehouseInviteData: WarehouseInviteDto) {
     const warehouseRole: WarehouseRole =
       this.clsService.get<WarehouseRole>('warehouseRole');
@@ -144,7 +146,7 @@ export class WarehouseController {
       ...(ORG_WAREHOUSE_INVITATION_PERMISSIONS[orgRole] || []),
     ];
     if (!allowedRoles.includes(warehouseInviteData.role)) {
-      throw new InternalServerErrorException(
+      throw new ForbiddenException(
         'You do not have permission to invite users with this role',
       );
     }
@@ -160,12 +162,12 @@ export class WarehouseController {
           'Organization',
         verificationUrl: `${this.configService.get('app.frontendUrl')}/invites/accept?token=${invite.rawToken}`,
         expiresInHours:
-          this.configService.get('auth.inviteTokenExpiresIn') || 24,
+          this.configService.get('email.inviteTokenExpiresIn') || 24,
       };
       await this.mailService.sendInviteEmail(invite.invite.email, context);
-      return { message: 'Invite send successfully.' };
+      return { message: 'Invite sent successfully.' };
     }
-    throw new InternalServerErrorException('Invalid invite');
+    throw new ForbiddenException('Invalid invite');
   }
   @Patch('/users')
   @UseGuards(AuthGuard, WarehouseRolesGuard)

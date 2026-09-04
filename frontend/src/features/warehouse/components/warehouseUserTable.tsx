@@ -1,5 +1,5 @@
 import TableHead from '../../../components/TableHead.tsx';
-import type { Warehouse, WarehouseUser } from '../warehouse.tsx';
+import type { Warehouse, WarehouseUser } from '../pages/warehouseUsers.tsx';
 import Button from '../../../components/Button.tsx';
 import { copyToClipboard } from '../../../utils/copyToClipboard.ts';
 import TableDataCell from '../../../components/TableDataCell.tsx';

@@ -69,7 +69,7 @@ function AppContent() {
             <Route path="/register/verify" element={<CreateOrganization />} />
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Navigate to="/login" replace />} />
-            <Route path="/invite/accept" element={<InviteManager />} />
+            <Route path="/invites/accept" element={<InviteManager />} />
           </Route>
         </Route>
 
