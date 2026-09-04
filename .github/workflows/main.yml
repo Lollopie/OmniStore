@@ -73,11 +73,8 @@ jobs:
           MIGRATOR_PASSWORD: migratorpassword
           DATABASE_NAME: test
 
-      - name: Debug table ownership
-        run: |
-          psql -h localhost -U test_user -d test -c "\dt+" 
-          psql -h localhost -U test_user -d test -c "SELECT tablename, tableowner FROM pg_tables WHERE schemaname = 'public';"
-          psql -h localhost -U test_user -d test -c "\ddp"
+      - name: Debug actual ACL on organization table
+        run: psql -h localhost -U test_user -d test -c "\dp organization"
         env:
           PGPASSWORD: test_password
       - name: Run Unit Tests
