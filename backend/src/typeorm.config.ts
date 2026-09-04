@@ -20,6 +20,6 @@ export const MigrationDataSource = new DataSource({
   username: process.env.MIGRATOR_USER,
   password: process.env.MIGRATOR_PASSWORD,
   database: process.env.DATABASE_NAME,
-  migrations: ['dist/migrations/*.js'],
-  entities: ['dist/**/*.entity.js'],
+  migrations: ['src/migrations/*.js'],
+  entities: ['src/**/*.entity.js'],
 });
