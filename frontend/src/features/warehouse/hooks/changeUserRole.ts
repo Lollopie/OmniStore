@@ -1,4 +1,4 @@
-import type { Warehouse, WarehouseUser } from '../warehouse.tsx';
+import type { Warehouse, WarehouseUser } from '../pages/warehouseUsers.tsx';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 interface Props {
   user: WarehouseUser;
@@ -13,7 +13,7 @@ export const changeUserRole = async ({user, newRole, setUsers, setActiveWarehous
       method: 'PATCH',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user.username, role: newRole, warehouseId: readStoredValue('activeWarehouse') }),
+      body: JSON.stringify({ username: user.username, role: newRole }),
     });
     if (!response.ok) {
       const txt = await response.text();

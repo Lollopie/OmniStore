@@ -52,8 +52,10 @@ export class InviteService {
     const token = this.authService.hashToken(rawToken);
     const [invite]: InviteEntity[] = await this.txRepoProvider
       .getManager()
-      .query<InviteEntity[]>(`SELECT * FROM consume_invite($1, $2)`, [
+      .query<InviteEntity[]>(`SELECT * FROM consume_invite($1, $2, $3, $4)`, [
         token,
+        null,
+        null,
         true,
       ])
       .catch(() => {
@@ -63,15 +65,15 @@ export class InviteService {
     let user = await userRepo.findOne({
       where: { email: mappedInvite.email },
     });
-    if (!user) {
-      user = userRepo.create({
-        email: mappedInvite.email,
-        username: registerDto.username,
-        password: await this.authService.hashPassword(registerDto.password),
-      });
-      await userRepo.save(user);
+    if (user) {
+      throw new BadRequestException('User already exists');
     }
-
+    user = userRepo.create({
+      email: mappedInvite.email,
+      username: registerDto.username,
+      password: await this.authService.hashPassword(registerDto.password),
+    });
+    await userRepo.save(user);
     await this.txRepoProvider
       .getManager()
       .query(`SELECT grant_invite_role($1, $2, $3, $4)`, [

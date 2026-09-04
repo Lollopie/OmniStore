@@ -17,6 +17,7 @@ describe('LoginService (Unit Test)', () => {
   beforeEach(async () => {
     const mockUserService = {
       findByUsername: jest.fn(),
+      getCookieInfo: jest.fn(),
     };
     const mockUserWarehouseRoleService = {
       getUserWarehouses: jest.fn(),
@@ -107,6 +108,15 @@ describe('LoginService (Unit Test)', () => {
         username: 'test',
         password: await authService.hashPassword('password1'),
       });
+      usersServiceMock.getCookieInfo.mockResolvedValue([{
+        user_id: '123e4567-e89b-12d3-a456-426614174000',
+        username: 'test',
+        org_id: 'org1',
+        org_role: 'admin',
+        warehouse_id: 'warehouse1',
+        warehouse_name: 'Warehouse 1',
+        warehouse_role: 'manager',
+      }]);
       userWarehouseRoleServiceMock.getUserWarehouses.mockResolvedValue(null);
       const validData = {
         username: 'test',

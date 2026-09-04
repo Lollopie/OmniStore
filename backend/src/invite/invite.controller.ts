@@ -8,7 +8,7 @@ import {
 import { InviteService } from './invite.service';
 import { RegisterDto } from '@shared/dto/register.dto';
 
-@Controller('invite')
+@Controller('invites')
 export class InviteController {
   constructor(private readonly inviteService: InviteService) {}
   @Post('accept')

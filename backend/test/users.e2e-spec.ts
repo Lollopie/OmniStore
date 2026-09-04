@@ -11,6 +11,7 @@ import cookieParser from 'cookie-parser';
 import { UserEntity } from '../src/user/user.entity';
 import { registerAndLogin } from './utils/helper';
 import { AuthService } from '../src/auth/auth.service';
+import { MailService } from '../src/mail/mail.service';
 
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -23,7 +24,10 @@ describe('UsersController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let authService: AuthService;
-
+  const mockMailService = {
+    sendVerificationEmail: jest.fn().mockResolvedValue(true),
+    sendInviteEmail: jest.fn().mockResolvedValue(true),
+  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -37,6 +41,8 @@ describe('UsersController (e2e)', () => {
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
+      .overrideProvider(MailService)
+      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -46,22 +52,6 @@ describe('UsersController (e2e)', () => {
     dataSource = moduleFixture.get<DataSource>(DataSource);
     authService = moduleFixture.get(AuthService);
   });
-
-  afterEach(async () => {
-    const entities = dataSource.entityMetadatas;
-    const tableNames = entities
-      .map((entity) => `"${entity.tableName}"`)
-      .join(', ');
-
-    if (tableNames.length > 0) {
-      await dataSource.query(
-        `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
-      );
-    }
-  });
-  afterAll(async () => {
-    await app.close();
-  });
   it('/users (DELETE) - should delete user account with correct password', async () => {
     const userData = {
       username: 'testuser',
@@ -69,6 +59,8 @@ describe('UsersController (e2e)', () => {
     };
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       userData.username,
       userData.password,
     );
@@ -96,6 +88,8 @@ describe('UsersController (e2e)', () => {
 
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       userData.username,
       userData.password,
     );
@@ -116,6 +110,8 @@ describe('UsersController (e2e)', () => {
 
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       userData.username,
       userData.password,
     );
@@ -145,6 +141,8 @@ describe('UsersController (e2e)', () => {
 
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       userData.username,
       userData.password,
     );
@@ -158,7 +156,7 @@ describe('UsersController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(response.body.message).toBe('Invalid password');
   });
-  it('/users (PATCH) - should not update password with incorrect password', async () => {
+  it('/users (PATCH) - should not update password with incorrect confirm password', async () => {
     const userData = {
       username: 'testuser',
       password: 'password123',
@@ -166,6 +164,8 @@ describe('UsersController (e2e)', () => {
 
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       userData.username,
       userData.password,
     );
@@ -178,5 +178,22 @@ describe('UsersController (e2e)', () => {
     expect(response.status).toBe(401);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(response.body.message).toBe('New passwords do not match');
+  });
+  afterEach(async () => {
+    const entities = dataSource.entityMetadatas;
+    const tableNames = entities
+      .map((entity) => `"${entity.tableName}"`)
+      .join(', ');
+
+    if (tableNames.length > 0) {
+      // TRUNCATE empties the tables, RESTART IDENTITY resets IDs to 1, CASCADE handles foreign keys
+      await dataSource.query(
+        `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
+      );
+    }
+  });
+  afterAll(async () => {
+    await dataSource.destroy();
+    await app.close();
   });
 });

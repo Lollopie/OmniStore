@@ -20,8 +20,8 @@ export class OrganizationService {
     const token = this.authService.hashToken(rawToken);
     try {
       const [invite]: InviteEntity[] = await inviteRepo.query(
-        'SELECT consume_invite($1, $2) AS invite',
-        [token, false],
+        'SELECT consume_invite($1, $2, $3, $4) AS invite',
+        [token, true, data.ownerEmail, false],
       );
       if (!invite) {
         throw new Error('Invalid or expired token');
@@ -31,7 +31,15 @@ export class OrganizationService {
     }
     const organizationRepo = this.txRepoProvider.getRepo(OrganizationEntity);
     const userRepo = this.txRepoProvider.getRepo(UserEntity);
-    const user = userRepo.create({
+    let user = await userRepo.findOne({ where: { email: data.ownerEmail } });
+    if (user) {
+      throw new BadRequestException('User with this email already exists');
+    }
+    user = await userRepo.findOne({ where: { username: data.ownerUsername } });
+    if (user) {
+      throw new BadRequestException('User with this username already exists');
+    }
+    user = userRepo.create({
       username: data.ownerUsername,
       email: data.ownerEmail,
       password: await this.authService.hashPassword(data.ownerPassword),

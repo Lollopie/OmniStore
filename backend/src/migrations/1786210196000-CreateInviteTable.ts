@@ -24,6 +24,8 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
     await queryRunner.query(`
         CREATE OR REPLACE FUNCTION consume_invite(
           raw_token_hash TEXT,
+          require_email BOOLEAN DEFAULT NULL,
+          recipient_email TEXT DEFAULT NULL,
           require_org BOOLEAN DEFAULT NULL
         )
         RETURNS invite
@@ -37,6 +39,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
           FROM invite
           WHERE token_hash = raw_token_hash
             AND consumed_at IS NULL
+            AND (require_email IS NULL OR email = recipient_email)
             AND expires_at > now()
             AND (
                 require_org IS NULL 

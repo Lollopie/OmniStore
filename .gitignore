@@ -22,3 +22,4 @@ Idea.txt
 TODO.txt
 /backend/coverage/
 /playwright/
+datasource.ts

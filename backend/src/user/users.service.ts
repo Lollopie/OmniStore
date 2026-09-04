@@ -5,7 +5,6 @@ import { UnauthorizedException } from '@nestjs/common';
 import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
 import { TxRepoProvider } from '../rls/db.helper';
 import { AuthService } from '../auth/auth.service';
-import { Cookie } from './user.decorator';
 
 @Injectable()
 export class UsersService {

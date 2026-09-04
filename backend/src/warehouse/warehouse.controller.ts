@@ -27,9 +27,7 @@ import {
   WAREHOUSE_INVITATION_PERMISSIONS,
   WarehouseRole,
 } from '@shared/enum/warehouseRoles.enum';
-import {
-  OrganizationRole,
-} from '@shared/enum/organizationRoles.enum';
+import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.decorator';
 import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationRoles.guard';
 import { InviteService } from '../invite/invite.service';
@@ -160,7 +158,7 @@ export class WarehouseController {
         organizationName:
           (await this.orgService.findOne(invite.invite.orgId))?.name ||
           'Organization',
-        verificationUrl: `${this.configService.get('app.frontendUrl')}/invite/accept?token=${invite.rawToken}`,
+        verificationUrl: `${this.configService.get('app.frontendUrl')}/invites/accept?token=${invite.rawToken}`,
         expiresInHours:
           this.configService.get('auth.inviteTokenExpiresIn') || 24,
       };
