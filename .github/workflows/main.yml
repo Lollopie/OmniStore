@@ -73,10 +73,6 @@ jobs:
           MIGRATOR_PASSWORD: migratorpassword
           DATABASE_NAME: test
 
-      - name: Debug actual ACL on organization table
-        run: psql -h localhost -U test_user -d test -c "\dp organization"
-        env:
-          PGPASSWORD: test_password
       - name: Run Unit Tests
         run: npm run test
         working-directory: backend
