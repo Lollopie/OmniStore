@@ -15,11 +15,11 @@ for (const v of [
 }
 export const MigrationDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DATABASE_HOST,
+  host: 'localhost',
   port: Number(process.env.DATABASE_PORT),
   username: process.env.MIGRATOR_USER,
   password: process.env.MIGRATOR_PASSWORD,
   database: process.env.DATABASE_NAME,
-  migrations: ['src/migrations/*.js'],
-  entities: ['src/**/*.entity.js'],
+  migrations: ['src/migrations/*.ts'],
+  entities: ['src/**/*.entity.ts'],
 });
