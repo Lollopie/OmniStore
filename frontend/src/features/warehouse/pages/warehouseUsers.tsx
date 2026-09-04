@@ -127,7 +127,7 @@ const WarehouseUsers = () => {
 
         <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-        {activeWarehouse.role && Object.values(WAREHOUSE_INVITATION_PERMISSIONS[activeWarehouse.role]).length > 0 ? (
+        {activeWarehouse.role && (WAREHOUSE_INVITATION_PERMISSIONS[activeWarehouse.role as WarehouseRole]?.length ?? 0) > 0 ? (
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center my-4">
             <InputField
               fieldsetClassName="w-full sm:max-w-xs"
@@ -142,7 +142,10 @@ const WarehouseUsers = () => {
               value={newRole}
               onChange={(e) => setNewRole(e.target.value as WarehouseRole)}
             >
-              {Object.values(WAREHOUSE_INVITATION_PERMISSIONS[activeWarehouse.role]).map((role: string) => (
+              <option value="" disabled>
+                Select a role
+              </option>
+              {(WAREHOUSE_INVITATION_PERMISSIONS[activeWarehouse.role as WarehouseRole] ?? []).map((role: string) => (
                 <option key={role} value={role}>
                   {role}
                 </option>

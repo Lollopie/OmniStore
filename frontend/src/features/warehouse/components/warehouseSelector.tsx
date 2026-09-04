@@ -1,6 +1,6 @@
 import React from 'react';
 import { getWarehouseFromWarehouseId } from '../hooks/getWarehouseFromWarehouseId.ts';
-import type { Warehouse } from '../warehouse.tsx';
+import type { Warehouse } from '../pages/warehouseUsers.tsx';
 
 export interface SelectResponse extends Response {
   activeRole: string;
@@ -47,7 +47,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
         value={selectedWarehouse}
         onChange={handleChange}
       >
-        <option disabled>-- Select a Warehouse --</option>
+        <option value="" disabled>-- Select a Warehouse --</option>
         {warehouses.map((warehouse: { warehouseId: string, name: string }) => (
           <option key={warehouse.warehouseId} value={warehouse.warehouseId}>
             {warehouse.name}

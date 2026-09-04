@@ -32,8 +32,7 @@ export class OrganizationUpdateRoleDto {
   @IsValidUsername()
   username: string;
 
-  @IsString()
   @IsNotEmpty()
   @IsEnum(OrganizationRole, { message: 'Invalid role' })
-  role: string;
+  role: OrganizationRole;
 }

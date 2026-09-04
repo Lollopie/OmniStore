@@ -18,11 +18,11 @@ interface InputFieldProps extends React.HTMLProps<HTMLInputElement> {
   inputClassName?: string;
 }
 
-export default function InputField({ variant, label, fieldSize, inputClassName, setValue, ...props }: InputFieldProps) {
+export default function InputField({ variant, label, fieldSize, setValue, fieldsetClassName, inputClassName, ...props }: InputFieldProps) {
   const baseInputFieldStyle = "input focus:outline-none focus:ring-2 focus:border-none ";
   const variantStyle = variant ? VARIANTS[variant] : VARIANTS['primary'];
   return (
-    <fieldset className={`fieldset ${props.fieldsetClassName || ''}`}>
+    <fieldset className={`fieldset ${fieldsetClassName || ''}`}>
       {label && <label htmlFor={label} className="label text-base-content">
         {label}
       </label>}

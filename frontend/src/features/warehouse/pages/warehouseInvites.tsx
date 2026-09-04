@@ -39,7 +39,7 @@ export function WarehouseInvites() {
               <option value="" disabled>
                 Select a role
               </option>
-              {readStoredValue<string>('activeRole') && Object.values(WAREHOUSE_INVITATION_PERMISSIONS[readStoredValue<string>('activeRole')]).map((role: string) => (
+              {readStoredValue<string>('activeRole') && ((WAREHOUSE_INVITATION_PERMISSIONS as Record<string, string[]>)[readStoredValue<string>('activeRole')] ?? []).map((role: string) => (
                 <option key={role} value={role}>
                   {role}
                 </option>
