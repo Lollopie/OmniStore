@@ -35,8 +35,8 @@ export default defineConfig({
       testMatch: /.*\.setup\.ts$/,
     },
     {
-      name: 'e2e tests chromium',
-      use: {...devices['Desktop Chrome']},
+      name: 'e2e tests firefox',
+      use: {...devices['Desktop Firefox']},
       dependencies: ['setup']
     },
   ],

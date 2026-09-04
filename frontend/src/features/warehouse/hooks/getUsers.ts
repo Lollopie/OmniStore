@@ -1,4 +1,5 @@
-import type { WarehouseUser } from '../warehouse.tsx';
+import type { WarehouseUser } from '../pages/warehouseUsers.tsx';
+import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 interface Props {
   searchTerm?: string;
   setUsers: React.Dispatch<React.SetStateAction<WarehouseUser[]>>;
@@ -7,7 +8,7 @@ interface Props {
   addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
 export const getUsers = async ({searchTerm, setUsers, setTotalUsers, controller, addToast}: Props) => {
-  const activeRole = JSON.parse(localStorage.getItem('activeRole') || '');
+  const activeRole = readStoredValue('activeRole', '');
   if (activeRole == 'admin' || activeRole == 'manager') {
     const params = new URLSearchParams();
     try {

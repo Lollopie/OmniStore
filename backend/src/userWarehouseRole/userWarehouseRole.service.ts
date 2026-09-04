@@ -8,6 +8,7 @@ import { UserWarehouseRoleEntity } from './userWarehouseRole.entity';
 import { ClsService } from 'nestjs-cls';
 import { UsersService } from '../user/users.service';
 import { TxRepoProvider } from '../rls/db.helper';
+import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
 
 @Injectable()
 export class UserWarehouseRoleService {
@@ -40,12 +41,21 @@ export class UserWarehouseRoleService {
     role: string,
   ): Promise<UserWarehouseRoleEntity> {
     const repo = this.txRepoProvider.getRepo(UserWarehouseRoleEntity);
+    const userOrgRepo = this.txRepoProvider.getRepo(UserOrganizationRoleEntity);
     const warehouseId = this.getActiveWarehouseId();
     const user = await this.usersService.findByUsername(username);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
+    const userOrganizationId = await userOrgRepo.findOneBy({
+      userId: user.userId,
+      orgId: this.clsService.get('orgId'),
+    });
+    if (!userOrganizationId) {
+      throw new BadRequestException(
+        'User does not belong to the same organization',
+      );
+    }
     const existingRole = await this.findRole(user.userId, warehouseId);
     if (existingRole) {
       throw new ConflictException('User already belongs to this warehouse');

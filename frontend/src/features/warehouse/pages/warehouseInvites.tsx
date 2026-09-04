@@ -27,6 +27,7 @@ export function WarehouseInvites() {
             onSubmit={handleSubmit((data) => createWarehouseInvite(data, addToast))}
           className="flex flex-col gap-4 items-start">
             <InputField
+              label="Email"
               placeholder="Enter user email" {...register('email')}
               fieldsetClassName="max-w-xs w-full"
               inputClassName="w-full"

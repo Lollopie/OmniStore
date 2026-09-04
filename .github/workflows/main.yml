@@ -121,7 +121,11 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -149,9 +153,19 @@ jobs:
         working-directory: backend
 
       - name: Initialize test database
-        run: psql -v ON_ERROR_STOP=1 -h localhost -U test_user -d test -f backend/init-test-db.sql
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U test_user -d test -f backend/init-test-db.sql --set MIGRATOR_ROLE=nestjs_migrator --set MIGRATOR_PASSWORD=migratorpassword --set APP_ROLE=nestjs_app_user --set APP_PASSWORD=apppassword --set DATABASE_NAME=test
         env:
           PGPASSWORD: test_password
+
+      - name: Run Migrations
+        run: npm run migration:run
+        working-directory: backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          MIGRATOR_USER: nestjs_migrator
+          MIGRATOR_PASSWORD: migratorpassword
+          DATABASE_NAME: test
 
       - name: Install frontend dependencies
         run: npm ci
@@ -181,7 +195,7 @@ jobs:
         env:
           DATABASE_HOST: localhost
           DATABASE_PORT: 5432
-          APP_USER: app_test_user
+          APP_USER: nestjs_app_user
           APP_PASSWORD: apppassword
           DATABASE_NAME: test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}

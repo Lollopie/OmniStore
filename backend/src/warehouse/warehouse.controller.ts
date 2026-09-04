@@ -18,6 +18,7 @@ import {
 } from '@shared/dto/warehouse.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import * as userDecorator from '../user/user.decorator';
+import { Cookie } from '../user/user.decorator';
 import express from 'express';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
 import { WarehouseRolesGuard } from '../roles/warehouseRoles/warehouseRoles.guard';
@@ -32,7 +33,6 @@ import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.
 import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationRoles.guard';
 import { InviteService } from '../invite/invite.service';
 import { ClsService } from 'nestjs-cls';
-import { Cookie } from '../user/user.decorator';
 import { AuthService } from '../auth/auth.service';
 import { MailService } from '../mail/mail.service';
 import { InviteContext } from '../mail/interfaces/mail-contexts.interface';
@@ -173,6 +173,27 @@ export class WarehouseController {
   @WarehouseRoles(WarehouseRole.ADMIN)
   async updateUserRole(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
     return await this.userWarehouseRoleService.updateUserRole(
+      warehouseUserRoleData.username,
+      warehouseUserRoleData.role,
+    );
+  }
+  @Post('/users')
+  @UseGuards(AuthGuard, WarehouseRolesGuard)
+  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
+  async addUserToWarehouse(
+    @Body() warehouseUserRoleData: WarehouseUserRoleDto,
+  ) {
+    const warehouseRole: WarehouseRole =
+      this.clsService.get<WarehouseRole>('warehouseRole');
+    const allowedRoles = [
+      ...(WAREHOUSE_INVITATION_PERMISSIONS[warehouseRole] || []),
+    ];
+    if (!allowedRoles.includes(warehouseUserRoleData.role)) {
+      throw new ForbiddenException(
+        'You do not have permission to add users with this role',
+      );
+    }
+    return await this.userWarehouseRoleService.addUserToWarehouse(
       warehouseUserRoleData.username,
       warehouseUserRoleData.role,
     );

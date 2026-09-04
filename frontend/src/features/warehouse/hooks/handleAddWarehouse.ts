@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Warehouse } from '../warehouse.tsx';
+import type { Warehouse } from '../pages/warehouseUsers.tsx';
 import { WarehouseDto } from '@shared/dto/warehouse.dto';
 interface Props {
   warehouseDto: WarehouseDto;
@@ -33,8 +33,8 @@ export const handleAddWarehouse = async ({warehouseDto, setActiveWarehouse, addT
     const currentWarehouses = JSON.parse(localStorage.getItem('userWarehouses') || '[]');
     currentWarehouses.push(addedItem);
     localStorage.setItem('userWarehouses', JSON.stringify(currentWarehouses));
-    localStorage.setItem('activeWarehouse', JSON.stringify(addedItem.warehouseId));
-    localStorage.setItem('activeRole', JSON.stringify(addedItem.role));
+    localStorage.setItem('activeWarehouse', addedItem.warehouseId);
+    localStorage.setItem('activeRole', addedItem.role);
     setActiveWarehouse({ warehouseId: addedItem.warehouseId, name: addedItem.name, role: addedItem.role });
     addToast(`Warehouse "${addedItem.name}" added successfully!`, 'success', 3000);
   } catch (err: unknown) {

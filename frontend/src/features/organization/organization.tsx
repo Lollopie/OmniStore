@@ -47,7 +47,7 @@ const Organization = () => {
           {users.length === 0 ? (
             <tr className="hover:bg-base-300/50 transition-colors">
               <td colSpan={3} className="text-center p-3 text-base-300">
-                No users in warehouse.
+                No users in organization.
               </td>
             </tr>
           ) : (

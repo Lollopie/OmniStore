@@ -1,19 +1,33 @@
 import { test as setup, expect } from '@playwright/test';
-
+import { getLatestEmailFor } from './utils/mail';
 const authPath = 'playwright/.auth/';
 setup('create warehouse account', async ({ request, page }) => {
   await page.goto('/');
   const credentials = {
+    email: `user_${Date.now()}@example.com`,
     username: `user_${Date.now()}`,
     password: 'password123',
+    orgName: 'user_org',
   };
   const response = await request.post(`${process.env.VITE_NESTJS_HOST_URL}/register`, {
     data: {
-      username: credentials.username,
-      password: credentials.password,
+      email: credentials.email,
     }
   });
   expect(response.status()).toBe(201);
+  const message = await getLatestEmailFor(page, credentials.email);
+  const match = message.HTML.match(/token=([0-9a-zA-Z]*)"/);
+  const verificationToken = match?.[1];
+  expect(verificationToken).toBeTruthy();
+  const creationResponse = await request.post(`${process.env.VITE_NESTJS_HOST_URL}/organizations/register?token=${verificationToken}`, {
+    data: {
+      ownerEmail: credentials.email,
+      ownerUsername: credentials.username,
+      ownerPassword: credentials.password,
+      name: credentials.orgName,
+    }
+  });
+  expect(creationResponse.status()).toBe(201);
   const url = `${process.env.VITE_NESTJS_HOST_URL}/login`;
   const loginSuccess = await page.evaluate(async ({url, credentials}) => {
     const res = await fetch(url, {
@@ -33,16 +47,30 @@ setup('create warehouse account', async ({ request, page }) => {
 setup('create inventory account', async ({ request, page }) => {
   await page.goto('/');
   const credentials = {
+    email: `user_${Date.now()}@example.com`,
     username: `user_${Date.now()}`,
     password: 'password123',
+    orgName: 'user_org',
   };
   const response = await request.post(`${process.env.VITE_NESTJS_HOST_URL}/register`, {
     data: {
-      username: credentials.username,
-      password: credentials.password,
+      email: credentials.email,
     }
   });
   expect(response.status()).toBe(201);
+  const message = await getLatestEmailFor(page, credentials.email);
+  const match = message.HTML.match(/token=([0-9a-zA-Z]*)"/);
+  const verificationToken = match?.[1];
+  expect(verificationToken).toBeTruthy();
+  const creationResponse = await request.post(`${process.env.VITE_NESTJS_HOST_URL}/organizations/register?token=${verificationToken}`, {
+    data: {
+      ownerEmail: credentials.email,
+      ownerUsername: credentials.username,
+      ownerPassword: credentials.password,
+      name: credentials.orgName,
+    }
+  });
+  expect(creationResponse.status()).toBe(201);
   const url = `${process.env.VITE_NESTJS_HOST_URL}/login`;
   const loginSuccess = await page.evaluate(async ({url, credentials}) => {
     const res = await fetch(url, {
