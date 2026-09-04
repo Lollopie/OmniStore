@@ -4,7 +4,15 @@ import { config } from 'dotenv';
 config({
   path: [`.env.${process.env.NODE_ENV || 'dev'}`, `.env`, '/etc/secrets/.env'],
 });
-
+for (const v of [
+  'DATABASE_HOST',
+  'MIGRATOR_USER',
+  'MIGRATOR_PASSWORD',
+  'DATABASE_NAME',
+  'DATABASE_PORT',
+]) {
+  if (!process.env[v]) throw new Error(`Missing required env var: ${v}`);
+}
 export const MigrationDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DATABASE_HOST,

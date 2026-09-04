@@ -68,8 +68,8 @@ jobs:
         env:
           DATABASE_HOST: localhost
           DATABASE_PORT: 5432
-          MIGRATION_USER: nestjs_migrator
-          MIGRATION_PASSWORD: migratorpassword
+          MIGRATOR_USER: nestjs_migrator
+          MIGRATOR_PASSWORD: migratorpassword
           DATABASE_NAME: test
 
       - name: Run Unit Tests
