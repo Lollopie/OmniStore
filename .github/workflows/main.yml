@@ -201,6 +201,8 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_URL: redis://localhost:6379
           CI: true
+          MAIL_HOST: localhost
+          MAIL_PORT: 1025
 
       # Upload trace reports on test failure for debugging
       - name: Upload Playwright Report
