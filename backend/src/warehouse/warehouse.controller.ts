@@ -3,7 +3,6 @@ import {
   Controller,
   ForbiddenException,
   Get,
-  InternalServerErrorException,
   Patch,
   Post,
   Query,
