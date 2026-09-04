@@ -4,9 +4,9 @@ import {
   MinLength,
   MaxLength,
   IsUUID,
-  IsEnum,
+  IsEnum, IsNotEmpty, IsEmail,
 } from 'class-validator';
-import { Role } from '../enum/roles.enum'
+import { WarehouseRole } from '../enum/warehouseRoles.enum'
 import { IsValidUsername } from '../decorators/isValidUsername.decorator';
 
 export class WarehouseDto {
@@ -32,6 +32,15 @@ export class WarehouseUserRoleDto {
   @IsValidUsername()
   username: string;
 
-  @IsEnum(Role, { message: 'Invalid role' })
-  role: Role;
+  @IsEnum(WarehouseRole, { message: 'Invalid role' })
+  role: WarehouseRole;
+}
+export class WarehouseInviteDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail({}, { message: 'Invalid email address' })
+  email: string;
+
+  @IsEnum(WarehouseRole, { message: 'Invalid role' })
+  role: WarehouseRole;
 }

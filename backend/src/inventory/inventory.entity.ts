@@ -4,7 +4,6 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-  RelationId,
 } from 'typeorm';
 import { WarehouseEntity } from '../warehouse/warehouse.entity';
 
@@ -15,7 +14,7 @@ export class InventoryEntity {
   @ManyToOne(() => WarehouseEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'warehouse_id' })
   warehouse: WarehouseEntity;
-  @RelationId((inventory: InventoryEntity) => inventory.warehouse)
+  @Column('uuid', { name: 'warehouse_id' })
   warehouseId: string;
   @Column({ name: 'item_name' })
   itemName: string;

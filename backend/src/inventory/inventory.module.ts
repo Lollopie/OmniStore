@@ -6,6 +6,8 @@ import { InventoryController } from './inventory.controller';
 import { UsersModule } from '../user/users.module';
 import { WarehouseModule } from '../warehouse/warehouse.module';
 import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.module';
+import { TxRepoProvider } from '../rls/db.helper';
+import { GuardDBService } from '../utils/guardDB.service';
 
 @Module({
   imports: [
@@ -14,7 +16,7 @@ import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.
     WarehouseModule,
     UserWarehouseRoleModule,
   ],
-  providers: [InventoryService],
+  providers: [InventoryService, TxRepoProvider, GuardDBService],
   controllers: [InventoryController],
 })
 export class InventoryModule {}

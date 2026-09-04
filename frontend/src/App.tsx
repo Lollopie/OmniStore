@@ -4,14 +4,19 @@ import Login from './features/auth/authForm/Login';
 import Inventory from './features/inventory/Inventory.tsx';
 import NavBar from './components/NavBar.tsx';
 import './assets/index.css';
-import Warehouse from './features/warehouse/warehouse.tsx';
+import { WarehouseManager } from './features/warehouse/warehouse.tsx';
 import { ToastProvider } from './features/toast';
 import { SettingsLayout } from './features/settings/Settings.tsx';
 import { useTheme } from './features/theme/hooks/useTheme.tsx';
-import { AccountSettings } from './features/settings/components/AccountSettings.tsx';
-import { WarehouseSettings } from './features/settings/components/WarehouseSettings.tsx';
-import PreferenceSettings from './features/settings/components/PreferenceSettings.tsx';
+import { AccountSettings } from './features/settings/pages/AccountSettings.tsx';
+import PreferenceSettings from './features/settings/pages/PreferenceSettings.tsx';
 import { AuthProvider, useAuth } from './features/auth/authContext/';
+import InviteManager from './features/invite/invite.tsx';
+import Homepage from './features/homepage/Homepage.tsx';
+import CreateOrganization from './features/organization/Create Organization.tsx';
+import Organization from './features/organization/organization.tsx';
+import WarehouseUsers from './features/warehouse/pages/warehouseUsers.tsx';
+import { WarehouseInvites } from './features/warehouse/pages/warehouseInvites.tsx';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -20,9 +25,26 @@ function ProtectedRoute() {
 
 function GuestRoute() {
   const { isAuthenticated } = useAuth();
-  return !isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
+  return !isAuthenticated ? <Outlet /> : <Navigate to="/organizations" replace />;
+}
+export function AppLayout() {
+  return (
+    <div className="min-h-screen bg-base-200 pt-5">
+      <NavBar />
+      <main className="py-6 px-4 sm:px-6 lg:px-8">
+        <Outlet />
+      </main>
+    </div>
+  );
 }
 
+export function HomeLayout() {
+  return (
+    <div className="min-h-screen bg-base-200 pt-5">
+      <Outlet />
+    </div>
+  );
+}
 function AppContent() {
   const { loading } = useAuth();
   useTheme();
@@ -37,34 +59,40 @@ function AppContent() {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-base-200">
-        <header className="w-full lg:max-w-3/5 mx-auto py-3 rounded-2xl">
-          <NavBar />
-        </header>
-        <div className="h-full py-12 px-4 sm:px-6 lg:px-8">
-          <Routes>
-            <Route element={<GuestRoute />}>
-              <Route path="/register" element={<Register />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/logout" element={<Navigate to="/login" replace />} />
+      <Routes>
+        <Route element={<GuestRoute />}>
+          <Route element={<HomeLayout />}>
+            <Route path="/" element={<Homepage />} />
+          </Route>
+          <Route element={<AppLayout />}>
+            <Route path="/register" element={<Register />} />
+            <Route path="/register/verify" element={<CreateOrganization />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/logout" element={<Navigate to="/login" replace />} />
+            <Route path="/invite/accept" element={<InviteManager />} />
+          </Route>
+        </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/organizations" element={<Organization />} />
+            <Route path="/warehouses" element={<WarehouseManager />} >
+              <Route index element={<Navigate to="users" replace />} />
+              <Route path="users" element={<WarehouseUsers />} />
+              <Route path="invites" element={<WarehouseInvites />} />
             </Route>
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route index element={<Navigate to="account" replace />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Warehouse />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/settings" element={<SettingsLayout />}>
-                <Route index element={<Navigate to="account" replace />} />
-
-                <Route path="account" element={<AccountSettings />} />
-                <Route path="warehouses" element={<WarehouseSettings />} />
-                <Route path="preferences" element={<PreferenceSettings />} />
-              </Route>
+              <Route path="account" element={<AccountSettings />} />
+              <Route path="preferences" element={<PreferenceSettings />} />
             </Route>
+          </Route>
+        </Route>
 
-            <Route path="*" element={<div className="p-10">404 - Page Not Found</div>} />
-          </Routes>
-        </div>
-      </div>
+        <Route path="*" element={<div className="p-10">404 - Page Not Found</div>} />
+      </Routes>
     </ToastProvider>
   );
 }

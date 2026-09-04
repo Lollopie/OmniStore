@@ -16,7 +16,7 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
   const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const warehouseId = event.target.value;
     const activeWarehouse = getWarehouseFromWarehouseId(warehouseId);
-    const response: SelectResponse = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouse/select`, {
+    const response: SelectResponse = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses/select`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -41,13 +41,13 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
     return <h3>No warehouses assigned.</h3>;
   }
   return (
-    <fieldset className="fieldset warehouse-selector flex flex-row justify-left md:items-center gap-2">
+    <fieldset className="fieldset sm:max-w-xs w-full">
       <legend className="fieldset-legend ml-1">Active Warehouse: </legend>
-      <select className="select select-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:max-w-xs w-full"
+      <select className="select select-sm focus:border-none focus:outline-none focus:ring-2 focus:ring-accent w-full"
         value={selectedWarehouse}
         onChange={handleChange}
       >
-        <option value="" disabled>-- Select a Warehouse --</option>
+        <option disabled>-- Select a Warehouse --</option>
         {warehouses.map((warehouse: { warehouseId: string, name: string }) => (
           <option key={warehouse.warehouseId} value={warehouse.warehouseId}>
             {warehouse.name}

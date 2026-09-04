@@ -10,7 +10,7 @@ export class UserWarehouseRoleEntity {
   @PrimaryColumn('uuid', { name: 'warehouse_id' })
   warehouseId: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column()
   role: string;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })

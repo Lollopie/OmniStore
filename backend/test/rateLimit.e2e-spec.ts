@@ -54,17 +54,17 @@ describe('RateLimit (e2e)', () => {
     for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
       await request(app.getHttpServer())
         .post('/register')
-        .send({ username: 'test' + i.toString(), password: 'password1' })
+        .send({ email: 'test' + i.toString() + '@example.com' })
         .expect(201);
     }
     await request(app.getHttpServer())
       .post('/register')
-      .send({ username: 'test', password: 'password1' })
+      .send({ email: 'test@example.com' })
       .expect(429);
     await new Promise((resolve) => setTimeout(resolve, 1100));
     await request(app.getHttpServer())
       .post('/register')
-      .send({ username: 'test', password: 'password1' })
+      .send({ email: 'test@example.com' })
       .expect(201);
   });
   afterEach(async () => {
@@ -83,5 +83,5 @@ describe('RateLimit (e2e)', () => {
   afterAll(async () => {
     await app.close();
     redisClient.destroy();
-  })
+  });
 });

@@ -9,15 +9,14 @@ import {
 import express from 'express';
 import { LoginService } from './login.service';
 import { RegisterDto } from '@shared/dto/register.dto';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { Cookie } from '../user/user.decorator';
+import { AuthService } from '../auth/auth.service';
 
 @Controller('login')
 export class LoginController {
   constructor(
     private readonly loginService: LoginService,
-    private readonly configService: ConfigService,
-    private readonly jwtService: JwtService,
+    private readonly cookieService: AuthService,
   ) {}
   @Post()
   @HttpCode(HttpStatus.OK)
@@ -26,49 +25,46 @@ export class LoginController {
     @Res({ passthrough: true }) res: express.Response,
   ): Promise<{
     message: string;
+    orgId: string;
+    orgRole: string;
     warehouses: { warehouseId: string; name: string; role: string }[] | null;
     activeWarehouse: string | null;
     activeRole: string | null;
     userId: string;
     username: string;
   }> {
-    const userInfo: {
-      warehouses: { warehouseId: string; name: string; role: string }[] | null;
-      userId: string;
-      username: string;
-    } = await this.loginService.login(user);
-    const cookie = {
-      userId: userInfo.userId,
-      username: userInfo.username,
-      activeWarehouseId:
-        userInfo.warehouses && userInfo.warehouses[0]
-          ? userInfo.warehouses[0].warehouseId
-          : '',
-      activeRole:
-        userInfo.warehouses && userInfo.warehouses[0]
-          ? userInfo.warehouses[0].role
-          : '',
+    const userInfo = await this.loginService.login(user);
+    const warehouses = userInfo
+      .map((info) => ({
+        warehouseId: info.warehouse_id,
+        name: info.warehouse_name,
+        role: info.warehouse_role,
+      }))
+      .filter(
+        (info) =>
+          info.warehouseId !== null && info.name !== null && info.role !== null,
+      );
+    const activeWarehouseId =
+      warehouses && warehouses[0] ? warehouses[0].warehouseId : null;
+    const activeRole = warehouses && warehouses[0] ? warehouses[0].role : null;
+    const cookie: Cookie = {
+      userId: userInfo[0].user_id,
+      username: userInfo[0].username,
+      orgId: userInfo[0].org_id,
+      activeWarehouseId: activeWarehouseId ? activeWarehouseId : '',
+      activeRole: activeRole ? activeRole : '',
     };
-    res.cookie('token', this.jwtService.sign(cookie), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
-    });
+    this.cookieService.createAndSendCookie(cookie, res);
 
     return {
       message: 'Authentication successful',
-      warehouses: userInfo.warehouses,
-      activeWarehouse:
-        userInfo.warehouses && userInfo.warehouses[0]
-          ? userInfo.warehouses[0].name
-          : null,
-      activeRole:
-        userInfo.warehouses && userInfo.warehouses[0]
-          ? userInfo.warehouses[0].role
-          : null,
-      userId: userInfo.userId,
-      username: userInfo.username,
+      orgId: userInfo[0].org_id,
+      orgRole: userInfo[0].org_role,
+      warehouses: warehouses,
+      activeWarehouse: activeWarehouseId,
+      activeRole: activeRole,
+      userId: userInfo[0].user_id,
+      username: userInfo[0].username,
     };
   }
 }

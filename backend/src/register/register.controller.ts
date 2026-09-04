@@ -1,7 +1,13 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { RegisterService } from './register.service';
-import { RegisterDto } from '@shared/dto/register.dto';
-import { Resend } from 'resend';
+import { RegisterEmailDto } from '@shared/dto/register.dto';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '../mail/mail.service';
 @Controller('register')
@@ -12,27 +18,40 @@ export class RegisterController {
     private readonly mailService: MailService,
   ) {}
   @Post()
-  async register(@Body() user: RegisterDto) {
+  async register(@Body() user: RegisterEmailDto) {
     const response = await this.registerService.register(user);
-    if (process.env.NODE_ENV == 'prod') {
-      const resend = new Resend(this.configService.get('email.resendSecret'));
-      await resend.emails.send({
-        from: 'onboarding@resend.dev',
-        to: 'f.piel@gmx.de',
-        subject: 'Hello World',
-        html: '<p>Congrats on sending your <strong>first email</strong>!</p>',
-      });
+    if (!response) {
+      return { error: 'Register failed' };
     }
-    if (process.env.NODE_ENV == 'dev') {
-      await this.mailService.sendVerificationEmail('example@example.org', {
-        userName: user.username,
-        verificationUrl: 'http://localhost:3000/verify-email',
-        expiresInHours: 24,
-      });
+    await this.mailService.sendVerificationEmail(user.email, {
+      verificationUrl:
+        `${this.configService.get<string>('app.frontendUrl')}/register/verify?token=` +
+        response.rawToken,
+      expiresInMinutes:
+        this.configService.get<number>('email.registerTokenExpiresIn') || 30,
+    });
+    return {
+      message:
+        'Registration successful! Please check your email for further instructions.',
+    };
+  }
+  @Get('verify')
+  async verifyToken(@Query('token') inviteToken: string) {
+    if (!inviteToken) {
+      throw new BadRequestException('Invite token is required');
     }
-    if (response) {
-      return { success: true };
+    const invite = await this.registerService.verifyToken(inviteToken);
+    if (!invite) {
+      throw new BadRequestException('Invalid or expired invite token');
     }
-    return { error: 'Register failed' };
+    if (invite.expiresAt < new Date()) {
+      return {
+        error: 'Invite token has expired. Please request a new invite.',
+      };
+    }
+    return {
+      valid: true,
+      email: invite.email,
+    };
   }
 }

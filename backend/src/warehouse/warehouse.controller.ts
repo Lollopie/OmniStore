@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  InternalServerErrorException,
   Patch,
   Post,
   Query,
@@ -12,31 +13,51 @@ import { WarehouseService } from './warehouse.service';
 import {
   WarehouseDto,
   WarehouseIDDto,
+  WarehouseInviteDto,
   WarehouseUserRoleDto,
 } from '@shared/dto/warehouse.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import * as userDecorator from '../user/user.decorator';
 import express from 'express';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
-import { RolesGuard } from '../roles/roles.guard';
-import { Roles } from '../roles/roles.decorator';
-import { Role } from '@shared/enum/roles.enum';
+import { WarehouseRolesGuard } from '../roles/warehouseRoles/warehouseRoles.guard';
+import { WarehouseRoles } from '../roles/warehouseRoles/warehouseRoles.decorator';
+import {
+  ORG_WAREHOUSE_INVITATION_PERMISSIONS,
+  WAREHOUSE_INVITATION_PERMISSIONS,
+  WarehouseRole,
+} from '@shared/enum/warehouseRoles.enum';
+import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
+import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.decorator';
+import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationRoles.guard';
+import { InviteService } from '../invite/invite.service';
+import { ClsService } from 'nestjs-cls';
+import { Cookie } from '../user/user.decorator';
+import { AuthService } from '../auth/auth.service';
+import { MailService } from '../mail/mail.service';
+import { InviteContext } from '../mail/interfaces/mail-contexts.interface';
+import { ConfigService } from '@nestjs/config';
+import { InviteEntity } from '../invite/invite.entity';
+import { OrganizationService } from '../organization/organization.service';
 
 @Controller('warehouses')
 export class WarehouseController {
   constructor(
     private readonly warehouseService: WarehouseService,
-    private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly userWarehouseRoleService: UserWarehouseRoleService,
+    private readonly inviteService: InviteService,
+    private readonly clsService: ClsService,
+    private readonly cookieService: AuthService,
+    private readonly orgService: OrganizationService,
   ) {}
   @Post()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   async create(
     @Body() warehouseData: WarehouseDto,
-    @userDecorator.User() userToken: userDecorator.UserToken,
+    @userDecorator.User() userToken: userDecorator.Cookie,
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const warehouse = await this.warehouseService.createWarehouse(
@@ -45,21 +66,14 @@ export class WarehouseController {
       'admin',
     );
     if (warehouse) {
-      const payload = {
+      const cookie = {
         userId: userToken.userId,
         username: userToken.username,
+        orgId: this.clsService.get<string>('orgId'),
         activeWarehouseId: warehouse.warehouseId,
         activeRole: 'admin',
       };
-      const token = {
-        Authorization: await this.jwtService.signAsync(payload),
-      };
-      res.cookie('token', token.Authorization, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
-      });
+      this.cookieService.createAndSendCookie(cookie, res);
       const response: { name: string; warehouseId: string; role: string } = {
         name: warehouse.name,
         warehouseId: warehouse.warehouseId,
@@ -70,10 +84,15 @@ export class WarehouseController {
     return { error: 'Creation failed' };
   }
   @Post('/select')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(
+    OrganizationRole.OWNER,
+    OrganizationRole.ADMIN,
+    OrganizationRole.MEMBER,
+  )
   async select(
     @Body() warehouseData: WarehouseIDDto,
-    @userDecorator.User() userToken: userDecorator.UserToken,
+    @userDecorator.User() userToken: userDecorator.Cookie,
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const response = await this.userWarehouseRoleService.findRole(
@@ -81,21 +100,14 @@ export class WarehouseController {
       warehouseData.warehouseId,
     );
     if (response) {
-      const payload = {
+      const cookie: Cookie = {
         userId: userToken.userId,
         username: userToken.username,
+        orgId: this.clsService.get<string>('orgId'),
         activeWarehouseId: response.warehouseId,
         activeRole: response.role,
       };
-      const token = {
-        Authorization: await this.jwtService.signAsync(payload),
-      };
-      res.cookie('token', token.Authorization, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
-      });
+      this.cookieService.createAndSendCookie(cookie, res);
       return {
         activeRole: response.role,
       };
@@ -103,8 +115,13 @@ export class WarehouseController {
     return { error: 'Selection failed' };
   }
   @Get('/users')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MANAGER)
+  @UseGuards(AuthGuard, OrganizationRolesGuard, WarehouseRolesGuard)
+  @OrganizationRoles(
+    OrganizationRole.OWNER,
+    OrganizationRole.ADMIN,
+    OrganizationRole.MEMBER,
+  )
+  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async get(@Query('search') searchTerm: string, @Query('page') page: number) {
     const limit = 10;
     return await this.userWarehouseRoleService.getUsers(
@@ -114,21 +131,45 @@ export class WarehouseController {
     );
   }
 
-  @Post('/users')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MANAGER)
-  async addUserToWarehouse(
-    @Body() warehouseUserRoleData: WarehouseUserRoleDto,
-  ) {
-    return await this.userWarehouseRoleService.addUserToWarehouse(
-      warehouseUserRoleData.username,
-      warehouseUserRoleData.role,
-    );
+  @Post('/invites')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async inviteUser(@Body() warehouseInviteData: WarehouseInviteDto) {
+    const warehouseRole: WarehouseRole =
+      this.clsService.get<WarehouseRole>('warehouseRole');
+    const orgRole: OrganizationRole =
+      this.clsService.get<OrganizationRole>('orgRole');
+    const allowedRoles = [
+      ...(WAREHOUSE_INVITATION_PERMISSIONS[warehouseRole] || []),
+      ...(ORG_WAREHOUSE_INVITATION_PERMISSIONS[orgRole] || []),
+    ];
+    if (!allowedRoles.includes(warehouseInviteData.role)) {
+      throw new InternalServerErrorException(
+        'You do not have permission to invite users with this role',
+      );
+    }
+    const invite: { invite: InviteEntity; rawToken: string } =
+      await this.inviteService.inviteWarehouseUser(
+        warehouseInviteData.email,
+        warehouseInviteData.role,
+      );
+    if (invite) {
+      const context: InviteContext = {
+        organizationName:
+          (await this.orgService.findOne(invite.invite.orgId))?.name ||
+          'Organization',
+        verificationUrl: `${this.configService.get('app.frontendUrl')}/invites/accept?token=${invite.rawToken}`,
+        expiresInHours:
+          this.configService.get('auth.inviteTokenExpiresIn') || 24,
+      };
+      await this.mailService.sendInviteEmail(invite.invite.email, context);
+      return { message: 'Invite send successfully.' };
+    }
+    throw new InternalServerErrorException('Invalid invite');
   }
-
   @Patch('/users')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MANAGER)
+  @UseGuards(AuthGuard, WarehouseRolesGuard)
+  @WarehouseRoles(WarehouseRole.ADMIN)
   async updateUserRole(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
     return await this.userWarehouseRoleService.updateUserRole(
       warehouseUserRoleData.username,

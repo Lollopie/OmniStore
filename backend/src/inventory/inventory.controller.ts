@@ -12,17 +12,21 @@ import {
 import { InventoryService } from './inventory.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { InventoryDto } from '@shared/dto/inventory.dto';
-import { RolesGuard } from '../roles/roles.guard';
-import { Roles } from '../roles/roles.decorator';
-import { Role } from '@shared/enum/roles.enum';
+import { WarehouseRolesGuard } from '../roles/warehouseRoles/warehouseRoles.guard';
+import { WarehouseRoles } from '../roles/warehouseRoles/warehouseRoles.decorator';
+import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import { DeleteResult } from 'typeorm';
 import { InventoryEntity } from './inventory.entity';
 @Controller('inventory')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, WarehouseRolesGuard)
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
   @Get()
-  @Roles(Role.ADMIN, Role.MANAGER, Role.STAFF)
+  @WarehouseRoles(
+    WarehouseRole.ADMIN,
+    WarehouseRole.MANAGER,
+    WarehouseRole.STAFF,
+  )
   getInventory(
     @Query('search') searchTerm: string,
     @Query('page') page: number,
@@ -37,12 +41,12 @@ export class InventoryController {
     return this.inventoryService.getInventory(searchTerm, page, sort);
   }
   @Post()
-  @Roles(Role.ADMIN, Role.MANAGER)
+  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   addItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
     return this.inventoryService.createItem(item);
   }
   @Patch()
-  @Roles(Role.ADMIN, Role.MANAGER)
+  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   updateItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
     if (!item.itemId) {
       throw new BadRequestException('Item ID is required');
@@ -50,7 +54,7 @@ export class InventoryController {
     return this.inventoryService.updateItem(item);
   }
   @Delete()
-  @Roles(Role.ADMIN, Role.MANAGER)
+  @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async deleteItem(@Body() item: InventoryDto): Promise<{ message: string }> {
     if (!item.itemId) {
       throw new BadRequestException('Item ID is required');

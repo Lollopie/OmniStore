@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import dbConfig from '../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { MailService } from '../src/mail/mail.service';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -17,6 +18,10 @@ class MockThrottlerGuard implements CanActivate {
 describe('LoginController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
+  const mockMailService = {
+    sendVerificationEmail: jest.fn().mockResolvedValue(true),
+    sendInviteEmail: jest.fn().mockResolvedValue(true),
+  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -30,6 +35,8 @@ describe('LoginController (e2e)', () => {
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
+      .overrideProvider(MailService)
+      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -37,6 +44,31 @@ describe('LoginController (e2e)', () => {
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
   });
+  async function register(username: string, password: string, email?: string) {
+    email = email ? email : 'test@example.org';
+    await request(app.getHttpServer())
+      .post('/register')
+      .send({ email: email })
+      .expect(201);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const verificationToken: string =
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      mockMailService.sendVerificationEmail.mock.calls[
+        mockMailService.sendVerificationEmail.mock.calls.length - 1
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      ][1].verificationUrl.split(
+        'token=',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      )[1];
+    return await request(app.getHttpServer())
+      .post('/organizations/register?token=' + verificationToken)
+      .send({
+        ownerEmail: email,
+        ownerUsername: username,
+        ownerPassword: password,
+        name: 'testOrg',
+      });
+  }
   it('/login unauthorized (POST)', () => {
     return request(app.getHttpServer())
       .post('/login')
@@ -44,13 +76,14 @@ describe('LoginController (e2e)', () => {
       .expect(401);
   });
   it('/register /login (POST)', async () => {
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({ username: 'test', password: 'password1' })
-      .expect(201);
+    const loginData = {
+      username: 'test',
+      password: 'password1',
+    };
+    await register(loginData.username, loginData.password);
     return request(app.getHttpServer())
       .post('/login')
-      .send({ username: 'test', password: 'password1' })
+      .send({ username: loginData.username, password: loginData.password })
       .expect(200);
   });
   it('/login (POST) - should reject username with a space', async () => {

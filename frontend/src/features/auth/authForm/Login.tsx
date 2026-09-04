@@ -8,7 +8,7 @@ export default function Login() {
     <AuthForm
       title="Login"
       buttonText="Login"
-      endpoint="login"
+      endpoint="/login"
       successMessage='Login successful!'
       onSuccess={() => setIsAuthenticated(true)}
       handleResponse={(data) => {
@@ -20,6 +20,8 @@ export default function Login() {
         localStorage.setItem('activeRole', JSON.stringify(data.activeRole));
         localStorage.setItem('userId', JSON.stringify(data.userId));
         localStorage.setItem('username', JSON.stringify(data.username));
+        localStorage.setItem('orgId', JSON.stringify(data.orgId));
+        localStorage.setItem('orgRole', JSON.stringify(data.orgRole));
       }}
     />
   );

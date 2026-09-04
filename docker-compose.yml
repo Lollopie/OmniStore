@@ -10,6 +10,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
       APP_PASSWORD: ${APP_PASSWORD}
+      MIGRATOR_PASSWORD: ${MIGRATOR_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -17,8 +18,27 @@ services:
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     networks:
       - app-network
-
-  # 2. NestJS Backend
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d production_db" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+  # 2. Migration Runner
+  migration-runner:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: development
+    command: ["npm", "run", "migration:run"]
+    volumes:
+      - ./backend:/usr/src/backend
+      - /usr/src/backend/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+  # 3. NestJS Backend
   backend:
     build:
       context: .
@@ -44,11 +64,14 @@ services:
       RATE_LIMIT: 10
       RATE_TIMEOUT: 60000
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      migration-runner:
+        condition: service_completed_successfully
     networks:
       - app-network
 
-  # 3. React Frontend
+  # 4. React Frontend
   frontend:
     build:
       context: .
@@ -67,7 +90,7 @@ services:
     networks:
       - app-network
 
-  #4. Redis
+  #5. Redis
   redis:
     image: redis:8-alpine
     container_name: redis_cache
@@ -75,6 +98,7 @@ services:
         - "6379:6379"
     networks:
         - app-network
+  #6. Mailpit for email testing
   mailpit:
     image: axllent/mailpit:latest
     container_name: mailpit

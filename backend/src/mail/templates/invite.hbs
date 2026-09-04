@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    .button { background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; }
+  </style>
+  <title>Welcome</title>
+</head>
+<body>
+<h2>Welcome to {{ organizationName }}!</h2>
+<p>Please accept the invite by clicking the link below:</p>
+<p>
+  <a href="{{ verificationUrl }}" class="button">Verify Email</a>
+</p>
+<p>This link will expire in {{ expiresInHours }} hours.</p>
+</body>
+</html>

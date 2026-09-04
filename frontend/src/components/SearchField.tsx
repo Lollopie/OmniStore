@@ -6,8 +6,6 @@ interface SearchFieldProps {
 }
 export function SearchField({ searchTerm, setSearchTerm, className }: SearchFieldProps) {
   return (
-    <div>
-      <InputField className={`input-sm  placeholder-base-300 ${className || ''}`} type="search" value={searchTerm} setValue={setSearchTerm} placeholder="Search..." />
-    </div>
+    <InputField inputClassName={`input-sm placeholder-base-300 ${className || ''}`} type="search" value={searchTerm} setValue={setSearchTerm} placeholder="Search..." />
   );
 }

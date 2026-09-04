@@ -6,6 +6,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UserWarehouseRoleEntity } from './userWarehouseRole.entity';
 import { DataSource } from 'typeorm';
+import { TxRepoProvider } from '../rls/db.helper';
 
 describe('UserWarehouseRoleService', () => {
   let service: UserWarehouseRoleService;
@@ -34,20 +35,14 @@ describe('UserWarehouseRoleService', () => {
     };
     const mockEntityManager = {
       query: jest.fn().mockResolvedValue([{}]),
-      getRepository: jest.fn().mockImplementation(() => repository),
-    };
-    const mockDataSource = {
-      transaction: jest.fn().mockImplementation(async (cb) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call
-        return await cb(mockEntityManager);
-      }),
+      getRepo: jest.fn().mockImplementation(() => repository),
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserWarehouseRoleService,
         {
-          provide: DataSource,
-          useValue: mockDataSource,
+          provide: TxRepoProvider,
+          useValue: mockEntityManager,
         },
         {
           provide: ClsService,
@@ -82,6 +77,7 @@ describe('UserWarehouseRoleService', () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
+        email: 'test@example.org',
         username: 'jane',
         password: 'hashed',
       });
@@ -106,6 +102,7 @@ describe('UserWarehouseRoleService', () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
+        email: 'test@example.org',
         username: 'jane',
         password: 'hashed',
       });
@@ -126,6 +123,7 @@ describe('UserWarehouseRoleService', () => {
       clsService.get.mockReturnValue('warehouse-1');
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
+        email: 'test@example.org',
         username: 'jane',
         password: 'hashed',
       });
@@ -155,6 +153,7 @@ describe('UserWarehouseRoleService', () => {
       repository.findOneBy.mockResolvedValue(null);
       usersService.findByUsername.mockResolvedValue({
         userId: 'user-1',
+        email: 'test@example.org',
         username: 'jane',
         password: 'hashed',
       });

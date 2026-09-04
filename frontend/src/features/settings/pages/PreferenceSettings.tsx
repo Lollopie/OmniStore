@@ -5,7 +5,7 @@ export default function PreferenceSettings() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="p-4">
+    <div>
       <h1 className="text-2xl font-bold mb-4">Preferences</h1>
 
       <h2 className="text-xl font-semibold">Appearance</h2>
@@ -14,13 +14,11 @@ export default function PreferenceSettings() {
       </div>
 
       <h2 className="text-xl font-semibold mt-8">Language</h2>
-      <div className="mt-4 ml-2">
-        <select className="select select-bordered w-full max-w-xs">
-          <option value="en">English</option>
-          <option value="de">German</option>
-          <option value="fr">French</option>
-        </select>
-      </div>
+      <select className="select focus:outline-none focus:ring-2 focus:border-none focus:ring-accent mt-4 ml-2">
+        <option value="en">English</option>
+        <option value="de">German</option>
+        <option value="fr">French</option>
+      </select>
     </div>
   );
 }

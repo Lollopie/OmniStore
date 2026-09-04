@@ -1,6 +1,6 @@
 import { Reflector } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
-import { Role } from '@shared/enum/roles.enum';
+import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import {
   BadRequestException,
   CanActivate,
@@ -8,25 +8,23 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { ROLES_KEY } from './roles.decorator';
-import { AuthenticatedRequest } from '../user/user.decorator';
-import { WarehouseService } from '../warehouse/warehouse.service';
-import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
+import { WAREHOUSE_ROLES_KEY } from './warehouseRoles.decorator';
+import { AuthenticatedRequest } from '../../user/user.decorator';
+import { GuardDBService } from '../../utils/guardDB.service';
 
 @Injectable()
-export class RolesGuard implements CanActivate {
+export class WarehouseRolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private readonly cls: ClsService,
-    private readonly warehouseService: WarehouseService,
-    private readonly userWarehouseRoleService: UserWarehouseRoleService,
+    private readonly clsService: ClsService,
+    private readonly guardDBService: GuardDBService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<WarehouseRole[]>(
+      WAREHOUSE_ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     const request: AuthenticatedRequest = context
       .switchToHttp()
@@ -41,13 +39,11 @@ export class RolesGuard implements CanActivate {
     if (!user.activeWarehouseId) {
       throw new BadRequestException('No active Warehouse found');
     }
-    if (!(await this.warehouseService.findOne(user.activeWarehouseId))) {
+    if (!(await this.guardDBService.findWarehouse(user.activeWarehouseId))) {
       throw new BadRequestException('Active Warehouse not found');
     }
 
-    this.cls.set('warehouseId', user.activeWarehouseId);
-
-    const userRole = await this.userWarehouseRoleService.findRole(
+    const userRole = await this.guardDBService.getUserWarehouseRole(
       user.userId,
       user.activeWarehouseId,
     );
@@ -58,16 +54,14 @@ export class RolesGuard implements CanActivate {
     }
 
     if (requiredRoles?.length) {
-      const userHasRole = requiredRoles.some((role) =>
-        userRole.role?.includes(role),
-      );
+      const userHasRole = requiredRoles.includes(userRole);
       if (!userHasRole) {
         throw new ForbiddenException(
           'You do not have the required role to access this resource',
         );
       }
     }
-
+    this.clsService.set('warehouseRole', userRole);
     return true;
   }
 }

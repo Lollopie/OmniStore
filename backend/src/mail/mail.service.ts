@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import {
+  InviteContext,
   PasswordResetContext,
   VerificationEmailContext,
 } from './interfaces/mail-contexts.interface';
@@ -8,28 +9,45 @@ import {
 @Injectable()
 export class MailService {
   constructor(private readonly mailerService: MailerService) {}
-
+  async sendEmail(
+    to: string,
+    subject: string,
+    template: string,
+    context: {
+      [name: string]: any;
+    },
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to,
+      subject,
+      template,
+      context,
+    });
+  }
   async sendVerificationEmail(
     to: string,
     context: VerificationEmailContext,
   ): Promise<void> {
-    await this.mailerService.sendMail({
+    await this.sendEmail(
       to,
-      subject: 'Verify your email address',
-      template: './verification',
+      'Verify your email address',
+      './verification',
       context,
-    });
+    );
   }
 
   async sendPasswordResetEmail(
     to: string,
     context: PasswordResetContext,
   ): Promise<void> {
-    await this.mailerService.sendMail({
+    await this.sendEmail(to, 'Reset your password', './passwordReset', context);
+  }
+  async sendInviteEmail(to: string, context: InviteContext): Promise<void> {
+    await this.sendEmail(
       to,
-      subject: 'Reset your password',
-      template: './passwordReset',
+      `You have been invited to \`${context.organizationName}\``,
+      './invite',
       context,
-    });
+    );
   }
 }

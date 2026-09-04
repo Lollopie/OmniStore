@@ -4,15 +4,91 @@ export class CreateUserWarehouseRoleTable1783439080000 implements MigrationInter
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `CREATE TABLE user_warehouse_role (
-                                           user_id UUID REFERENCES "user"(user_id) ON DELETE CASCADE,
-                                           warehouse_id UUID REFERENCES "warehouse"(warehouse_id) ON DELETE CASCADE,
-                                           role VARCHAR(50) NOT NULL,
-                                           PRIMARY KEY (user_id, warehouse_id)
-       );`,
+                 user_id        uuid    NOT NULL,
+                 warehouse_id   uuid    NOT NULL,
+                 role           text    NOT NULL,
+                 CONSTRAINT "PK_user_warehouse_role" PRIMARY KEY (user_id, warehouse_id),
+                 CONSTRAINT "FK_user" FOREIGN KEY (user_id) REFERENCES "user"(user_id) ON DELETE CASCADE,
+                 CONSTRAINT "FK_warehouse" FOREIGN KEY (warehouse_id) REFERENCES "warehouse"(warehouse_id) ON DELETE CASCADE
+       )`,
     );
+    await queryRunner.query(`
+            ALTER TABLE "user_warehouse_role" ENABLE ROW LEVEL SECURITY;
+    `);
+    await queryRunner.query(`
+        CREATE OR REPLACE FUNCTION get_user_warehouse_role(check_user_id UUID, check_warehouse_id UUID)
+        RETURNS TEXT
+        LANGUAGE sql
+        SECURITY DEFINER
+        STABLE
+        AS $$
+          SELECT role FROM user_warehouse_role
+          WHERE user_id = check_user_id AND warehouse_id = check_warehouse_id;
+        $$;
+        
+        REVOKE ALL ON FUNCTION get_user_warehouse_role FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION get_user_warehouse_role TO nestjs_app_user;
+    `);
+    await queryRunner.query(`
+        CREATE OR REPLACE FUNCTION is_org_admin(check_user_id UUID, check_org_id UUID)
+        RETURNS BOOLEAN
+        LANGUAGE sql
+        SECURITY INVOKER
+        STABLE
+        AS $$
+          SELECT EXISTS (
+            SELECT 1 FROM user_org_role
+            WHERE user_id = check_user_id
+              AND org_id = check_org_id
+              AND role IN ('owner', 'admin')
+          );
+        $$;
+        
+        -- lock the function down so it can't be called arbitrarily to probe other users
+        REVOKE ALL ON FUNCTION is_org_admin FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION is_org_admin TO nestjs_app_user;
+    `);
+    await queryRunner.query(`
+        CREATE OR REPLACE FUNCTION is_warehouse_admin(check_user_id UUID, check_warehouse_id UUID)
+        RETURNS BOOLEAN
+        LANGUAGE sql
+        SECURITY INVOKER
+        STABLE
+        AS $$
+          SELECT EXISTS (
+            SELECT 1 FROM user_warehouse_role
+            WHERE user_id = check_user_id
+              AND warehouse_id = check_warehouse_id
+              AND role IN ('admin', 'manager')
+          );
+        $$;
+        
+        -- lock the function down so it can't be called arbitrarily to probe other users
+        REVOKE ALL ON FUNCTION is_warehouse_admin FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION is_warehouse_admin TO nestjs_app_user;
+    `);
+    await queryRunner.query(`
+          CREATE POLICY uwr_self_or_org_admin ON user_warehouse_role
+              USING (
+                  user_id = current_setting('app.current_user_id', true)::uuid
+                  OR is_org_admin(
+                       current_setting('app.current_user_id', true)::uuid,
+                       current_setting('app.current_org_id', true)::uuid
+                     )
+                  OR is_warehouse_admin(
+                       current_setting('app.current_user_id', true)::uuid,
+                       current_setting('app.current_warehouse_id', true)::uuid
+                     )                 
+              );
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE "user_warehouse_role"`);
+    await queryRunner.query(`
+        DROP POLICY "uwr_self_or_org_admin" ON "user_warehouse_role";
+    `);
+    await queryRunner.query(`
+        DROP TABLE "user_warehouse_role";
+    `);
   }
 }

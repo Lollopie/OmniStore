@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { CanActivate, Injectable, ValidationPipe } from '@nestjs/common';
@@ -9,7 +8,8 @@ import dbConfig from '../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
-import { registerAndLogin } from './utils/helper';
+import { inviteAndAccept, registerAndLogin } from './utils/helper';
+import { MailService } from '../src/mail/mail.service';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -19,6 +19,10 @@ class MockThrottlerGuard implements CanActivate {
 describe('WarehouseController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
+  const mockMailService = {
+    sendVerificationEmail: jest.fn().mockResolvedValue(true),
+    sendInviteEmail: jest.fn().mockResolvedValue(true),
+  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -28,10 +32,11 @@ describe('WarehouseController (e2e)', () => {
         }),
         AppModule,
       ],
-      providers: [],
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
+      .overrideProvider(MailService)
+      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -41,7 +46,13 @@ describe('WarehouseController (e2e)', () => {
     dataSource = moduleFixture.get<DataSource>(DataSource);
   });
   it('Warehouse Create', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1');
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+    );
     const warehouseResponse = await agent
       .post('/warehouses')
       .send({
@@ -59,7 +70,13 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse Select', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1');
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+    );
     const warehouseResponse = await agent
       .post('/warehouses')
       .send({
@@ -81,7 +98,15 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse getUsers', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+      'testOrg',
+      true,
+    );
     const getUsersResponse = await agent.get('/warehouses/users').expect(200);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(getUsersResponse.body['total']).toEqual(1);
@@ -95,59 +120,16 @@ describe('WarehouseController (e2e)', () => {
       },
     ]);
   });
-
-  it('Warehouse post non-existent user', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
-    const postUsersResponse = await agent
-      .post('/warehouses/users')
-      .send({
-        username: 'username2',
-        role: 'admin',
-      })
-      .expect(404);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(postUsersResponse.body.message).toEqual('User not found');
-  });
-  it('Warehouse post duplicate user', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
-    const postUsersResponse = await agent
-      .post('/warehouses/users')
-      .send({
-        username: 'username',
-        role: 'admin',
-      })
-      .expect(409);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(postUsersResponse.body.message).toEqual(
-      'User already belongs to this warehouse',
-    );
-  });
-  it('Warehouse postUsers', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username2',
-        password: 'password1',
-      })
-      .expect(201);
-    const postUsersResponse = await agent
-      .post('/warehouses/users')
-      .send({
-        username: 'username2',
-        role: 'admin',
-      })
-      .expect(201);
-    expect(postUsersResponse.body).toEqual({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      userId: expect.any(String),
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      warehouseId: expect.any(String),
-      role: 'admin',
-    });
-  });
   it('Warehouse patchUsers', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+      'testOrg',
+      true,
+    );
     const patchUserResponse = await agent
       .patch('/warehouses/users')
       .send({
@@ -164,7 +146,15 @@ describe('WarehouseController (e2e)', () => {
     });
   });
   it('Warehouse patch non-existent user', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+      'testOrg',
+      true,
+    );
     const patchUserResponse = await agent
       .patch('/warehouses/users')
       .send({
@@ -176,13 +166,25 @@ describe('WarehouseController (e2e)', () => {
     expect(patchUserResponse.body.message).toEqual('User not found');
   });
   it('Warehouse patch user not in warehouse', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username2',
-        password: 'password1',
-      })
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+      'testOrg',
+      true,
+    );
+    await inviteAndAccept(
+      app,
+      mockMailService,
+      agent,
+      'username2@example.org',
+      'admin',
+    );
+    await agent
+      .post('/warehouses')
+      .send({ warehouseName: 'Warehouse 2' })
       .expect(201);
     const postUsersResponse = await agent
       .patch('/warehouses/users')
@@ -197,21 +199,22 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse getUsers search', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
-    await request(app.getHttpServer())
-      .post('/register')
-      .send({
-        username: 'username2',
-        password: 'password1',
-      })
-      .expect(201);
-    await agent
-      .post('/warehouses/users')
-      .send({
-        username: 'username2',
-        role: 'admin',
-      })
-      .expect(201);
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+      'testOrg',
+      true,
+    );
+    await inviteAndAccept(
+      app,
+      mockMailService,
+      agent,
+      'username2@example.org',
+      'admin',
+    );
     const getUsersResponse = await agent
       .get('/warehouses/users?search=2')
       .expect(200);

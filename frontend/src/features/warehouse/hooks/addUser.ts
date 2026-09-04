@@ -1,11 +1,13 @@
-import type { WarehouseUser } from '../warehouse.tsx';
+import type { WarehouseUser } from '../pages/warehouseUsers.tsx';
 interface Props {
   newUsername: string;
+  newRole: string;
   setUsers: React.Dispatch<React.SetStateAction<WarehouseUser[]>>;
   setNewUsername: React.Dispatch<React.SetStateAction<string>>;
+  setNewRole: React.Dispatch<React.SetStateAction<string>>;
   addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
-export const addUser = async ({newUsername, setUsers, setNewUsername, addToast}: Props) => {
+export const addUser = async ({newUsername, newRole, setUsers, setNewUsername, setNewRole, addToast}: Props) => {
   const username = newUsername || '';
   if (!username) return alert('Enter a username');
   try {
@@ -13,7 +15,7 @@ export const addUser = async ({newUsername, setUsers, setNewUsername, addToast}:
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ username: username, role: 'staff' }),
+      body: JSON.stringify({ username: username, role: newRole }),
     });
     if (!response.ok) {
       const txt = await response.text();
@@ -23,6 +25,7 @@ export const addUser = async ({newUsername, setUsers, setNewUsername, addToast}:
     newUser.username = username;
     setUsers((prev) => [...prev, newUser]);
     setNewUsername('');
+    setNewRole('');
     addToast(`Added user "${username}" to active warehouse`, 'success', 5000);
   } catch (err) {
     addToast(`Failed to add user "${username}"`, 'error', 3000);

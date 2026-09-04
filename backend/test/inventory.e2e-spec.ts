@@ -12,6 +12,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { registerAndLogin } from './utils/helper';
 import { CookieAccessInfo } from 'cookiejar';
+import { MailService } from '../src/mail/mail.service';
 
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -23,6 +24,10 @@ describe('InventoryController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let jwtService: JwtService;
+  const mockMailService = {
+    sendVerificationEmail: jest.fn().mockResolvedValue(true),
+    sendInviteEmail: jest.fn().mockResolvedValue(true),
+  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -47,6 +52,8 @@ describe('InventoryController (e2e)', () => {
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
+      .overrideProvider(MailService)
+      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -64,6 +71,8 @@ describe('InventoryController (e2e)', () => {
   it('/inventory without warehouse (GET)', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
     );
@@ -73,8 +82,11 @@ describe('InventoryController (e2e)', () => {
   it('should create and read inventory for the authenticated user only', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const createResponse = await agent
@@ -98,17 +110,23 @@ describe('InventoryController (e2e)', () => {
     expect(String(listResponse.body[0][0].amount)).toBe('5');
   });
 
-  it('should enforce RLS isolation between two users', async () => {
+  it('should enforce RLS isolation between two orgs', async () => {
     const aliceAgent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.rls',
       'Password123',
+      'testOrg',
       true,
     );
     const bobAgent = await registerAndLogin(
       app,
+      mockMailService,
+      'test2@example.org',
       'bob.inventory.rls',
       'Password123',
+      'testOrg2',
       true,
     );
     await aliceAgent
@@ -135,11 +153,44 @@ describe('InventoryController (e2e)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(bobList.body[1]).toBe(1);
   });
+  it('should enforce RLS isolation between two warehouses', async () => {
+    const aliceAgent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'alice.inventory.rls',
+      'Password123',
+      'testOrg',
+      true,
+    );
+
+    await aliceAgent
+      .post('/inventory')
+      .send({ itemName: 'Alice item', amount: '1' })
+      .expect(201);
+    await aliceAgent
+      .post('/warehouses')
+      .send({ warehouseName: 'Warehouse 2' })
+      .expect(201);
+    await aliceAgent
+      .post('/inventory')
+      .send({ itemName: 'Bob item', amount: '2' })
+      .expect(201);
+    const bobList = await aliceAgent.get('/inventory').expect(200);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(bobList.body[0]).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(bobList.body[1]).toBe(1);
+  });
   it('should only return 10 items', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 15;
@@ -162,8 +213,11 @@ describe('InventoryController (e2e)', () => {
   it('default sort by new', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 10;
@@ -194,8 +248,11 @@ describe('InventoryController (e2e)', () => {
   it('sort by old', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 10;
@@ -224,8 +281,11 @@ describe('InventoryController (e2e)', () => {
   it('sort by itemName asc', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 10;
@@ -256,8 +316,11 @@ describe('InventoryController (e2e)', () => {
   it('sort by itemName desc', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 10;
@@ -290,8 +353,11 @@ describe('InventoryController (e2e)', () => {
   it('sort by amount asc', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 10;
@@ -321,8 +387,11 @@ describe('InventoryController (e2e)', () => {
   it('sort by amount desc', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 10;
@@ -357,8 +426,11 @@ describe('InventoryController (e2e)', () => {
   it('sort by amount asc tiebreaker', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 10;
@@ -400,8 +472,11 @@ describe('InventoryController (e2e)', () => {
   it('sort by amount desc tiebreaker', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 10;
@@ -445,8 +520,11 @@ describe('InventoryController (e2e)', () => {
   it('pagination', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const numberOfItems = 100;
@@ -480,8 +558,11 @@ describe('InventoryController (e2e)', () => {
   it('edit item', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const createResponse = await agent
@@ -514,8 +595,11 @@ describe('InventoryController (e2e)', () => {
   it('edit no itemId', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const createResponse = await agent
@@ -541,8 +625,11 @@ describe('InventoryController (e2e)', () => {
   it('edit wrong itemId', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const createResponse = await agent
@@ -564,13 +651,16 @@ describe('InventoryController (e2e)', () => {
         itemName: 'Apples',
         amount: '5',
       })
-      .expect(400);
+      .expect(404);
   });
   it('delete item', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const createResponse = await agent
@@ -600,8 +690,11 @@ describe('InventoryController (e2e)', () => {
   it('delete no itemId', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const createResponse = await agent
@@ -627,8 +720,11 @@ describe('InventoryController (e2e)', () => {
   it('delete wrong itemId', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     const createResponse = await agent
@@ -650,13 +746,16 @@ describe('InventoryController (e2e)', () => {
         itemName: 'Apples',
         amount: '5',
       })
-      .expect(400);
+      .expect(404);
   });
   it('search', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
+      'testOrg',
       true,
     );
     await agent
@@ -680,6 +779,8 @@ describe('InventoryController (e2e)', () => {
   it('non existent warehouseId', async () => {
     const agent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'alice.inventory.test',
       'Password123',
     );

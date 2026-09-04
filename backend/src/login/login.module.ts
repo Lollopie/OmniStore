@@ -4,12 +4,13 @@ import { LoginController } from './login.controller';
 import { UsersModule } from '../user/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PasswordService } from '../auth/password.service';
 import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.module';
+import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
+import { TxRepoProvider } from '../rls/db.helper';
+import { AuthService } from '../auth/auth.service';
 @Module({
   imports: [
     UsersModule,
-    UserWarehouseRoleModule,
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
@@ -22,7 +23,12 @@ import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.
       }),
     }),
   ],
-  providers: [LoginService, PasswordService],
+  providers: [
+    LoginService,
+    AuthService,
+    UserOrganizationRoleService,
+    TxRepoProvider,
+  ],
   controllers: [LoginController],
 })
 export class LoginModule {}

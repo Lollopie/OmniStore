@@ -9,8 +9,10 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { registerAndLogin } from './utils/helper';
+import { inviteAndAccept, registerAndLogin } from './utils/helper';
 import { CookieAccessInfo } from 'cookiejar';
+import { MailService } from '../src/mail/mail.service';
+import { Cookie } from '../src/user/user.decorator';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -21,6 +23,10 @@ describe('RoleGuard (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let jwtService: JwtService;
+  const mockMailService = {
+    sendVerificationEmail: jest.fn().mockResolvedValue(true),
+    sendInviteEmail: jest.fn().mockResolvedValue(true),
+  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -45,6 +51,8 @@ describe('RoleGuard (e2e)', () => {
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
+      .overrideProvider(MailService)
+      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -55,7 +63,13 @@ describe('RoleGuard (e2e)', () => {
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
   it('RoleGuard no warehouse', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1');
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+    );
     const roleGuardResponse = await agent
       .post('/inventory')
       .send({
@@ -67,7 +81,13 @@ describe('RoleGuard (e2e)', () => {
     expect(roleGuardResponse.body.message).toBe('No active Warehouse found');
   });
   it('RoleGuard non-existent warehouse', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1');
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+    );
     const cookie = agent.jar.getCookie(
       'token',
       new CookieAccessInfo('127.0.0.1', '/', false, false),
@@ -101,7 +121,15 @@ describe('RoleGuard (e2e)', () => {
     expect(roleGuardResponse.body.message).toBe('Active Warehouse not found');
   });
   it('RoleGuard with permission', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+      'testOrg',
+      true,
+    );
     await agent
       .post('/inventory')
       .send({
@@ -113,16 +141,24 @@ describe('RoleGuard (e2e)', () => {
   it('RoleGuard without role in warehouse', async () => {
     const firstAgent = await registerAndLogin(
       app,
+      mockMailService,
+      'test@example.org',
       'username',
       'password1',
+      'testOrg',
       true,
     );
-    const secondAgent = await registerAndLogin(
+    const secondAgent = await inviteAndAccept(
       app,
-      'username2',
-      'password1',
-      false,
+      mockMailService,
+      firstAgent,
+      'test2@example.org',
+      'admin',
     );
+    await firstAgent
+      .post('/warehouses')
+      .send({ warehouseName: 'Warehouse 2' })
+      .expect(201);
     const cookie = firstAgent.jar.getCookie(
       'token',
       new CookieAccessInfo('127.0.0.1', '/', false, false),
@@ -131,28 +167,14 @@ describe('RoleGuard (e2e)', () => {
       'token',
       new CookieAccessInfo('127.0.0.1', '/', false, false),
     );
-    const token: {
-      userId: string;
-      username: string;
-      activeWarehouseId: string;
-      activeRole: string;
-    } = jwtService.decode(cookie.value);
-    const secondToken: {
-      userId: string;
-      username: string;
-      activeWarehouseId: string;
-      activeRole: string;
-    } = jwtService.decode(secondCookie.value);
-    const newToken: {
-      userId: string;
-      username: string;
-      activeWarehouseId: string;
-      activeRole: string;
-    } = {
+    const token: Cookie = jwtService.decode(cookie.value);
+    const secondToken: Cookie = jwtService.decode(secondCookie.value);
+    const newToken: Cookie = {
       userId: secondToken.userId,
       username: secondToken.username,
       activeWarehouseId: token.activeWarehouseId,
       activeRole: 'admin',
+      orgId: secondToken.orgId,
     };
     cookie.value = jwtService.sign(newToken);
     secondAgent.jar.setCookie(cookie);
@@ -169,7 +191,15 @@ describe('RoleGuard (e2e)', () => {
     );
   });
   it('RoleGuard without permission', async () => {
-    const agent = await registerAndLogin(app, 'username', 'password1', true);
+    const agent = await registerAndLogin(
+      app,
+      mockMailService,
+      'test@example.org',
+      'username',
+      'password1',
+      'testOrg',
+      true,
+    );
     await agent
       .patch('/warehouses/users')
       .send({
