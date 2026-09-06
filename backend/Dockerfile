@@ -23,6 +23,7 @@ FROM node:24-alpine AS production
 WORKDIR /usr/src/backend
 
 COPY --from=development /usr/src/shared /usr/src/shared
+COPY --from=development /usr/src/backend/.env.prod ./
 COPY --from=development /usr/src/backend/package*.json ./
 COPY --from=development /usr/src/backend/dist ./dist
 
