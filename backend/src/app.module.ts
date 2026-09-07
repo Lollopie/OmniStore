@@ -38,6 +38,7 @@ import { GuardDBService } from './utils/guardDB.service';
 import { AuthService } from './auth/auth.service';
 import { InviteEntity } from './invite/invite.entity';
 import appConfig from './config/app.config';
+import { ResendTransport } from './mail/resend.transport';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -93,10 +94,23 @@ import appConfig from './config/app.config';
       useFactory: (config: ConfigService) => {
         const user = config.get<string>('email.mailUser');
         let pass: string | undefined;
-        if (user == 'resend') {
-          pass = config.get<string>('email.resendSecret');
-        } else {
-          pass = config.get<string>('email.mailPassword');
+        if (user === 'resend') {
+          return {
+            transport: new ResendTransport(
+              config.get<string>('email.resendSecret')!,
+            ),
+            defaults: {
+              from: config.get<string>('email.mailFrom'),
+            },
+            template: {
+              dir: join(__dirname, '/mail/templates'),
+              adapter: new HandlebarsAdapter(
+                { uppercase: (str: string) => str.toUpperCase() },
+                {},
+              ),
+              options: { strict: true },
+            },
+          };
         }
         return {
           transport: {
