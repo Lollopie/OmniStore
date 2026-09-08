@@ -15,9 +15,7 @@ export class AuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly clsService: ClsService,
   ) {}
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request: Request = context.switchToHttp().getRequest();
+  async validateToken(request: Request): Promise<any> {
     if (
       !request.cookies ||
       !request.cookies['token'] ||
@@ -33,8 +31,12 @@ export class AuthGuard implements CanActivate {
       this.clsService.set('warehouseId', cookie.activeWarehouseId);
       this.clsService.set('userId', cookie.userId);
     } catch {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid token');
     }
+  }
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request: Request = context.switchToHttp().getRequest();
+    await this.validateToken(request);
     return true;
   }
 }

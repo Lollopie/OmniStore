@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoginService } from './login.service';
-import { UsersService } from '../user/users.service';
+import { LoginService } from '../../src/login/login.service';
+import { UsersService } from '../../src/user/users.service';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import authConfig from '../config/auth.config';
-import dbConfig from '../config/db.config';
-import { UserWarehouseRoleService } from '../userWarehouseRole/userWarehouseRole.service';
-import { AuthService } from '../auth/auth.service';
+import authConfig from '../../src/config/auth.config';
+import dbConfig from '../../src/config/db.config';
+import { UserWarehouseRoleService } from '../../src/userWarehouseRole/userWarehouseRole.service';
+import { AuthService } from '../../src/auth/auth.service';
 
 describe('LoginService (Unit Test)', () => {
   let loginService: LoginService;
@@ -55,7 +55,7 @@ describe('LoginService (Unit Test)', () => {
           imports: [ConfigModule],
           inject: [ConfigService],
           useFactory: (configService: ConfigService) => ({
-            secret: configService.get<string>('auth.jwtSecret'), // 3. Dynamically fetch the secret
+            secret: configService.get<string>('auth.jwtSecret'),
             signOptions: { expiresIn: '1h' },
           }),
         }),

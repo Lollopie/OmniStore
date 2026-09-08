@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { AppModule } from '../../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import authConfig from '../src/config/auth.config';
-import dbConfig from '../src/config/db.config';
+import authConfig from '../../src/config/auth.config';
+import dbConfig from '../../src/config/db.config';
 import { createClient, RedisClientType } from 'redis';
 import { DataSource } from 'typeorm';
 

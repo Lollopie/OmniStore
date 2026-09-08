@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppModule } from '../src/app.module';
+import { AppModule } from '../../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { CanActivate, Injectable, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import authConfig from '../src/config/auth.config';
-import dbConfig from '../src/config/db.config';
+import authConfig from '../../src/config/auth.config';
+import dbConfig from '../../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
 import { inviteAndAccept, registerAndLogin } from './utils/helper';
-import { MailService } from '../src/mail/mail.service';
+import { MailService } from '../../src/mail/mail.service';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {

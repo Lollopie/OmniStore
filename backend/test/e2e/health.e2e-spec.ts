@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { AppModule } from '../../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 
@@ -16,8 +16,11 @@ describe('HealthController (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
   });
-  it('/health', () => {
-    return request(app.getHttpServer()).get('/healthz').expect(200);
+  it('/health', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/healthz')
+      .expect(200);
+    expect(response.body).toEqual({ status: 'ok' });
   });
   afterAll(async () => {
     await app.close();

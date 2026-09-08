@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { InventoryService } from './inventory.service';
+import { InventoryService, InventorySortOption } from './inventory.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { InventoryDto } from '@shared/dto/inventory.dto';
 import { WarehouseRolesGuard } from '../roles/warehouseRoles/warehouseRoles.guard';
@@ -32,11 +32,14 @@ export class InventoryController {
     @Query('page') page: number,
     @Query('sort') sort: string,
   ): Promise<[InventoryEntity[], number]> {
+    if (!searchTerm) {
+      searchTerm = '';
+    }
     if (!page) {
       page = 1;
     }
     if (!sort) {
-      sort = 'new';
+      sort = InventorySortOption.NEW;
     }
     return this.inventoryService.getInventory(searchTerm, page, sort);
   }
@@ -59,7 +62,7 @@ export class InventoryController {
     if (!item.itemId) {
       throw new BadRequestException('Item ID is required');
     }
-    const result: DeleteResult = await this.inventoryService.remove(item);
+    const result: DeleteResult = await this.inventoryService.deleteItem(item);
     if (!result.affected) {
       throw new BadRequestException('Item not found');
     }

@@ -5,7 +5,7 @@
     "target": "ES2023",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
       "@shared/*": ["../../shared/$1"]
     },

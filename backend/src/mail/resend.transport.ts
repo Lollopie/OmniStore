@@ -16,7 +16,6 @@ export class ResendTransport<T = any> {
   ) {
     try {
       const data = mail.data;
-      console.log(data);
       if (
         !data.from ||
         typeof data.from !== 'string' ||

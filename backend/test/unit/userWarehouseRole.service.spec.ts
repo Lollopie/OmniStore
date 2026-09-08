@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserWarehouseRoleService } from './userWarehouseRole.service';
+import { UserWarehouseRoleService } from '../../src/userWarehouseRole/userWarehouseRole.service';
 import { ClsService } from 'nestjs-cls';
-import { UsersService } from '../user/users.service';
+import { UsersService } from '../../src/user/users.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { UserWarehouseRoleEntity } from './userWarehouseRole.entity';
-import { DataSource } from 'typeorm';
-import { TxRepoProvider } from '../rls/db.helper';
-import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
+import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehouseRole.entity';
+import { TxRepoProvider } from '../../src/rls/db.helper';
+import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
 
 describe('UserWarehouseRoleService', () => {
   let service: UserWarehouseRoleService;
@@ -40,7 +39,7 @@ describe('UserWarehouseRoleService', () => {
     userOrganizationRoleRepository = {
       findOneBy: jest.fn(),
     };
-    const mockEntityManager = {
+    const mockTxRepoProvider = {
       query: jest.fn().mockResolvedValue([{}]),
       getRepo: jest.fn().mockImplementation((entity) => {
         if (entity === UserWarehouseRoleEntity) {
@@ -57,7 +56,7 @@ describe('UserWarehouseRoleService', () => {
         UserWarehouseRoleService,
         {
           provide: TxRepoProvider,
-          useValue: mockEntityManager,
+          useValue: mockTxRepoProvider,
         },
         {
           provide: ClsService,
@@ -78,7 +77,7 @@ describe('UserWarehouseRoleService', () => {
         {
           provide: getRepositoryToken(UserOrganizationRoleEntity),
           useValue: userOrganizationRoleRepository,
-        }
+        },
       ],
     }).compile();
 
@@ -115,7 +114,7 @@ describe('UserWarehouseRoleService', () => {
       const result = await service.addUserToWarehouse('jane', 'staff');
 
       expect(result.role).toBe('staff');
-      expect(userWarehouseRoleRepository.save).toHaveBeenCalledWith({
+      expect(userWarehouseRoleRepository.save).toHaveBeenLastCalledWith({
         userId: 'user-1',
         warehouseId: 'warehouse-1',
         role: 'staff',
@@ -169,7 +168,7 @@ describe('UserWarehouseRoleService', () => {
       const result = await service.updateUserRole('jane', 'manager');
 
       expect(result.role).toBe('manager');
-      expect(userWarehouseRoleRepository.save).toHaveBeenCalledWith({
+      expect(userWarehouseRoleRepository.save).toHaveBeenLastCalledWith({
         userId: 'user-1',
         warehouseId: 'warehouse-1',
         role: 'manager',

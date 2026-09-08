@@ -64,7 +64,7 @@ export class InventoryService {
       take: itemsPerPage,
       skip: (page - 1) * itemsPerPage,
     };
-    const trimmedSearchTerm = searchTerm?.trim();
+    const trimmedSearchTerm = searchTerm.trim();
     if (trimmedSearchTerm) {
       options.where = {
         warehouseId: warehouseId,
@@ -100,7 +100,7 @@ export class InventoryService {
     }
     return await repo.save(repo.merge(itemToUpdate, updatedItem));
   }
-  async remove(item: InventoryDto): Promise<DeleteResult> {
+  async deleteItem(item: InventoryDto): Promise<DeleteResult> {
     const warehouseId: string = this.clsService.get('warehouseId');
     const repo = this.txRepoProvider.getRepo(InventoryEntity);
     const itemToDelete = await repo.findOne({
