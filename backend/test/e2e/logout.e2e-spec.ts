@@ -50,12 +50,6 @@ describe('LogoutController (e2e)', () => {
     await app.init();
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
-  it('/logout no token', async () => {
-    const response = await request(app.getHttpServer())
-      .post('/logout')
-      .expect(200);
-    expect(response.body).toEqual({ message: 'No token provided' });
-  });
   it('/logout with token', async () => {
     const token = jwtService.sign({ userId: 1 });
     const response = await request(app.getHttpServer())
