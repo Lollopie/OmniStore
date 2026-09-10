@@ -18,7 +18,6 @@ import { OrganizationEntity } from './organization.entity';
 import express from 'express';
 import { Cookie } from '../user/user.decorator';
 import { AuthService } from '../auth/auth.service';
-import { MailService } from '../mail/mail.service';
 import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.decorator';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { AuthGuard } from '../auth/auth.guard';
@@ -29,7 +28,6 @@ import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganiz
 export class OrganizationController {
   constructor(
     private readonly organizationService: OrganizationService,
-    private readonly mailService: MailService,
     private readonly authService: AuthService,
     private readonly userOrganizationRoleService: UserOrganizationRoleService,
   ) {}
@@ -53,7 +51,6 @@ export class OrganizationController {
     };
     this.authService.createAndSendCookie(cookie, res);
     return { message: 'Organization created successfully.' };
-    //TODO: Send E-Mail Authentication
   }
   @Get('/users')
   @UseGuards(AuthGuard, OrganizationRolesGuard)

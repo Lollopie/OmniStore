@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoginService } from '../../src/login/login.service';
 import { UsersService } from '../../src/user/users.service';
-import { UnauthorizedException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import authConfig from '../../src/config/auth.config';
@@ -9,22 +8,35 @@ import dbConfig from '../../src/config/db.config';
 import { UserWarehouseRoleService } from '../../src/userWarehouseRole/userWarehouseRole.service';
 import { AuthService } from '../../src/auth/auth.service';
 
-describe('LoginService (Unit Test)', () => {
+describe('LoginService', () => {
   let loginService: LoginService;
-  let usersServiceMock: jest.Mocked<UsersService>;
-  let authService: AuthService;
-  let userWarehouseRoleServiceMock: jest.Mocked<UserWarehouseRoleService>;
+  const mockUserService = {
+    findByUsername: jest.fn().mockResolvedValue({
+      email: 'example@example.org',
+      username: 'username',
+      password: 'password1',
+    }),
+    getCookieInfo: jest.fn().mockReturnValue({
+      user_id: 'user-1',
+      username: 'username',
+      org_id: 'org-1',
+      org_role: 'member',
+      warehouse_id: 'warehouse-1',
+      warehouse_name: 'warehouse',
+      warehouse_role: 'staff',
+    }),
+  };
+  const mockUserWarehouseRoleService = {
+    getUserWarehouses: jest.fn(),
+  };
+  const mockAuthService = {
+    verifyPassword: jest.fn().mockResolvedValue(true),
+  };
   beforeEach(async () => {
-    const mockUserService = {
-      findByUsername: jest.fn(),
-      getCookieInfo: jest.fn(),
-    };
-    const mockUserWarehouseRoleService = {
-      getUserWarehouses: jest.fn(),
-    };
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AuthService,
+        LoginService,
         {
           provide: ConfigService,
           useValue: {
@@ -35,7 +47,10 @@ describe('LoginService (Unit Test)', () => {
             }),
           },
         },
-        LoginService,
+        {
+          provide: AuthService,
+          useValue: mockAuthService,
+        },
         {
           provide: UsersService,
           useValue: mockUserService,
@@ -63,9 +78,6 @@ describe('LoginService (Unit Test)', () => {
     }).compile();
 
     loginService = module.get<LoginService>(LoginService);
-    authService = module.get<AuthService>(AuthService);
-    usersServiceMock = module.get(UsersService);
-    userWarehouseRoleServiceMock = module.get(UserWarehouseRoleService);
   });
 
   it('should be defined', () => {
@@ -74,59 +86,51 @@ describe('LoginService (Unit Test)', () => {
 
   describe('login', () => {
     it('should throw an error if provided with a wrong username', async () => {
-      usersServiceMock.findByUsername.mockResolvedValue(null);
-      const invalidData = {
-        username: 'test',
-        password: 'password1',
-      };
-      await expect(loginService.login(invalidData)).rejects.toThrow(
-        UnauthorizedException,
-      );
-      expect(usersServiceMock.findByUsername.mock.calls.length).toBe(1);
+      mockUserService.findByUsername.mockResolvedValueOnce(null);
+      await expect(
+        loginService.login({
+          username: 'test',
+          password: 'password1',
+        }),
+      ).rejects.toThrow('Wrong username or password');
     });
     it('should throw an error if provided with a wrong auth', async () => {
-      usersServiceMock.findByUsername.mockResolvedValue({
-        userId: '123e4567-e89b-12d3-a456-426614174000',
-        email: 'test@example.org',
-        username: 'test',
-        password: await authService.hashPassword('password1'),
-      });
-      const invalidData = {
+      mockAuthService.verifyPassword.mockResolvedValueOnce(false);
+      await expect(
+        loginService.login({
+          username: 'test',
+          password: 'password2',
+        }),
+      ).rejects.toThrow('Wrong username or password');
+    });
+    it('should call authService verifyPassword', async () => {
+      await loginService.login({
         username: 'test',
         password: 'password2',
-      };
-      await expect(loginService.login(invalidData)).rejects.toThrow(
-        UnauthorizedException,
-      );
-      expect(usersServiceMock.findByUsername.mock.calls.length).toBe(1);
-    });
-    it('should successfully login user if data is valid', async () => {
-      // Program the mock to simulate a successful DB insertion
-      usersServiceMock.findByUsername.mockResolvedValue({
-        userId: '123e4567-e89b-12d3-a456-426614174000',
-        email: 'test@example.org',
-        username: 'test',
-        password: await authService.hashPassword('password1'),
       });
-      usersServiceMock.getCookieInfo.mockResolvedValue([{
-        user_id: '123e4567-e89b-12d3-a456-426614174000',
+      expect(mockAuthService.verifyPassword).toHaveBeenCalled();
+    });
+    it('should call usersService getCookieInfo with username', async () => {
+      await loginService.login({
         username: 'test',
-        org_id: 'org1',
-        org_role: 'admin',
-        warehouse_id: 'warehouse1',
-        warehouse_name: 'Warehouse 1',
-        warehouse_role: 'manager',
-      }]);
-      userWarehouseRoleServiceMock.getUserWarehouses.mockResolvedValue(null);
-      const validData = {
+        password: 'password2',
+      });
+      expect(mockUserService.getCookieInfo).toHaveBeenCalledWith('username');
+    });
+    it('should return cookieInfo', async () => {
+      const response = await loginService.login({
         username: 'test',
-        password: 'password1',
-      };
-      const result = await loginService.login(validData);
-
-      // Assertions
-      expect(result).toBeDefined();
-      expect(usersServiceMock.findByUsername.mock.calls.length).toBe(1);
+        password: 'password2',
+      });
+      expect(response).toMatchObject({
+        user_id: 'user-1',
+        username: 'username',
+        org_id: 'org-1',
+        org_role: 'member',
+        warehouse_id: 'warehouse-1',
+        warehouse_name: 'warehouse',
+        warehouse_role: 'staff',
+      });
     });
   });
 });

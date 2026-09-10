@@ -45,7 +45,7 @@ export class MailService {
   async sendInviteEmail(to: string, context: InviteContext): Promise<void> {
     await this.sendEmail(
       to,
-      `You have been invited to \`${context.organizationName}\``,
+      `You have been invited to ${context.organizationName}`,
       './invite',
       context,
     );

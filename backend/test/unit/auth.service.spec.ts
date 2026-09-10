@@ -105,4 +105,11 @@ describe('AuthService', () => {
       expect(hashedToken).toEqual(expectedHash);
     });
   });
+  describe('generateRandomToken', () => {
+    it('should generate a random token', () => {
+      const token = service.generateRandomToken();
+      expect(token).toHaveLength(64); // 32 bytes in hex is 64 characters
+      expect(token).toMatch(/^[a-f0-9]{64}$/); // Check if it's a valid hex string
+    });
+  });
 });

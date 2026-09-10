@@ -19,9 +19,11 @@ export class OrganizationService {
     const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
     const token = this.authService.hashToken(rawToken);
     try {
+      const requireEmail = true;
+      const requireOrg = false;
       const [invite]: InviteEntity[] = await inviteRepo.query(
         'SELECT consume_invite($1, $2, $3, $4) AS invite',
-        [token, true, data.ownerEmail, false],
+        [token, requireEmail, data.ownerEmail, requireOrg],
       );
       if (!invite) {
         throw new Error('Invalid or expired token');
@@ -52,7 +54,7 @@ export class OrganizationService {
     const org = mapRow(organizationRepo, rawOrg);
     return { user: savedUser, organization: org };
   }
-  async findOne(id: string): Promise<OrganizationEntity | null> {
+  async findByOrgId(id: string): Promise<OrganizationEntity | null> {
     const organizationRepo = this.txRepoProvider.getRepo(OrganizationEntity);
     return await organizationRepo.findOne({ where: { orgId: id } });
   }

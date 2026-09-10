@@ -18,7 +18,7 @@ export class AuthService {
     response.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
     });
   }
@@ -34,5 +34,8 @@ export class AuthService {
   }
   hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
+  }
+  generateRandomToken(): string {
+    return crypto.randomBytes(32).toString('hex');
   }
 }

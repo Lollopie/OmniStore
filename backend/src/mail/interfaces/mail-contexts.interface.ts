@@ -4,7 +4,7 @@ export interface VerificationEmailContext {
 }
 
 export interface PasswordResetContext {
-  userName: string;
+  username: string;
   resetUrl: string;
 }
 

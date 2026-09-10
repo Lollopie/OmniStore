@@ -157,7 +157,7 @@ export class WarehouseController {
     if (invite) {
       const context: InviteContext = {
         organizationName:
-          (await this.orgService.findOne(invite.invite.orgId))?.name ||
+          (await this.orgService.findByOrgId(invite.invite.orgId))?.name ||
           'Organization',
         verificationUrl: `${this.configService.get('app.frontendUrl')}/invites/accept?token=${invite.rawToken}`,
         expiresInHours:

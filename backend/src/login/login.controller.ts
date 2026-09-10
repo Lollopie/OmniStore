@@ -16,11 +16,11 @@ import { AuthService } from '../auth/auth.service';
 export class LoginController {
   constructor(
     private readonly loginService: LoginService,
-    private readonly cookieService: AuthService,
+    private readonly authService: AuthService,
   ) {}
   @Post()
   @HttpCode(HttpStatus.OK)
-  async register(
+  async login(
     @Body() user: RegisterDto,
     @Res({ passthrough: true }) res: express.Response,
   ): Promise<{
@@ -54,7 +54,7 @@ export class LoginController {
       activeWarehouseId: activeWarehouseId ? activeWarehouseId : '',
       activeRole: activeRole ? activeRole : '',
     };
-    this.cookieService.createAndSendCookie(cookie, res);
+    this.authService.createAndSendCookie(cookie, res);
 
     return {
       message: 'Authentication successful',
