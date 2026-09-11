@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserEntity } from './user.entity';
-import { RegisterDto } from '@shared/dto/register.dto';
 import { UnauthorizedException } from '@nestjs/common';
 import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
 import { TxRepoProvider } from '../rls/txrepo.service';
@@ -15,11 +14,6 @@ export class UsersService {
   findByUsername(userName: string): Promise<UserEntity | null> {
     const repo = this.txRepoProvider.getRepo(UserEntity);
     return repo.findOneBy({ username: userName });
-  }
-  async createUser(user: RegisterDto): Promise<UserEntity> {
-    const repo = this.txRepoProvider.getRepo(UserEntity);
-    const newUser = repo.create(user);
-    return await repo.save(newUser);
   }
   async deleteUser(userId: string, password: string) {
     const repo = this.txRepoProvider.getRepo(UserEntity);

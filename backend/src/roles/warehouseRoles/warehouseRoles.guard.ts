@@ -19,16 +19,10 @@ export class WarehouseRolesGuard implements CanActivate {
     private readonly clsService: ClsService,
     private readonly guardDBService: GuardDBService,
   ) {}
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<WarehouseRole[]>(
-      WAREHOUSE_ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-
-    const request: AuthenticatedRequest = context
-      .switchToHttp()
-      .getRequest<AuthenticatedRequest>();
+  async validateToken(
+    request: AuthenticatedRequest,
+    requiredRoles: WarehouseRole[],
+  ): Promise<boolean> {
     const user: {
       userId: string;
       username: string;
@@ -62,6 +56,17 @@ export class WarehouseRolesGuard implements CanActivate {
       }
     }
     this.clsService.set('warehouseRole', userRole);
+    return true;
+  }
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const requiredRoles = this.reflector.getAllAndOverride<WarehouseRole[]>(
+      WAREHOUSE_ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const request: AuthenticatedRequest = context
+      .switchToHttp()
+      .getRequest<AuthenticatedRequest>();
+    await this.validateToken(request, requiredRoles);
     return true;
   }
 }

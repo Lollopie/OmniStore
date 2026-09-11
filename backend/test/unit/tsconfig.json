@@ -7,7 +7,7 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "..",
     "paths": {
-      "@shared/*": ["../../shared/$1"]
+      "@shared/*": ["../../shared/src/$1"]
     },
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

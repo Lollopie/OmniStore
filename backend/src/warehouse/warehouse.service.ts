@@ -16,15 +16,15 @@ export class WarehouseService {
     role: string,
   ): Promise<WarehouseEntity> {
     const orgId = this.clsService.get<string>('orgId');
-    const repo = this.txRepoProvider.getRepo(WarehouseEntity);
+    const warehouseRepo = this.txRepoProvider.getRepo(WarehouseEntity);
     const userWarehouseRoleRepo = this.txRepoProvider.getRepo(
       UserWarehouseRoleEntity,
     );
-    const warehouse = repo.create({
+    const warehouse = warehouseRepo.create({
       name: warehouseData.warehouseName,
       orgId,
     });
-    const savedWarehouse = await repo.save(warehouse);
+    const savedWarehouse = await warehouseRepo.save(warehouse);
     const userWarehouseRole = userWarehouseRoleRepo.create({
       userId,
       warehouseId: savedWarehouse.warehouseId,
@@ -32,9 +32,5 @@ export class WarehouseService {
     });
     await userWarehouseRoleRepo.save(userWarehouseRole);
     return savedWarehouse;
-  }
-  findOne(warehouseId: string): Promise<WarehouseEntity | null> {
-    const warehouseRepo = this.txRepoProvider.getRepo(WarehouseEntity);
-    return warehouseRepo.findOneBy({ warehouseId });
   }
 }

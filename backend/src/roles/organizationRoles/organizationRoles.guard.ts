@@ -19,20 +19,14 @@ export class OrganizationRolesGuard implements CanActivate {
     private readonly clsService: ClsService,
     private readonly guardDBService: GuardDBService,
   ) {}
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<OrganizationRole[]>(
-      ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-
-    const request: AuthenticatedRequest = context
-      .switchToHttp()
-      .getRequest<AuthenticatedRequest>();
+  async validateToken(
+    request: AuthenticatedRequest,
+    requiredRoles: OrganizationRole[],
+  ): Promise<boolean> {
     const user: Cookie = request['user'];
     if (!user) return false;
     if (!user.orgId) {
-      throw new BadRequestException('No organization found');
+      throw new BadRequestException('No organizationId found');
     }
     if (!(await this.guardDBService.getOrg(user.orgId))) {
       throw new BadRequestException('Organization not found');
@@ -58,6 +52,17 @@ export class OrganizationRolesGuard implements CanActivate {
       }
     }
     this.clsService.set('orgRole', userRole);
+    return true;
+  }
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const requiredRoles = this.reflector.getAllAndOverride<OrganizationRole[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const request: AuthenticatedRequest = context
+      .switchToHttp()
+      .getRequest<AuthenticatedRequest>();
+    await this.validateToken(request, requiredRoles);
     return true;
   }
 }

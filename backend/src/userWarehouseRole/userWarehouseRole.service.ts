@@ -87,25 +87,6 @@ export class UserWarehouseRoleService {
     return await repo.save(existingRole);
   }
 
-  async getUserWarehouses(
-    userId: string,
-  ): Promise<{ warehouseId: string; name: string; role: string }[] | null> {
-    const repo = this.txRepoProvider.getRepo(UserWarehouseRoleEntity);
-    return repo
-      .createQueryBuilder('user_warehouse_role')
-      .innerJoinAndSelect(
-        'WarehouseEntity',
-        'warehouse',
-        'warehouse.warehouseId = user_warehouse_role.warehouseId',
-      )
-      .where('user_warehouse_role.userId = :userId', { userId })
-      .select([
-        'warehouse.warehouseId AS "warehouseId"',
-        'warehouse.name AS name',
-        'user_warehouse_role.role AS role',
-      ])
-      .getRawMany();
-  }
   async getUsers(
     page: number = 1,
     limit: number = 10,
@@ -115,7 +96,7 @@ export class UserWarehouseRoleService {
     total: number;
   }> {
     const repo = this.txRepoProvider.getRepo(UserWarehouseRoleEntity);
-    const warehouseId: string = this.clsService.get('warehouseId');
+    const warehouseId: string = this.getActiveWarehouseId();
     const skip = (page - 1) * limit;
     const queryBuilder = repo
       .createQueryBuilder('user_warehouse_role')

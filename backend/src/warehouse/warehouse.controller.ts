@@ -3,6 +3,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  NotFoundException,
   Patch,
   Post,
   Query,
@@ -49,7 +50,7 @@ export class WarehouseController {
     private readonly userWarehouseRoleService: UserWarehouseRoleService,
     private readonly inviteService: InviteService,
     private readonly clsService: ClsService,
-    private readonly cookieService: AuthService,
+    private readonly authService: AuthService,
     private readonly orgService: OrganizationService,
   ) {}
   @Post()
@@ -73,7 +74,7 @@ export class WarehouseController {
         activeWarehouseId: warehouse.warehouseId,
         activeRole: 'admin',
       };
-      this.cookieService.createAndSendCookie(cookie, res);
+      this.authService.createAndSendCookie(cookie, res);
       const response: { name: string; warehouseId: string; role: string } = {
         name: warehouse.name,
         warehouseId: warehouse.warehouseId,
@@ -107,7 +108,7 @@ export class WarehouseController {
         activeWarehouseId: response.warehouseId,
         activeRole: response.role,
       };
-      this.cookieService.createAndSendCookie(cookie, res);
+      this.authService.createAndSendCookie(cookie, res);
       return {
         activeRole: response.role,
       };
@@ -122,7 +123,9 @@ export class WarehouseController {
     OrganizationRole.MEMBER,
   )
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
-  async get(@Query('search') searchTerm: string, @Query('page') page: number) {
+  async get(@Query('page') page: number, @Query('search') searchTerm: string) {
+    searchTerm = searchTerm || '';
+    page = page || 1;
     const limit = 10;
     return await this.userWarehouseRoleService.getUsers(
       page,
@@ -149,6 +152,12 @@ export class WarehouseController {
         'You do not have permission to invite users with this role',
       );
     }
+    const org = await this.orgService.findByOrgId(
+      this.clsService.get<string>('orgId'),
+    );
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
     const invite: { invite: InviteEntity; rawToken: string } =
       await this.inviteService.inviteWarehouseUser(
         warehouseInviteData.email,
@@ -156,9 +165,7 @@ export class WarehouseController {
       );
     if (invite) {
       const context: InviteContext = {
-        organizationName:
-          (await this.orgService.findByOrgId(invite.invite.orgId))?.name ||
-          'Organization',
+        organizationName: org.name,
         verificationUrl: `${this.configService.get('app.frontendUrl')}/invites/accept?token=${invite.rawToken}`,
         expiresInHours:
           this.configService.get('email.inviteTokenExpiresIn') || 24,
@@ -166,7 +173,7 @@ export class WarehouseController {
       await this.mailService.sendInviteEmail(invite.invite.email, context);
       return { message: 'Invite sent successfully.' };
     }
-    throw new ForbiddenException('Invalid invite');
+    throw new ForbiddenException('Invite creation failed');
   }
   @Patch('/users')
   @UseGuards(AuthGuard, WarehouseRolesGuard)
