@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { InviteService } from './invite.service';
 import { InviteController } from './invite.controller';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { AuthService } from '../auth/auth.service';
 
 @Module({

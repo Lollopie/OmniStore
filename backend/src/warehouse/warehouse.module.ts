@@ -7,7 +7,7 @@ import { UserWarehouseRoleEntity } from '../userWarehouseRole/userWarehouseRole.
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.module';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { OrganizationModule } from '../organization/organization.module';
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
 import { InviteModule } from '../invite/invite.module';

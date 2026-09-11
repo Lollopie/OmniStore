@@ -3,7 +3,7 @@ import { UserEntity } from './user.entity';
 import { RegisterDto } from '@shared/dto/register.dto';
 import { UnauthorizedException } from '@nestjs/common';
 import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { AuthService } from '../auth/auth.service';
 
 @Injectable()

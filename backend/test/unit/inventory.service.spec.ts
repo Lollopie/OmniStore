@@ -3,7 +3,7 @@ import { InventoryService } from '../../src/inventory/inventory.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { InventoryEntity } from '../../src/inventory/inventory.entity';
-import { TxRepoProvider } from '../../src/rls/db.helper';
+import { TxRepoProvider } from '../../src/rls/txrepo.service';
 import { ClsService } from 'nestjs-cls';
 
 describe('InventoryService', () => {

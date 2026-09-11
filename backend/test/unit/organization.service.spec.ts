@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganizationService } from '../../src/organization/organization.service';
-import { TxRepoProvider } from '../../src/rls/db.helper';
+import { TxRepoProvider } from '../../src/rls/txrepo.service';
 import { AuthService } from '../../src/auth/auth.service';
 import { ClsService } from 'nestjs-cls';
 import { InviteEntity } from '../../src/invite/invite.entity';

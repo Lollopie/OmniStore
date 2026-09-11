@@ -17,7 +17,7 @@ class MockThrottlerGuard implements CanActivate {
     return true;
   }
 }
-describe('RegisterController (e2e)', () => {
+describe('LogoutController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let authService: AuthService;

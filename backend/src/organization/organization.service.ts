@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { OrganizationDto } from '@shared/dto/organization.dto';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { OrganizationEntity } from './organization.entity';
 import { UserEntity } from '../user/user.entity';
 import { mapRow } from '../utils/helper';

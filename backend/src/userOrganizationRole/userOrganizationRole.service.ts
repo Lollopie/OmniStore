@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { UserOrganizationRoleEntity } from './userOrganizationRole.entity';
 import { UserEntity } from '../user/user.entity';
 

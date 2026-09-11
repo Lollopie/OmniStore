@@ -12,15 +12,15 @@ import { firstValueFrom, from, Observable } from 'rxjs';
 export class RlsInterceptor implements NestInterceptor {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly cls: ClsService,
+    private readonly clsService: ClsService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return from(
       this.dataSource.transaction(async (manager) => {
-        const userId: string = this.cls.get('userId');
-        const orgId: string = this.cls.get('orgId');
-        const warehouseId: string = this.cls.get('warehouseId');
+        const userId: string = this.clsService.get('userId');
+        const orgId: string = this.clsService.get('orgId');
+        const warehouseId: string = this.clsService.get('warehouseId');
         if (userId) {
           await manager.query(
             `SELECT set_config('app.current_user_id', $1, true)`,
@@ -40,7 +40,7 @@ export class RlsInterceptor implements NestInterceptor {
           );
         }
 
-        this.cls.set('entityManager', manager);
+        this.clsService.set('entityManager', manager);
         const result: unknown = await firstValueFrom(next.handle());
         return result;
       }),

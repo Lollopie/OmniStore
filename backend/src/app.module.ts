@@ -33,7 +33,7 @@ import { RlsInterceptor } from './rls/rls.interceptor';
 import { UserOrganizationRoleService } from './userOrganizationRole/userOrganizationRole.service';
 import { OrganizationModule } from './organization/organization.module';
 import { InviteService } from './invite/invite.service';
-import { TxRepoProvider } from './rls/db.helper';
+import { TxRepoProvider } from './rls/txrepo.service';
 import { GuardDBService } from './utils/guardDB.service';
 import { AuthService } from './auth/auth.service';
 import { InviteEntity } from './invite/invite.entity';

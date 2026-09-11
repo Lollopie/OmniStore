@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { WarehouseDto } from '@shared/dto/warehouse.dto';
 import { WarehouseEntity } from './warehouse.entity';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { ClsService } from 'nestjs-cls';
 import { UserWarehouseRoleEntity } from '../userWarehouseRole/userWarehouseRole.entity';
 @Injectable()

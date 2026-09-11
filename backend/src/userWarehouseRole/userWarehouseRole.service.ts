@@ -7,7 +7,7 @@ import {
 import { UserWarehouseRoleEntity } from './userWarehouseRole.entity';
 import { ClsService } from 'nestjs-cls';
 import { UsersService } from '../user/users.service';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
 
 @Injectable()

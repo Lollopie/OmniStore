@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleModule } from '../userWarehouseRole/userWarehouseRole.module';
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { AuthService } from '../auth/auth.service';
 @Module({
   imports: [

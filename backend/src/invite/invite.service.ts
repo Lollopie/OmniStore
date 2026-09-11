@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 import { InviteEntity } from './invite.entity';
 import { ClsService } from 'nestjs-cls';
 import { RegisterDto } from '@shared/dto/register.dto';

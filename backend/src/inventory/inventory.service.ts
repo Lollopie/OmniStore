@@ -3,7 +3,7 @@ import { InventoryEntity } from './inventory.entity';
 import { DeleteResult, FindManyOptions, ILike } from 'typeorm';
 import { InventoryDto } from '@shared/dto/inventory.dto';
 import { ClsService } from 'nestjs-cls';
-import { TxRepoProvider } from '../rls/db.helper';
+import { TxRepoProvider } from '../rls/txrepo.service';
 export enum InventorySortOption {
   NEW = 'new',
   OLD = 'old',

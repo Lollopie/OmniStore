@@ -5,7 +5,7 @@ import { UsersService } from '../../src/user/users.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehouseRole.entity';
-import { TxRepoProvider } from '../../src/rls/db.helper';
+import { TxRepoProvider } from '../../src/rls/txrepo.service';
 import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
 
 describe('UserWarehouseRoleService', () => {

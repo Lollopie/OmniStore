@@ -5,7 +5,7 @@ import { ClsService } from 'nestjs-cls';
 import { InviteEntity } from '../../src/invite/invite.entity';
 import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
 import { UserEntity } from '../../src/user/user.entity';
-import { TxRepoProvider } from '../../src/rls/db.helper';
+import { TxRepoProvider } from '../../src/rls/txrepo.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import authConfig from '../../src/config/auth.config';
 import dbConfig from '../../src/config/db.config';
