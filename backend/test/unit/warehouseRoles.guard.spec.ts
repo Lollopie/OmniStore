@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from '../../src/user/user.decorator';
 import { GuardDBService } from '../../src/utils/guardDB.service';
 import { ClsService } from 'nestjs-cls';
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 describe('WarehouseRolesGuard', () => {
   let warehouseRolesGuard: WarehouseRolesGuard;
   const mockGuardDB = {
@@ -53,7 +54,7 @@ describe('WarehouseRolesGuard', () => {
           } as AuthenticatedRequest,
           [],
         ),
-      ).rejects.toThrow('No active Warehouse found');
+      ).rejects.toThrow(new BadRequestException('No active Warehouse found'));
     });
     it('should throw if no warehouse is found', async () => {
       mockGuardDB.findWarehouse.mockResolvedValueOnce(null);
@@ -62,7 +63,7 @@ describe('WarehouseRolesGuard', () => {
           mockRequest as AuthenticatedRequest,
           [],
         ),
-      ).rejects.toThrow('Active Warehouse not found');
+      ).rejects.toThrow(new BadRequestException('Active Warehouse not found'));
     });
     it("should throw if user doesn't belong to warehouse", async () => {
       mockGuardDB.getUserWarehouseRole.mockResolvedValueOnce(null);
@@ -71,7 +72,11 @@ describe('WarehouseRolesGuard', () => {
           mockRequest as AuthenticatedRequest,
           [],
         ),
-      ).rejects.toThrow('You do not have access to the active warehouse');
+      ).rejects.toThrow(
+        new ForbiddenException(
+          'You do not have access to the active warehouse',
+        ),
+      );
     });
     it('should throw if role not in requiredRoles', async () => {
       await expect(
@@ -80,7 +85,9 @@ describe('WarehouseRolesGuard', () => {
           WarehouseRole.MANAGER,
         ]),
       ).rejects.toThrow(
-        'You do not have the required role to access this resource',
+        new ForbiddenException(
+          'You do not have the required role to access this resource',
+        ),
       );
     });
     it('should set clsService warehouseRole', async () => {

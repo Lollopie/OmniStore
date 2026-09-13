@@ -8,15 +8,28 @@ import { ClsService } from 'nestjs-cls';
 import { AuthService } from '../../src/auth/auth.service';
 import { OrganizationService } from '../../src/organization/organization.service';
 import { Response } from 'express';
-import { CanActivate } from '@nestjs/common';
+import {
+  CanActivate,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuthGuard } from '../../src/auth/auth.guard';
 import { WarehouseRolesGuard } from '../../src/roles/warehouseRoles/warehouseRoles.guard';
 import { OrganizationRolesGuard } from '../../src/roles/organizationRoles/organizationRoles.guard';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import appConfig from '../../src/config/app.config';
+import { ConfigService } from '@nestjs/config';
 describe('WarehouseController', () => {
   let warehouseController: WarehouseController;
-  let configService: ConfigService;
+  const mockConfigService = {
+    get: jest.fn().mockImplementation((key: string) => {
+      if (key === 'app.frontendUrl') {
+        return 'http://localhost:3000';
+      }
+      if (key === 'email.inviteTokenExpiresHours') {
+        return 24;
+      }
+      throw new Error(`Unexpected key: ${key}`);
+    }),
+  };
   const mockWarehouseService = {
     createWarehouse: jest.fn().mockResolvedValue({
       warehouseId: 'warehouse-1',
@@ -118,12 +131,7 @@ describe('WarehouseController', () => {
         { provide: ClsService, useValue: mockClsService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: OrganizationService, useValue: mockOrgService },
-      ],
-      imports: [
-        ConfigModule.forRoot({
-          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
-          load: [appConfig],
-        }),
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     })
       .overrideGuard(AuthGuard)
@@ -135,7 +143,6 @@ describe('WarehouseController', () => {
       .compile();
 
     warehouseController = module.get<WarehouseController>(WarehouseController);
-    configService = module.get<ConfigService>(ConfigService);
   });
   it('should be defined', () => {
     expect(warehouseController).toBeDefined();
@@ -318,7 +325,9 @@ describe('WarehouseController', () => {
           role: 'admin',
         }),
       ).rejects.toThrow(
-        'You do not have permission to invite users with this role',
+        new ForbiddenException(
+          'You do not have permission to invite users with this role',
+        ),
       );
     });
     it('should call inviteService inviteWarehouseUser with expected parameters', async () => {
@@ -338,7 +347,7 @@ describe('WarehouseController', () => {
           email: 'example@example.org',
           role: 'admin',
         }),
-      ).rejects.toThrow('Invite creation failed');
+      ).rejects.toThrow(new Error('Invite creation failed'));
     });
     it('should call sendInviteEmail with correct parameters', async () => {
       await warehouseController.inviteUser({
@@ -349,7 +358,7 @@ describe('WarehouseController', () => {
         'example@example.org',
         {
           organizationName: 'organization',
-          verificationUrl: `${configService.get('app.frontendUrl')}/invites/accept?token=mocked-raw-token`,
+          verificationUrl: `${mockConfigService.get('app.frontendUrl')}/invites/accept?token=mocked-raw-token`,
           expiresInHours: 24,
         },
       );
@@ -361,7 +370,7 @@ describe('WarehouseController', () => {
           email: 'example@example.org',
           role: 'admin',
         }),
-      ).rejects.toThrow('Organization not found');
+      ).rejects.toThrow(new NotFoundException('Organization not found'));
     });
     it('should return success message', async () => {
       const result = await warehouseController.inviteUser({
@@ -415,7 +424,9 @@ describe('WarehouseController', () => {
           role: 'manager',
         }),
       ).rejects.toThrow(
-        'You do not have permission to add users with this role',
+        new ForbiddenException(
+          'You do not have permission to add users with this role',
+        ),
       );
     });
     it('should call userWarehouseRoleService addUserToWarehouse with expected parameters', async () => {

@@ -1,9 +1,5 @@
-import {
-  createParamDecorator,
-  ExecutionContext,
-  Request,
-} from '@nestjs/common';
-
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { Request } from 'express';
 export type Cookie = {
   username: string;
   userId: string;

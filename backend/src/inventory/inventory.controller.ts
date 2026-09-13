@@ -27,7 +27,7 @@ export class InventoryController {
     WarehouseRole.MANAGER,
     WarehouseRole.STAFF,
   )
-  getInventory(
+  async getInventory(
     @Query('search') searchTerm: string,
     @Query('page') page: number,
     @Query('sort') sort: string,
@@ -41,20 +41,20 @@ export class InventoryController {
     if (!sort) {
       sort = InventorySortOption.NEW;
     }
-    return this.inventoryService.getInventory(searchTerm, page, sort);
+    return await this.inventoryService.getInventory(searchTerm, page, sort);
   }
   @Post()
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
-  addItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
-    return this.inventoryService.createItem(item);
+  async addItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
+    return await this.inventoryService.createItem(item);
   }
   @Patch()
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
-  updateItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
+  async updateItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
     if (!item.itemId) {
       throw new BadRequestException('Item ID is required');
     }
-    return this.inventoryService.updateItem(item);
+    return await this.inventoryService.updateItem(item);
   }
   @Delete()
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)

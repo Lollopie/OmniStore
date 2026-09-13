@@ -28,7 +28,8 @@ export class RegisterController {
         `${this.configService.get<string>('app.frontendUrl')}/register/verify?token=` +
         response.rawToken,
       expiresInMinutes:
-        this.configService.get<number>('email.registerTokenExpiresIn') || 30,
+        this.configService.get<number>('email.registerTokenExpiresMinutes') ||
+        30,
     });
     return {
       message:

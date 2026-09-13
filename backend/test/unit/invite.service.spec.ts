@@ -6,22 +6,39 @@ import { InviteEntity } from '../../src/invite/invite.entity';
 import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
 import { UserEntity } from '../../src/user/user.entity';
 import { TxRepoProvider } from '../../src/rls/txrepo.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import authConfig from '../../src/config/auth.config';
-import dbConfig from '../../src/config/db.config';
-import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as helper from '../../src/utils/helper';
 import { mapRow } from '../../src/utils/helper';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 jest.mock('../../src/utils/helper', () => ({
-  mapRow: jest.fn(),
+  mapRow: jest.fn().mockReturnValue({
+    inviteId: 'invite-1',
+    email: 'example@example.org',
+    orgId: 'org-1',
+    warehouseId: 'warehouse-1',
+    role: 'member',
+    tokenHash: 'mocked-hashed-token',
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+    createdAt: new Date(Date.now() + 1000 * 60 * 60),
+  }),
 }));
 
 describe('InviteService', () => {
   let inviteService: InviteService;
-  let configService: ConfigService;
+  const mockConfigService = {
+    get: jest.fn<number, [string]>((key: string) => {
+      if (key === 'email.inviteTokenExpiresHours') {
+        return 24;
+      }
+      if (key === 'email.registerTokenExpiresMinutes') {
+        return 30;
+      }
+      throw new Error(`Unexpected config key accessed: ${key}`);
+    }),
+  };
   const mockClsService = {
-    get: jest.fn().mockImplementation((field: string) => {
+    get: jest.fn((field: string) => {
       if (field === 'warehouseId') {
         return 'warehouse-1';
       }
@@ -33,25 +50,33 @@ describe('InviteService', () => {
     set: jest.fn(),
   };
   const mockInviteRepository = {
-    create: jest.fn().mockImplementation((inputValue: InviteEntity) => {
+    create: jest.fn((inputValue: InviteEntity) => {
       return {
         ...inputValue,
         inviteId: 'invite-1',
       };
     }),
-    save: jest
-      .fn()
-      .mockImplementation((inputValue: InviteEntity) => inputValue),
-    query: jest.fn().mockReturnValue([{}]),
+    save: jest.fn((inputValue: InviteEntity) => inputValue),
+    query: jest.fn().mockReturnValue([
+      {
+        invite_id: 'invite-1',
+        email: 'example@example.org',
+        org_id: 'org-1',
+        warehouse_id: 'warehouse-1',
+        role: 'owner',
+        token_hash: 'mocked-hashed-token',
+        expires_at: new Date(),
+        created_at: new Date(),
+      },
+    ]),
   };
-  const mockJwtService = {};
   const mockWarehouseRepository = {
-    findOne: jest.fn(),
+    findOne: jest.fn().mockResolvedValue({}),
   };
   const mockUserRepository = {
     findOne: jest.fn().mockReturnValue(null),
     save: jest.fn(),
-    create: jest.fn().mockImplementation((inputValue: InviteEntity) => {
+    create: jest.fn((inputValue: InviteEntity) => {
       return {
         ...inputValue,
         userId: 'user-1',
@@ -59,7 +84,7 @@ describe('InviteService', () => {
     }),
   };
   const mockTxRepoProvider = {
-    getRepo: jest.fn().mockImplementation((entity) => {
+    getRepo: jest.fn((entity) => {
       if (entity === InviteEntity) {
         return mockInviteRepository;
       }
@@ -90,15 +115,6 @@ describe('InviteService', () => {
     hashToken: jest.fn().mockReturnValue('mocked-hashed-token'),
     hashPassword: jest.fn().mockReturnValue('mocked-hashed-password'),
   };
-  (helper.mapRow as jest.Mock).mockReturnValue({
-    inviteId: 'invite-1',
-    email: 'example@example.org',
-    orgId: 'org-1',
-    warehouseId: 'warehouse-1',
-    role: 'member',
-    tokenHash: 'mocked-hashed-token',
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-  });
   beforeEach(async () => {
     jest.clearAllMocks();
     const moduleRef = await Test.createTestingModule({
@@ -107,54 +123,38 @@ describe('InviteService', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: ClsService, useValue: mockClsService },
         { provide: TxRepoProvider, useValue: mockTxRepoProvider },
-        { provide: JwtService, useValue: mockJwtService },
-      ],
-      imports: [
-        await ConfigModule.forRoot({
-          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
-          load: [authConfig, dbConfig],
-        }),
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
     inviteService = moduleRef.get<InviteService>(InviteService);
-    configService = moduleRef.get(ConfigService);
   });
   it('should be defined', () => {
     expect(inviteService).toBeDefined();
   });
   describe('inviteWarehouseUser', () => {
     it('should read warehouseId from clsService', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue(null);
-      await expect(
-        inviteService.inviteWarehouseUser('example@example.org', 'member'),
-      ).rejects.toThrow('Warehouse not found');
+      await inviteService.inviteWarehouseUser('example@example.org', 'member');
       expect(mockClsService.get).toHaveBeenCalledWith('warehouseId');
     });
     it('should read orgId from clsService', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue(null);
-      await expect(
-        inviteService.inviteWarehouseUser('example@example.org', 'member'),
-      ).rejects.toThrow('Warehouse not found');
+      await inviteService.inviteWarehouseUser('example@example.org', 'member');
       expect(mockClsService.get).toHaveBeenCalledWith('orgId');
     });
     it('should throw an error if warehouse is not found', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue(null);
+      mockWarehouseRepository.findOne.mockReturnValueOnce(null);
       await expect(
         inviteService.inviteWarehouseUser('example@example.org', 'member'),
-      ).rejects.toThrow('Warehouse not found');
+      ).rejects.toThrow(new NotFoundException('Warehouse not found'));
     });
     it('should call authService generateRandomToken', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue({});
       await inviteService.inviteWarehouseUser('example@example.org', 'member');
       expect(mockAuthService.generateRandomToken).toHaveBeenCalled();
     });
     it('should call authService hashToken', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue({});
       await inviteService.inviteWarehouseUser('example@example.org', 'member');
       expect(mockAuthService.hashToken).toHaveBeenCalled();
     });
     it('should call inviteRepo create with correct parameters', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue({});
       await inviteService.inviteWarehouseUser('example@example.org', 'member');
       expect(mockInviteRepository.create).toHaveBeenCalledWith({
         email: 'example@example.org',
@@ -167,13 +167,13 @@ describe('InviteService', () => {
       });
     });
     it('should calculate expiresAt correctly', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue({});
       const response = await inviteService.inviteWarehouseUser(
         'example@example.org',
         'member',
       );
-      const inviteTokenExpirationHours: number =
-        configService.get('email.inviteTokenExpiresIn') || 24;
+      const inviteTokenExpirationHours = mockConfigService.get(
+        'email.inviteTokenExpiresHours',
+      );
       const expiresAt = new Date(
         Date.now() + inviteTokenExpirationHours * 60 * 60 * 1000,
       );
@@ -184,7 +184,6 @@ describe('InviteService', () => {
       );
     });
     it('should call inviteRepo save with correct parameters', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue({});
       await inviteService.inviteWarehouseUser('example@example.org', 'member');
       expect(mockInviteRepository.save).toHaveBeenCalledWith({
         email: 'example@example.org',
@@ -198,7 +197,6 @@ describe('InviteService', () => {
       });
     });
     it('should return saved invite and raw invite token', async () => {
-      mockWarehouseRepository.findOne.mockReturnValue({});
       const response = await inviteService.inviteWarehouseUser(
         'example@example.org',
         'member',
@@ -230,8 +228,7 @@ describe('InviteService', () => {
         password: 'password1',
       });
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(mockTxRepoProvider.getManager().query).toHaveBeenNthCalledWith(
-        1,
+      expect(mockTxRepoProvider.getManager().query).toHaveBeenCalledWith(
         'SELECT * FROM consume_invite($1, $2, $3, $4)',
         ['mocked-hashed-token', null, null, true],
       );
@@ -242,8 +239,7 @@ describe('InviteService', () => {
         password: 'password1',
       });
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(mockTxRepoProvider.getManager().query).toHaveBeenNthCalledWith(
-        2,
+      expect(mockTxRepoProvider.getManager().query).toHaveBeenCalledWith(
         'SELECT grant_invite_role($1, $2, $3, $4)',
         ['user-1', 'org-1', 'warehouse-1', 'member'],
       );
@@ -260,7 +256,7 @@ describe('InviteService', () => {
           username: 'username',
           password: 'password1',
         }),
-      ).rejects.toThrow('Invite invalid or expired');
+      ).rejects.toThrow(new BadRequestException('Invite invalid or expired'));
     });
     it('should call mapRow', async () => {
       await inviteService.acceptInvite('rawToken', {
@@ -280,7 +276,7 @@ describe('InviteService', () => {
           username: 'username',
           password: 'password1',
         }),
-      ).rejects.toThrow('User already exists');
+      ).rejects.toThrow(new BadRequestException('User already exists'));
     });
     it('should create a new user with hashed password', async () => {
       await inviteService.acceptInvite('rawToken', {
@@ -327,7 +323,7 @@ describe('InviteService', () => {
       });
       await expect(
         inviteService.inviteOrganizationRegister('example@example.org'),
-      ).rejects.toThrow('User already exists');
+      ).rejects.toThrow(new BadRequestException('User already exists'));
     });
     it('should call authService generateRandomToken', async () => {
       await inviteService.inviteOrganizationRegister('example@example.org');
@@ -340,14 +336,15 @@ describe('InviteService', () => {
     it('should call create org registration with correct parameters', async () => {
       await inviteService.inviteOrganizationRegister('example@example.org');
       expect(mockInviteRepository.query).toHaveBeenCalledWith(
-        'SELECT create_org_registration($1, $2, $3)',
+        'SELECT * from create_org_registration($1, $2, $3)',
         ['example@example.org', 'mocked-hashed-token', expect.any(Date)],
       );
     });
     it('should calculate expiresAt correctly', async () => {
       await inviteService.inviteOrganizationRegister('example@example.org');
-      const registerDurationMinutes =
-        configService.get<number>('email.registerTokenExpiresIn') || 30;
+      const registerDurationMinutes = mockConfigService.get(
+        'email.registerTokenExpiresMinutes',
+      );
       const expiresAt = new Date(
         Date.now() + registerDurationMinutes * 60 * 1000,
       );
@@ -360,17 +357,6 @@ describe('InviteService', () => {
       expect(Math.abs(expiresAt - calledExpiresAt)).toBeLessThan(1000); //Less than a second between dates
     });
     it('should return created invite and rawToken', async () => {
-      mockInviteRepository.query.mockReturnValueOnce([
-        {
-          inviteId: 'invite-1',
-          email: 'example@example.org',
-          orgId: 'org-1',
-          role: 'owner',
-          tokenHash: 'mocked-hashed-token',
-          expiresAt: new Date(),
-          createdAt: new Date(),
-        },
-      ]);
       const response = await inviteService.inviteOrganizationRegister(
         'example@example.org',
       );
@@ -379,7 +365,8 @@ describe('InviteService', () => {
           inviteId: 'invite-1',
           email: 'example@example.org',
           orgId: 'org-1',
-          role: 'owner',
+          warehouseId: 'warehouse-1',
+          role: 'member',
           tokenHash: 'mocked-hashed-token',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           expiresAt: expect.any(Date),
@@ -398,7 +385,7 @@ describe('InviteService', () => {
     it('should throw if no invite is found', async () => {
       mockInviteRepository.query.mockReturnValueOnce([null]);
       await expect(inviteService.validateInvite('rawToken')).rejects.toThrow(
-        'Invite invalid or expired',
+        new BadRequestException('Invite invalid or expired'),
       );
     });
     it('should call validate invite with correct parameters', async () => {

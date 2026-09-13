@@ -168,12 +168,12 @@ export class WarehouseController {
         organizationName: org.name,
         verificationUrl: `${this.configService.get('app.frontendUrl')}/invites/accept?token=${invite.rawToken}`,
         expiresInHours:
-          this.configService.get('email.inviteTokenExpiresIn') || 24,
+          this.configService.get('email.inviteTokenExpiresHours') || 24,
       };
       await this.mailService.sendInviteEmail(invite.invite.email, context);
       return { message: 'Invite sent successfully.' };
     }
-    throw new ForbiddenException('Invite creation failed');
+    throw new Error('Invite creation failed');
   }
   @Patch('/users')
   @UseGuards(AuthGuard, WarehouseRolesGuard)

@@ -4,26 +4,35 @@ import {
   InventorySortOption,
 } from '../../src/inventory/inventory.service';
 import { InventoryController } from '../../src/inventory/inventory.controller';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClsModule } from 'nestjs-cls';
 import { BadRequestException, CanActivate } from '@nestjs/common';
 import { WarehouseRolesGuard } from '../../src/roles/warehouseRoles/warehouseRoles.guard';
+import { AuthGuard } from '../../src/auth/auth.guard';
 
 describe('InventoryController', () => {
   const mockInventoryService = {
-    getInventory: jest.fn(),
-    createItem: jest.fn(),
-    updateItem: jest.fn(),
-    deleteItem: jest.fn(),
+    getInventory: jest
+      .fn()
+      .mockResolvedValue([[{ itemId: 1, itemName: 'Item 1', amount: 10 }], 1]),
+    createItem: jest.fn().mockResolvedValue({
+      itemId: 1,
+      itemName: 'Item 1',
+      amount: 10,
+    }),
+    updateItem: jest.fn().mockResolvedValue({
+      itemId: 'item-1',
+      itemName: 'Item 1',
+      amount: 10,
+    }),
+    deleteItem: jest.fn().mockResolvedValue({ affected: 1 }),
   };
-  class MockWarehouseRolesGuard implements CanActivate {
+  class MockGuard implements CanActivate {
     canActivate(): boolean {
       return true;
     }
   }
   let service: InventoryController;
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InventoryController,
@@ -32,24 +41,11 @@ describe('InventoryController', () => {
           useValue: mockInventoryService,
         },
       ],
-      imports: [
-        JwtModule.registerAsync({
-          global: true,
-          imports: [ConfigModule],
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService) => ({
-            secret: configService.get<string>('auth.jwtSecret'),
-            signOptions: { expiresIn: '1h' },
-          }),
-        }),
-        ClsModule.forRoot({
-          global: true,
-          middleware: { mount: true },
-        }),
-      ],
     })
+      .overrideGuard(AuthGuard)
+      .useClass(MockGuard)
       .overrideGuard(WarehouseRolesGuard)
-      .useClass(MockWarehouseRolesGuard)
+      .useClass(MockGuard)
       .compile();
     service = module.get<InventoryController>(InventoryController);
   });
@@ -58,7 +54,6 @@ describe('InventoryController', () => {
   });
   describe('getInventory', () => {
     it('should call InventoryService.getInventory with default parameters', async () => {
-      mockInventoryService.getInventory.mockReturnValue([]);
       await service.getInventory(null, null, null);
       expect(mockInventoryService.getInventory).toHaveBeenLastCalledWith(
         '',
@@ -67,7 +62,6 @@ describe('InventoryController', () => {
       );
     });
     it('should call InventoryService.getInventory with provided parameters', async () => {
-      mockInventoryService.getInventory.mockReturnValue([]);
       await service.getInventory('searchTerm', 2, InventorySortOption.NAME_ASC);
       expect(mockInventoryService.getInventory).toHaveBeenLastCalledWith(
         'searchTerm',
@@ -76,10 +70,6 @@ describe('InventoryController', () => {
       );
     });
     it('should return the result of InventoryService.getInventory', async () => {
-      mockInventoryService.getInventory.mockReturnValue([
-        [{ itemId: 1, itemName: 'Item 1', amount: 10 }],
-        1,
-      ]);
       const result = await service.getInventory(
         'searchTerm',
         2,
@@ -93,7 +83,6 @@ describe('InventoryController', () => {
   });
   describe('addItem', () => {
     it('should call InventoryService.createItem with the correct parameters', async () => {
-      mockInventoryService.createItem.mockReturnValue(undefined);
       await service.addItem({ itemName: 'Item 1', amount: 10 });
       expect(mockInventoryService.createItem).toHaveBeenLastCalledWith({
         itemName: 'Item 1',
@@ -101,23 +90,17 @@ describe('InventoryController', () => {
       });
     });
     it('should return created item', async () => {
-      mockInventoryService.createItem.mockReturnValue({
-        itemId: 1,
-        itemName: 'Item 1',
-        amount: 10,
-      });
       const result = await service.addItem({ itemName: 'Item 1', amount: 10 });
       expect(result).toEqual({ itemId: 1, itemName: 'Item 1', amount: 10 });
     });
   });
   describe('updateItem', () => {
-    it('should throw an error if itemId is not provided', () => {
-      expect(() => {
-        service.updateItem({ itemName: 'Item 1', amount: 10 } as any);
-      }).toThrow(BadRequestException);
+    it('should throw an error if itemId is not provided', async () => {
+      await expect(
+        service.updateItem({ itemName: 'Item 1', amount: 10 }),
+      ).rejects.toThrow(new BadRequestException('Item ID is required'));
     });
     it('should call InventoryService.updateItem with the correct parameters', async () => {
-      mockInventoryService.updateItem.mockReturnValue(undefined);
       await service.updateItem({
         itemId: 'item-1',
         itemName: 'Item 1',
@@ -130,11 +113,6 @@ describe('InventoryController', () => {
       });
     });
     it('should return updated item', async () => {
-      mockInventoryService.updateItem.mockReturnValue({
-        itemId: 'item-1',
-        itemName: 'Item 1',
-        amount: 10,
-      });
       const result = await service.updateItem({
         itemId: 'item-1',
         itemName: 'Item 1',
@@ -151,10 +129,9 @@ describe('InventoryController', () => {
     it('should throw an error if itemId is not provided', async () => {
       await expect(
         service.deleteItem({ itemName: 'Item 1', amount: 10 }),
-      ).rejects.toThrow('Item ID is required');
+      ).rejects.toThrow(new BadRequestException('Item ID is required'));
     });
     it('should call InventoryService.deleteItem with the correct parameters', async () => {
-      mockInventoryService.deleteItem.mockReturnValue({ affected: 1 });
       await service.deleteItem({
         itemId: 'item-1',
         itemName: 'Item 1',
@@ -167,17 +144,16 @@ describe('InventoryController', () => {
       });
     });
     it('should throw an error if the item is not found', async () => {
-      mockInventoryService.deleteItem.mockReturnValue({ affected: null });
+      mockInventoryService.deleteItem.mockResolvedValueOnce({ affected: null });
       await expect(
         service.deleteItem({
           itemId: 'item-1',
           itemName: 'Item 1',
           amount: 10,
         }),
-      ).rejects.toThrow('Item not found');
+      ).rejects.toThrow(new BadRequestException('Item not found'));
     });
     it('should return a success message', async () => {
-      mockInventoryService.deleteItem.mockReturnValue({ affected: 1 });
       const result = await service.deleteItem({
         itemId: 'item-1',
         itemName: 'Item 1',

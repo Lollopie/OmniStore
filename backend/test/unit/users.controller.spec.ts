@@ -73,12 +73,13 @@ describe('UsersController', () => {
   });
   describe('deleteAccount', () => {
     it('should call usersService deleteAccount with userId and password', async () => {
-      const mockResponse = {
+      const mockResponse: any = {
         clearCookie: jest.fn(),
       };
       await usersController.deleteAccount(
         { password: 'password1' },
         mockUserToken,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
       expect(mockUsersService.deleteUser).toHaveBeenCalledWith(
@@ -87,14 +88,16 @@ describe('UsersController', () => {
       );
     });
     it('should clear cookie', async () => {
-      const mockResponse = {
+      const mockResponse: any = {
         clearCookie: jest.fn(),
       };
       await usersController.deleteAccount(
         { password: 'password1' },
         mockUserToken,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('token', {
         httpOnly: true,
         secure: false,
@@ -102,12 +105,13 @@ describe('UsersController', () => {
       });
     });
     it('should return success message', async () => {
-      const mockResponse = {
+      const mockResponse: any = {
         clearCookie: jest.fn(),
       };
       const result = await usersController.deleteAccount(
         { password: 'password1' },
         mockUserToken,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
       expect(result).toEqual({ message: 'Account deleted successfully' });

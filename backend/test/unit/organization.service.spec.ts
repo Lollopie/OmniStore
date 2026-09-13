@@ -9,6 +9,7 @@ import { UserEntity } from '../../src/user/user.entity';
 import * as helper from '../../src/utils/helper';
 import { FindOneOptions } from 'typeorm';
 import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
+import { BadRequestException } from '@nestjs/common';
 jest.mock('../../src/utils/helper', () => ({
   mapRow: jest.fn(),
 }));
@@ -152,7 +153,7 @@ describe('OrganizationService', () => {
           ownerUsername: 'username',
           ownerPassword: 'password1',
         }),
-      ).rejects.toThrow('Invalid or expired token');
+      ).rejects.toThrow(new BadRequestException('Invalid or expired token'));
     });
     it('should throw if email already used', async () => {
       mockUserRepository.findOne.mockImplementationOnce(
@@ -175,7 +176,9 @@ describe('OrganizationService', () => {
           ownerUsername: 'username',
           ownerPassword: 'password1',
         }),
-      ).rejects.toThrow('User with this email already exists');
+      ).rejects.toThrow(
+        new BadRequestException('User with this email already exists'),
+      );
     });
     it('should throw if username already used', async () => {
       mockUserRepository.findOne
@@ -208,7 +211,9 @@ describe('OrganizationService', () => {
           ownerUsername: 'username',
           ownerPassword: 'password1',
         }),
-      ).rejects.toThrow('User with this username already exists');
+      ).rejects.toThrow(
+        new BadRequestException('User with this username already exists'),
+      );
     });
     it('should call authService hashPassword', async () => {
       await organizationService.createOrganization('rawToken', {

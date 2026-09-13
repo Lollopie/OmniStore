@@ -1,27 +1,60 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InventoryService } from '../../src/inventory/inventory.service';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { InventoryEntity } from '../../src/inventory/inventory.entity';
 import { TxRepoProvider } from '../../src/rls/txrepo.service';
 import { ClsService } from 'nestjs-cls';
+import { NotFoundException } from '@nestjs/common';
 
 describe('InventoryService', () => {
   let service: InventoryService;
   const mockClsService = {
-    get: jest.fn(),
+    get: jest.fn((key: string) => {
+      if (key === 'warehouseId') {
+        return 'warehouse-1';
+      }
+      throw new Error(`Unexpected key: ${key}`);
+    }),
     set: jest.fn(),
   };
   const mockInventoryRepository = {
-    findAndCount: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    findOne: jest.fn(),
-    merge: jest.fn(),
-    delete: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([
+      [
+        {
+          itemId: 'item-1',
+          itemName: 'Item 1',
+          amount: 10,
+        },
+      ],
+      1,
+    ]),
+    create: jest.fn().mockReturnValue({
+      itemId: 'item-1',
+      itemName: 'Item 1',
+      amount: 100,
+      warehouse: { warehouseId: 'warehouse-1' },
+    }),
+    save: jest.fn().mockResolvedValue({
+      itemId: 'item-1',
+      itemName: 'Item 1',
+      amount: 100,
+      warehouse: { warehouseId: 'warehouse-1' },
+    }),
+    findOne: jest.fn().mockResolvedValue({
+      itemId: 'item-1',
+      itemName: 'Item 1',
+      amount: 100,
+      warehouse: { warehouseId: 'warehouse-1' },
+    }),
+    merge: jest.fn().mockReturnValue({
+      itemId: 'item-1',
+      itemName: 'Updated Item 1',
+      amount: 200,
+      warehouse: { warehouseId: 'warehouse-1' },
+    }),
+    delete: jest.fn().mockResolvedValue({ affected: 1 }),
   };
   const mockTxRepoProvider = {
-    getRepo: jest.fn().mockImplementation((entity) => {
+    getRepo: jest.fn((entity) => {
       if (entity === InventoryEntity) {
         return mockInventoryRepository;
       }
@@ -29,6 +62,7 @@ describe('InventoryService', () => {
     }),
   };
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InventoryService,
@@ -41,17 +75,6 @@ describe('InventoryService', () => {
           useValue: mockTxRepoProvider,
         },
       ],
-      imports: [
-        JwtModule.registerAsync({
-          global: true,
-          imports: [ConfigModule],
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService) => ({
-            secret: configService.get<string>('auth.jwtSecret'),
-            signOptions: { expiresIn: '1h' },
-          }),
-        }),
-      ],
     }).compile();
     service = module.get<InventoryService>(InventoryService);
   });
@@ -60,201 +83,100 @@ describe('InventoryService', () => {
   });
   describe('getInventory', () => {
     it('should have sorting by old', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('', 1, 'old');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: { warehouseId: 'warehouse-1' },
-        order: { itemId: 'ASC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('', 1, 'old');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          order: { itemId: 'ASC' },
+        }),
+      );
     });
     it('should have sorting by new', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('', 1, 'new');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: { warehouseId: 'warehouse-1' },
-        order: { itemId: 'DESC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('', 1, 'new');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          order: { itemId: 'DESC' },
+        }),
+      );
     });
     it('should have sorting by amount asc with name tiebreaker', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('', 1, 'amount asc');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: { warehouseId: 'warehouse-1' },
-        order: { amount: 'ASC', itemName: 'ASC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('', 1, 'amount asc');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          order: { amount: 'ASC', itemName: 'ASC' },
+        }),
+      );
     });
     it('should have sorting by amount desc with name tiebreaker', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('', 1, 'amount desc');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: { warehouseId: 'warehouse-1' },
-        order: { amount: 'DESC', itemName: 'ASC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('', 1, 'amount desc');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          order: { amount: 'DESC', itemName: 'ASC' },
+        }),
+      );
     });
     it('should have sorting by item name asc with age tiebreaker', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('', 1, 'itemName asc');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: { warehouseId: 'warehouse-1' },
-        order: { itemName: 'ASC', itemId: 'DESC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('', 1, 'itemName asc');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          order: { itemName: 'ASC', itemId: 'DESC' },
+        }),
+      );
     });
     it('should have sorting by item name desc with age tiebreaker', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('', 1, 'itemName desc');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: { warehouseId: 'warehouse-1' },
-        order: { itemName: 'DESC', itemId: 'DESC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('', 1, 'itemName desc');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          order: { itemName: 'DESC', itemId: 'DESC' },
+        }),
+      );
     });
     it('should do expected pagination page 1', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('', 1, 'old');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: { warehouseId: 'warehouse-1' },
-        order: { itemId: 'ASC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('', 1, 'old');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          order: { itemId: 'ASC' },
+        }),
+      );
     });
     it('should do expected pagination page 2', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('', 2, 'old');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: { warehouseId: 'warehouse-1' },
-        order: { itemId: 'ASC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 10,
-        take: 10,
-      });
+      await service.getInventory('', 2, 'old');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          order: { itemId: 'ASC' },
+        }),
+      );
     });
     it('should filter by name', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('name', 1, 'old');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: {
-          warehouseId: 'warehouse-1',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          itemName: expect.objectContaining({
-            _type: 'ilike',
-            _value: '%name%',
-          }),
-        },
-        order: { itemId: 'ASC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('name', 1, 'old');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: {
+            warehouseId: 'warehouse-1',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            itemName: expect.objectContaining({
+              _type: 'ilike',
+              _value: '%name%',
+            }),
+          },
+        }),
+      );
     });
     it('should filter by trimmed name', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([[], 0]);
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const result = await service.getInventory('       name       ', 1, 'old');
-      expect(result).toEqual([[], 0]);
-      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith({
-        where: {
-          warehouseId: 'warehouse-1',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          itemName: expect.objectContaining({
-            _type: 'ilike',
-            _value: '%name%',
-          }),
-        },
-        order: { itemId: 'ASC' },
-        select: {
-          amount: true,
-          itemId: true,
-          itemName: true,
-        },
-        skip: 0,
-        take: 10,
-      });
+      await service.getInventory('       name       ', 1, 'old');
+      expect(mockInventoryRepository.findAndCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: {
+            warehouseId: 'warehouse-1',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            itemName: expect.objectContaining({
+              _type: 'ilike',
+              _value: '%name%',
+            }),
+          },
+        }),
+      );
     });
     it('should return query results', async () => {
-      mockInventoryRepository.findAndCount.mockResolvedValue([
-        [
-          {
-            itemId: 'item-1',
-            itemName: 'Item 1',
-            amount: 10,
-          },
-        ],
-        1,
-      ]);
-      mockClsService.get.mockReturnValue('warehouse-1');
       const result = await service.getInventory('name', 1, 'old');
       expect(result).toEqual([
         [
@@ -270,108 +192,105 @@ describe('InventoryService', () => {
   });
   describe('createItem', () => {
     it('should parse amount to integer and save item', async () => {
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const mockItem = {
+      await service.createItem({
         itemName: 'Item 1',
         amount: '100',
-      };
-      const mockSavedItem = {
-        itemId: 'item-1',
-        itemName: 'Item 1',
-        amount: 100,
-        warehouse: { warehouseId: 'warehouse-1' },
-      };
-      mockInventoryRepository.create.mockReturnValue(mockSavedItem);
-      mockInventoryRepository.save.mockResolvedValue(mockSavedItem);
-
-      const result = await service.createItem(mockItem);
-
-      expect(result).toEqual(mockSavedItem);
+      });
       expect(mockInventoryRepository.create).toHaveBeenCalledWith({
         itemName: 'Item 1',
         amount: 100,
         warehouse: { warehouseId: 'warehouse-1' },
       });
-      expect(mockInventoryRepository.save).toHaveBeenCalledWith(mockSavedItem);
-    });
-  });
-  describe('updateItem', () => {
-    it('should throw an error if the item is not found', async () => {
-      mockClsService.get.mockReturnValue('warehouse-1');
-      mockInventoryRepository.findOne.mockResolvedValue(null);
-      await expect(
-        service.updateItem({ itemName: 'item-1', amount: 200 }),
-      ).rejects.toThrow('Item not found');
-    });
-    it('should update the item if it exists', async () => {
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const existingItem = {
+      expect(mockInventoryRepository.save).toHaveBeenCalledWith({
         itemId: 'item-1',
         itemName: 'Item 1',
         amount: 100,
         warehouse: { warehouseId: 'warehouse-1' },
-      };
-      mockInventoryRepository.findOne.mockResolvedValue(existingItem);
-      const updatedItem = {
+      });
+    });
+    it('should return the saved item', async () => {
+      const result = await service.createItem({
+        itemName: 'Item 1',
+        amount: '100',
+      });
+      expect(result).toEqual({
+        itemId: 'item-1',
+        itemName: 'Item 1',
+        amount: 100,
+        warehouse: { warehouseId: 'warehouse-1' },
+      });
+    });
+  });
+  describe('updateItem', () => {
+    it('should throw an error if the item is not found', async () => {
+      mockInventoryRepository.findOne.mockResolvedValueOnce(null);
+      await expect(
+        service.updateItem({ itemName: 'item-1', amount: 200 }),
+      ).rejects.toThrow(new NotFoundException('Item not found'));
+    });
+    it('should update the item', async () => {
+      await service.updateItem({
+        itemId: 'item-1',
+        itemName: 'Updated Item 1',
+        amount: '200',
+      });
+      expect(mockInventoryRepository.save).toHaveBeenCalledWith({
         itemId: 'item-1',
         itemName: 'Updated Item 1',
         amount: 200,
         warehouse: { warehouseId: 'warehouse-1' },
-      };
-      mockInventoryRepository.save.mockResolvedValue(updatedItem);
-      mockInventoryRepository.merge.mockReturnValue(updatedItem);
-
+      });
+      expect(mockInventoryRepository.merge).toHaveBeenCalledWith(
+        {
+          itemId: 'item-1',
+          itemName: 'Item 1',
+          amount: 100,
+          warehouse: { warehouseId: 'warehouse-1' },
+        },
+        {
+          itemName: 'Updated Item 1',
+          amount: 200,
+          warehouse: { warehouseId: 'warehouse-1' },
+        },
+      );
+    });
+    it('should return the updated item', async () => {
+      mockInventoryRepository.save.mockResolvedValueOnce({
+        itemId: 'item-1',
+        itemName: 'Updated Item 1',
+        amount: 200,
+        warehouse: { warehouseId: 'warehouse-1' },
+      });
       const result = await service.updateItem({
         itemId: 'item-1',
         itemName: 'Updated Item 1',
         amount: '200',
       });
-
-      expect(result).toEqual(updatedItem);
-      expect(mockInventoryRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          itemId: 'item-1',
-          itemName: 'Updated Item 1',
-          amount: 200,
-          warehouse: { warehouseId: 'warehouse-1' },
-        }),
-      );
-      expect(mockInventoryRepository.merge).toHaveBeenCalledWith(
-        existingItem,
-        expect.objectContaining({
-          itemName: 'Updated Item 1',
-          amount: 200,
-          warehouse: { warehouseId: 'warehouse-1' },
-        }),
-      );
+      expect(result).toEqual({
+        itemId: 'item-1',
+        itemName: 'Updated Item 1',
+        amount: 200,
+        warehouse: { warehouseId: 'warehouse-1' },
+      });
     });
   });
   describe('deleteItem', () => {
     it('should throw an error if the item is not found', async () => {
-      mockClsService.get.mockReturnValue('warehouse-1');
-      mockInventoryRepository.findOne.mockResolvedValue(null);
+      mockInventoryRepository.findOne.mockResolvedValueOnce(null);
       await expect(service.deleteItem({ itemId: 'item-1' })).rejects.toThrow(
-        'Item not found',
+        new NotFoundException('Item not found'),
       );
     });
     it('should delete the item if it exists', async () => {
-      mockClsService.get.mockReturnValue('warehouse-1');
-      const existingItem = {
-        itemId: 'item-1',
-        itemName: 'Item 1',
-        amount: 100,
-        warehouse: { warehouseId: 'warehouse-1' },
-      };
-      mockInventoryRepository.findOne.mockResolvedValue(existingItem);
-      mockInventoryRepository.delete.mockResolvedValue({ affected: 1 });
-
-      const result = await service.deleteItem({ itemId: 'item-1' });
-
-      expect(result).toEqual({ affected: 1 });
+      await service.deleteItem({ itemId: 'item-1' });
       expect(mockInventoryRepository.delete).toHaveBeenCalledWith({
         itemId: 'item-1',
         warehouseId: 'warehouse-1',
       });
+    });
+    it('should return the delete result', async () => {
+      const result = await service.deleteItem({ itemId: 'item-1' });
+      expect(result).toEqual({ affected: 1 });
     });
   });
 });

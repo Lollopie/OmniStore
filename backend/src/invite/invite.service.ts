@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { TxRepoProvider } from '../rls/txrepo.service';
 import { InviteEntity } from './invite.entity';
 import { ClsService } from 'nestjs-cls';
@@ -26,11 +30,11 @@ export class InviteService {
       where: { warehouseId, orgId },
     });
     if (!warehouse) {
-      throw new BadRequestException('Warehouse not found');
+      throw new NotFoundException('Warehouse not found');
     }
     const rawToken = this.authService.generateRandomToken();
     const invitationDurationHours =
-      this.configService.get<number>('email.inviteTokenExpiresIn') || 24;
+      this.configService.get<number>('email.inviteTokenExpiresHours') || 24;
     const expiresAt = new Date(
       Date.now() + invitationDurationHours * 60 * 60 * 1000,
     );
@@ -96,16 +100,16 @@ export class InviteService {
     const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
     const rawToken = this.authService.generateRandomToken();
     const registerDurationMinutes =
-      this.configService.get<number>('email.registerTokenExpiresIn') || 30;
+      this.configService.get<number>('email.registerTokenExpiresMinutes') || 30;
     const expiresAt = new Date(
       Date.now() + registerDurationMinutes * 60 * 1000,
     );
     const token = this.authService.hashToken(rawToken);
     const [invite]: InviteEntity[] = await inviteRepo.query<InviteEntity[]>(
-      'SELECT create_org_registration($1, $2, $3)',
+      'SELECT * from create_org_registration($1, $2, $3)',
       [email, token, expiresAt],
     );
-    return { invite: invite, rawToken: rawToken };
+    return { invite: mapRow(inviteRepo, invite), rawToken: rawToken };
   }
   async validateInvite(rawToken: string) {
     const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);

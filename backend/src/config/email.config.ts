@@ -8,8 +8,8 @@ export default registerAs('email', () => ({
   mailPassword: process.env.MAIL_PASS || '',
   mailFrom: process.env.MAIL_FROM || 'No Reply <noreply@localhost>',
   resendSecret: process.env.RESEND_SECRET || 'resendSecret',
-  inviteTokenExpiresIn:
+  inviteTokenExpiresHours:
     parseInt(process.env.INVITE_TOKEN_EXPIRATION_HOURS!, 10) || 24,
-  registerTokenExpiresIn:
+  registerTokenExpiresMinutes:
     parseInt(process.env.REGISTER_TOKEN_EXPIRATION_MINUTES!, 10) || 30,
 }));

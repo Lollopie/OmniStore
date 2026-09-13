@@ -32,7 +32,9 @@ describe('TxRepo', () => {
     it("should throw an error if entityManager isn't defined", () => {
       mockClsService.get.mockReturnValueOnce(null);
       expect(() => txRepoProvider.getRepo(InviteEntity)).toThrow(
-        'No transactional EntityManager in CLS — RlsInterceptor did not run',
+        new Error(
+          'No transactional EntityManager in CLS — RlsInterceptor did not run',
+        ),
       );
     });
     it('should return repository from entityManager', () => {
@@ -48,7 +50,9 @@ describe('TxRepo', () => {
     it("should throw an error if entityManager isn't defined", () => {
       mockClsService.get.mockReturnValueOnce(null);
       expect(() => txRepoProvider.getManager()).toThrow(
-        'No transactional EntityManager in CLS — RlsInterceptor did not run',
+        new Error(
+          'No transactional EntityManager in CLS — RlsInterceptor did not run',
+        ),
       );
     });
     it('should return entityManager from clsService', () => {

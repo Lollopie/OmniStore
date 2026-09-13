@@ -2,12 +2,9 @@ import { RegisterController } from '../../src/register/register.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { RegisterService } from '../../src/register/register.service';
 import { MailService } from '../../src/mail/mail.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import appConfig from '../../src/config/app.config';
-import emailConfig from '../../src/config/email.config';
+import { ConfigService } from '@nestjs/config';
 describe('RegisterController', () => {
   let registerController: RegisterController;
-  let configService: ConfigService;
   const mockRegisterService = {
     register: jest.fn().mockResolvedValue({
       invite: {
@@ -25,6 +22,17 @@ describe('RegisterController', () => {
   const mockMailService = {
     sendVerificationEmail: jest.fn(),
   };
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      if (key === 'app.frontendUrl') {
+        return 'http://localhost:3000';
+      }
+      if (key === 'email.registerTokenExpiresMinutes') {
+        return 30;
+      }
+      throw new Error(`Config key ${key} not mocked`);
+    }),
+  };
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
@@ -32,23 +40,17 @@ describe('RegisterController', () => {
       providers: [
         { provide: RegisterService, useValue: mockRegisterService },
         { provide: MailService, useValue: mockMailService },
-      ],
-      imports: [
-        await ConfigModule.forRoot({
-          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
-          load: [appConfig, emailConfig],
-        }),
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
     registerController = module.get<RegisterController>(RegisterController);
-    configService = module.get(ConfigService);
   });
   it('should be defined', () => {
     expect(registerController).toBeDefined();
   });
   describe('register', () => {
-    it('should throw an error if registration failed', async () => {
+    it('should return an error if registration failed', async () => {
       mockRegisterService.register.mockResolvedValueOnce(null);
       const result = await registerController.register({
         email: 'example@example.org',
@@ -59,9 +61,9 @@ describe('RegisterController', () => {
       await registerController.register({
         email: 'example@example.org',
       });
-      const targetURL = configService.get<string>('app.frontendUrl');
+      const targetURL = mockConfigService.get('app.frontendUrl');
       const expiresInMinutes =
-        configService.get<number>('email.registerTokenExpiresIn') || 30;
+        mockConfigService.get('email.registerTokenExpiresMinutes') || 30;
       expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
         'example@example.org',
         {

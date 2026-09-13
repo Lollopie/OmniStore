@@ -4,6 +4,11 @@ import { AuthenticatedRequest } from '../../src/user/user.decorator';
 import { GuardDBService } from '../../src/utils/guardDB.service';
 import { ClsService } from 'nestjs-cls';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 describe('OrganizationRolesGuard', () => {
   let organizationRolesGuard: OrganizationRolesGuard;
   const mockGuardDB = {
@@ -55,7 +60,7 @@ describe('OrganizationRolesGuard', () => {
           } as AuthenticatedRequest,
           [],
         ),
-      ).rejects.toThrow('No organizationId found');
+      ).rejects.toThrow(new BadRequestException('No organizationId found'));
     });
     it('should throw if no org is found', async () => {
       mockGuardDB.getOrg.mockResolvedValueOnce(null);
@@ -64,7 +69,7 @@ describe('OrganizationRolesGuard', () => {
           mockRequest as AuthenticatedRequest,
           [],
         ),
-      ).rejects.toThrow('Organization not found');
+      ).rejects.toThrow(new NotFoundException('Organization not found'));
     });
     it("should throw if user doesn't belong to org", async () => {
       mockGuardDB.getUserOrgRole.mockResolvedValueOnce(null);
@@ -73,7 +78,11 @@ describe('OrganizationRolesGuard', () => {
           mockRequest as AuthenticatedRequest,
           [],
         ),
-      ).rejects.toThrow('You do not have access to the active organization');
+      ).rejects.toThrow(
+        new ForbiddenException(
+          'You do not have access to the active organization',
+        ),
+      );
     });
     it('should throw if role not in requiredRoles', async () => {
       await expect(
@@ -82,7 +91,9 @@ describe('OrganizationRolesGuard', () => {
           [OrganizationRole.OWNER, OrganizationRole.ADMIN],
         ),
       ).rejects.toThrow(
-        'You do not have the required role to access this resource',
+        new ForbiddenException(
+          'You do not have the required role to access this resource',
+        ),
       );
     });
     it('should set clsService orgRole', async () => {

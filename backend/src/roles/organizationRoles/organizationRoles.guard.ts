@@ -6,6 +6,7 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { ROLES_KEY } from './organizationRoles.decorator';
 import { AuthenticatedRequest, Cookie } from '../../user/user.decorator';
@@ -29,7 +30,7 @@ export class OrganizationRolesGuard implements CanActivate {
       throw new BadRequestException('No organizationId found');
     }
     if (!(await this.guardDBService.getOrg(user.orgId))) {
-      throw new BadRequestException('Organization not found');
+      throw new NotFoundException('Organization not found');
     }
 
     const userRole: OrganizationRole = await this.guardDBService.getUserOrgRole(

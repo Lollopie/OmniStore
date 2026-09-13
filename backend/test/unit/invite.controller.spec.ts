@@ -1,13 +1,19 @@
 import { Test } from '@nestjs/testing';
 import { InviteController } from '../../src/invite/invite.controller';
 import { InviteService } from '../../src/invite/invite.service';
-import { UserEntity } from '../../src/user/user.entity';
+import { BadRequestException } from '@nestjs/common';
 describe('InviteController', () => {
   const mockInviteService = {
-    acceptInvite: jest.fn(),
+    acceptInvite: jest.fn().mockResolvedValue({
+      userId: 'user-1',
+      email: 'user@example.org',
+      username: 'user',
+      password: 'password1',
+    }),
   };
   let inviteController: InviteController;
   beforeEach(async () => {
+    jest.clearAllMocks();
     const moduleRef = await Test.createTestingModule({
       controllers: [InviteController],
       providers: [{ provide: InviteService, useValue: mockInviteService }],
@@ -19,29 +25,25 @@ describe('InviteController', () => {
   });
   describe('acceptInvite', () => {
     it('should throw an error if no invite token is provided', async () => {
-      const registerDto = {
-        username: 'testuser',
-        password: 'testpassword1',
-      };
       await expect(
-        inviteController.acceptInvite(null, registerDto),
-      ).rejects.toThrow('Invite token is required');
+        inviteController.acceptInvite(null, {
+          username: 'testuser',
+          password: 'testpassword1',
+        }),
+      ).rejects.toThrow(new BadRequestException('Invite token is required'));
     });
     it("should return invite service's return value", async () => {
-      const registerDto = {
-        username: 'testuser',
-        password: 'testpassword1',
-      };
-      const mockUser: UserEntity = {
+      await expect(
+        inviteController.acceptInvite('a', {
+          username: 'testuser',
+          password: 'testpassword1',
+        }),
+      ).resolves.toEqual({
         userId: 'user-1',
         email: 'user@example.org',
         username: 'user',
         password: 'password1',
-      };
-      mockInviteService.acceptInvite.mockReturnValue(mockUser);
-      await expect(
-        inviteController.acceptInvite('a', registerDto),
-      ).resolves.toEqual(mockUser);
+      });
     });
   });
 });

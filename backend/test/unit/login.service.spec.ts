@@ -1,12 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoginService } from '../../src/login/login.service';
 import { UsersService } from '../../src/user/users.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import authConfig from '../../src/config/auth.config';
-import dbConfig from '../../src/config/db.config';
+import { ConfigService } from '@nestjs/config';
 import { UserWarehouseRoleService } from '../../src/userWarehouseRole/userWarehouseRole.service';
 import { AuthService } from '../../src/auth/auth.service';
+import { UnauthorizedException } from '@nestjs/common';
 
 describe('LoginService', () => {
   let loginService: LoginService;
@@ -60,21 +58,6 @@ describe('LoginService', () => {
           useValue: mockUserWarehouseRoleService,
         },
       ],
-      imports: [
-        ConfigModule.forRoot({
-          envFilePath: [`.env`, `.env.${process.env.NODE_ENV || 'test'}`],
-          load: [authConfig, dbConfig],
-        }),
-        JwtModule.registerAsync({
-          global: true,
-          imports: [ConfigModule],
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService) => ({
-            secret: configService.get<string>('auth.jwtSecret'),
-            signOptions: { expiresIn: '1h' },
-          }),
-        }),
-      ],
     }).compile();
 
     loginService = module.get<LoginService>(LoginService);
@@ -92,7 +75,9 @@ describe('LoginService', () => {
           username: 'test',
           password: 'password1',
         }),
-      ).rejects.toThrow('Wrong username or password');
+      ).rejects.toThrow(
+        new UnauthorizedException('Wrong username or password'),
+      );
     });
     it('should throw an error if provided with a wrong auth', async () => {
       mockAuthService.verifyPassword.mockResolvedValueOnce(false);
@@ -101,7 +86,9 @@ describe('LoginService', () => {
           username: 'test',
           password: 'password2',
         }),
-      ).rejects.toThrow('Wrong username or password');
+      ).rejects.toThrow(
+        new UnauthorizedException('Wrong username or password'),
+      );
     });
     it('should call authService verifyPassword', async () => {
       await loginService.login({

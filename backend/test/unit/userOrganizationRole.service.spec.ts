@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
 import { UserEntity } from '../../src/user/user.entity';
 import { TxRepoProvider } from '../../src/rls/txrepo.service';
+import { NotFoundException } from '@nestjs/common';
 describe('UserOrganizationRoleService', () => {
   let userOrganizationRoleService: UserOrganizationRoleService;
   const mockTxRepoProvider = {
@@ -65,7 +66,7 @@ describe('UserOrganizationRoleService', () => {
       mockUserRepository.findOne.mockResolvedValueOnce(null);
       await expect(
         userOrganizationRoleService.updateUserRole('username', 'owner'),
-      ).rejects.toThrow('User not found');
+      ).rejects.toThrow(new NotFoundException('User not found'));
     });
     it('should get the current userOrgRole', async () => {
       await userOrganizationRoleService.updateUserRole('username', 'owner');
@@ -79,7 +80,9 @@ describe('UserOrganizationRoleService', () => {
       mockUserOrganizationRoleRepository.findOne.mockResolvedValueOnce(null);
       await expect(
         userOrganizationRoleService.updateUserRole('username', 'owner'),
-      ).rejects.toThrow('User not found in organization');
+      ).rejects.toThrow(
+        new NotFoundException('User not found in organization'),
+      );
     });
     it('should save with new role', async () => {
       await userOrganizationRoleService.updateUserRole('username', 'owner');

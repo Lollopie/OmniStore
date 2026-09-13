@@ -71,7 +71,7 @@ export class InventoryService {
         itemName: ILike(`%${trimmedSearchTerm}%`),
       };
     }
-    return repo.findAndCount(options);
+    return await repo.findAndCount(options);
   }
   async createItem(item: InventoryDto): Promise<InventoryEntity> {
     const repo = this.txRepoProvider.getRepo(InventoryEntity);

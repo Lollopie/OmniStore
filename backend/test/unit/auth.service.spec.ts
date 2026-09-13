@@ -20,6 +20,7 @@ describe('AuthService', () => {
   };
   let service: AuthService;
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
