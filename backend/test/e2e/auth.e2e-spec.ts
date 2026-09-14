@@ -53,8 +53,9 @@ describe('AuthController (e2e)', () => {
     dataSource = moduleFixture.get<DataSource>(DataSource);
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
-  it('/auth/status no token', () => {
-    return request(app.getHttpServer()).get('/auth/status').expect(401);
+  it('/auth/status no token', async () => {
+    const response = await request(app.getHttpServer()).get('/auth/status');
+    expect(response.status).toBe(401);
   });
   it('/auth/status logged in', async () => {
     const token = jwtService.sign({
@@ -63,10 +64,10 @@ describe('AuthController (e2e)', () => {
       activeWarehouseId: '',
       activeRole: '',
     });
-    return request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .get('/auth/status')
-      .set('Cookie', `token=${token}`)
-      .expect(200);
+      .set('Cookie', `token=${token}`);
+    expect(response.status).toBe(200);
   });
   it('/auth/status expired token', async () => {
     const token = jwtService.sign({
@@ -76,10 +77,10 @@ describe('AuthController (e2e)', () => {
       activeRole: '',
     });
     await new Promise((resolve) => setTimeout(resolve, 1100));
-    return request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .get('/auth/status')
-      .set('Cookie', `token=${token}`)
-      .expect(401);
+      .set('Cookie', `token=${token}`);
+    expect(response.status).toBe(401);
   });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;

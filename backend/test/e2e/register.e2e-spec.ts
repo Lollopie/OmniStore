@@ -10,6 +10,7 @@ import dbConfig from '../../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from '../../src/auth/auth.service';
 import { MailService } from '../../src/mail/mail.service';
+import { UserEntity } from '../../src/user/user.entity';
 
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -54,16 +55,10 @@ describe('LogoutController (e2e)', () => {
       .post('/register')
       .send({ email: email })
       .expect(201);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const verificationToken: string =
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       mockMailService.sendVerificationEmail.mock.calls[
         mockMailService.sendVerificationEmail.mock.calls.length - 1
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ][1].verificationUrl.split(
-        'token=',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      )[1];
+      ][1].verificationUrl.split('token=')[1];
     return await request(app.getHttpServer())
       .post('/organizations/register?token=' + verificationToken)
       .send({
@@ -73,14 +68,11 @@ describe('LogoutController (e2e)', () => {
         name: 'testOrg',
       });
   }
-  // it('/register (GET)', () => {
-  //   return request(app.getHttpServer()).get('/register').expect(200);
-  // });
-  it('/register (POST)', () => {
-    return request(app.getHttpServer())
+  it('/register (POST)', async () => {
+    const response = await request(app.getHttpServer())
       .post('/register')
-      .send({ email: 'test@example.org' })
-      .expect(201);
+      .send({ email: 'test@example.org' });
+    expect(response.status).toBe(201);
   });
   it('/register (POST) - should reject username with a space', async () => {
     const invalidData = {
@@ -198,9 +190,7 @@ describe('LogoutController (e2e)', () => {
       .getRepository('user')
       .findOneBy({ username: 'test' });
     expect(user).toBeDefined();
-    if (user) {
-      expect(user.password).not.toBe('password1');
-    }
+    expect(user.password).not.toBe('password1');
   });
   it('/register (POST) - auth should be verifiable', async () => {
     const userData = {
@@ -212,18 +202,15 @@ describe('LogoutController (e2e)', () => {
     expect(response.status).toBe(201);
 
     const user = await dataSource
-      .getRepository('user')
+      .getRepository(UserEntity)
       .findOneBy({ username: 'test' });
     expect(user).toBeDefined();
-    if (user && typeof user['password'] === 'string') {
-      const isMatch = await authService.verifyPassword(
-        userData.password,
-        user.password,
-      );
-      expect(isMatch).toBe(true);
-    } else {
-      expect(true).toBe(false);
-    }
+    expect(typeof user['password'] === 'string').toBeTruthy();
+    const isMatch = await authService.verifyPassword(
+      userData.password,
+      user.password,
+    );
+    expect(isMatch).toBe(true);
   });
   it('/register (POST) - should reject duplicate usernames', async () => {
     const userData = {

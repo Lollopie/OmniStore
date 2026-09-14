@@ -28,12 +28,14 @@ const Organization = () => {
   const [pages, setPages] = useState<(string | number)[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const page: number = Number(searchParams.get('page')) || 1;
-  const controller = new AbortController();
+
   const { addToast } = useToast();
   const usersPerPage = 10;
   useEffect(() => {
+    const controller = new AbortController();
     getUsers({ searchTerm: debouncedSearchTerm, setUsers, setTotalUsers, controller, addToast });
-  }, [debouncedSearchTerm]);
+    return () => controller.abort();
+  }, [addToast, debouncedSearchTerm]);
   useEffect(() => {
     generatePagination(Number(page), Math.max(Math.ceil(totalUsers / usersPerPage), 1), setPages);
   }, [page, totalUsers]);

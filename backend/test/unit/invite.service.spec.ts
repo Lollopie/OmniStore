@@ -177,11 +177,10 @@ describe('InviteService', () => {
       const expiresAt = new Date(
         Date.now() + inviteTokenExpirationHours * 60 * 60 * 1000,
       );
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      expect(Math.abs(expiresAt - response.invite.expiresAt)).toBeLessThan(
-        1000, // Expect Difference to be less than a second
-      );
+      const maxDifferenceInMilliseconds = 1000;
+      expect(
+        Math.abs(expiresAt.valueOf() - response.invite.expiresAt.valueOf()),
+      ).toBeLessThan(maxDifferenceInMilliseconds);
     });
     it('should call inviteRepo save with correct parameters', async () => {
       await inviteService.inviteWarehouseUser('example@example.org', 'member');
@@ -347,12 +346,12 @@ describe('InviteService', () => {
       const expiresAt = new Date(
         Date.now() + registerDurationMinutes * 60 * 1000,
       );
-
+      const maxDifferenceInMilliseconds = 1000;
       const calledExpiresAt: Date =
         mockInviteRepository.query.mock.calls[0][1][2];
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      expect(Math.abs(expiresAt - calledExpiresAt)).toBeLessThan(1000); //Less than a second between dates
+      expect(
+        Math.abs(expiresAt.valueOf() - calledExpiresAt.valueOf()),
+      ).toBeLessThan(maxDifferenceInMilliseconds);
     });
     it('should return created invite and rawToken', async () => {
       const response = await inviteService.inviteOrganizationRegister(

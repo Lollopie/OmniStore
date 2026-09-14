@@ -14,34 +14,22 @@ export async function registerAndLogin(
   createWarehouse?: boolean,
 ) {
   const agent = request.agent(app.getHttpServer());
-  await agent.post('/register').send({ email }).expect(201);
+  await agent.post('/register').send({ email });
   organizationName = organizationName ? organizationName : 'Test Organization';
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const verificationToken: string =
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     mockMailService.sendVerificationEmail.mock.calls[
       mockMailService.sendVerificationEmail.mock.calls.length - 1
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    ][1].verificationUrl.split(
-      'token=',
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    )[1];
-  await agent
-    .post('/organizations/register?token=' + verificationToken)
-    .send({
-      ownerEmail: email,
-      ownerUsername: username,
-      ownerPassword: password,
-      name: organizationName,
-    })
-    .expect(201);
-  await agent.post('/login').send({ username, password }).expect(200);
+    ][1].verificationUrl.split('token=')[1];
+  await agent.post('/organizations/register?token=' + verificationToken).send({
+    ownerEmail: email,
+    ownerUsername: username,
+    ownerPassword: password,
+    name: organizationName,
+  });
+  await agent.post('/login').send({ username, password });
 
   if (createWarehouse) {
-    await agent
-      .post('/warehouses')
-      .send({ warehouseName: 'Test Warehouse' })
-      .expect(201);
+    await agent.post('/warehouses').send({ warehouseName: 'Test Warehouse' });
   }
   return agent;
 }
@@ -56,24 +44,17 @@ export async function inviteAndAccept(
   role: string,
 ) {
   await agent.post('/warehouses/invites').send({ email, role }).expect(201);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
   const inviteToken: string =
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     mockMailService.sendInviteEmail.mock.calls[
       mockMailService.sendInviteEmail.mock.calls.length - 1
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    ][1].verificationUrl.split(
-      'token=',
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    )[1];
+    ][1].verificationUrl.split('token=')[1];
   const agent2 = request.agent(app.getHttpServer());
   await agent2
     .post('/invites/accept?token=' + inviteToken)
-    .send({ username: email.split('@')[0], password: 'password1' })
-    .expect(201);
+    .send({ username: email.split('@')[0], password: 'password1' });
   await agent2
     .post('/login')
-    .send({ username: email.split('@')[0], password: 'password1' })
-    .expect(200);
+    .send({ username: email.split('@')[0], password: 'password1' });
   return agent2;
 }

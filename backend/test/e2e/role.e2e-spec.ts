@@ -77,7 +77,6 @@ describe('RoleGuard (e2e)', () => {
         amount: '1',
       })
       .expect(400);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe('No active Warehouse found');
   });
   it('RoleGuard non-existent warehouse', async () => {
@@ -117,7 +116,6 @@ describe('RoleGuard (e2e)', () => {
         amount: '1',
       })
       .expect(400);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe('Active Warehouse not found');
   });
   it('RoleGuard with permission', async () => {
@@ -130,13 +128,11 @@ describe('RoleGuard (e2e)', () => {
       'testOrg',
       true,
     );
-    await agent
-      .post('/inventory')
-      .send({
-        itemName: 'Apple',
-        amount: '1',
-      })
-      .expect(201);
+    const response = await agent.post('/inventory').send({
+      itemName: 'Apple',
+      amount: '1',
+    });
+    expect(response.status).toBe(201);
   });
   it('RoleGuard without role in warehouse', async () => {
     const firstAgent = await registerAndLogin(
@@ -185,7 +181,6 @@ describe('RoleGuard (e2e)', () => {
         amount: '1',
       })
       .expect(403);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe(
       'You do not have access to the active warehouse',
     );
@@ -214,7 +209,6 @@ describe('RoleGuard (e2e)', () => {
         amount: '1',
       })
       .expect(403);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(roleGuardResponse.body.message).toBe(
       'You do not have the required role to access this resource',
     );

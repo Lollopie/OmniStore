@@ -61,7 +61,6 @@ describe('WarehouseController (e2e)', () => {
       .expect(201);
     expect(warehouseResponse.body).toEqual({
       name: 'Warehouse 1',
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       warehouseId: expect.any(String),
       role: 'admin',
     });
@@ -86,7 +85,6 @@ describe('WarehouseController (e2e)', () => {
     const selectResponse = await agent
       .post('/warehouses/select')
       .send({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         warehouseId: warehouseResponse.body.warehouseId,
       })
       .expect(201);
@@ -108,12 +106,9 @@ describe('WarehouseController (e2e)', () => {
       true,
     );
     const getUsersResponse = await agent.get('/warehouses/users').expect(200);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(getUsersResponse.body['total']).toEqual(1);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(getUsersResponse.body['data']).toEqual([
       {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         userId: expect.any(String),
         username: 'username',
         role: 'admin',
@@ -138,9 +133,7 @@ describe('WarehouseController (e2e)', () => {
       })
       .expect(200);
     expect(patchUserResponse.body).toEqual({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       userId: expect.any(String),
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       warehouseId: expect.any(String),
       role: 'staff',
     });
@@ -162,7 +155,6 @@ describe('WarehouseController (e2e)', () => {
         role: 'staff',
       })
       .expect(404);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(patchUserResponse.body.message).toEqual('User not found');
   });
   it('Warehouse patch user not in warehouse', async () => {
@@ -193,7 +185,6 @@ describe('WarehouseController (e2e)', () => {
         role: 'admin',
       })
       .expect(404);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(postUsersResponse.body.message).toEqual(
       'User is not assigned to this warehouse',
     );
@@ -218,12 +209,9 @@ describe('WarehouseController (e2e)', () => {
     const getUsersResponse = await agent
       .get('/warehouses/users?search=2')
       .expect(200);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(getUsersResponse.body['total']).toEqual(1);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(getUsersResponse.body['data']).toEqual([
       {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         userId: expect.any(String),
         username: 'username2',
         role: 'admin',

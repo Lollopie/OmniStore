@@ -18,11 +18,13 @@ import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { WarehouseDto } from '@shared/dto/warehouse.dto';
 import { useForm } from 'react-hook-form';
 import { WAREHOUSE_INVITATION_PERMISSIONS, WarehouseRole } from '@shared/enum/warehouseRoles.enum';
+
 export interface WarehouseUser {
   userId: string;
   username: string;
   role: string;
 }
+
 export interface Warehouse {
   warehouseId: string;
   name: string;
@@ -61,7 +63,7 @@ const WarehouseUsers = () => {
   } = useForm<WarehouseDto>({ resolver });
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;
-    if (!dialog){
+    if (!dialog) {
       return;
     }
     if (isOpen) {
@@ -72,11 +74,11 @@ const WarehouseUsers = () => {
   }, [isOpen]);
   useEffect(() => {
     const controller = new AbortController();
-    getUsers({searchTerm: debouncedSearchTerm, setUsers, setTotalUsers, controller, addToast});
+    getUsers({ searchTerm: debouncedSearchTerm, setUsers, setTotalUsers, controller, addToast });
     return () => {
       controller.abort();
     };
-  }, [activeWarehouse, debouncedSearchTerm]);
+  }, [activeWarehouse, addToast, debouncedSearchTerm]);
   useEffect(() => {
     generatePagination(Number(page), Math.max(Math.ceil(totalUsers / usersPerPage), 1), setPages);
   }, [page, totalUsers]);
@@ -94,29 +96,31 @@ const WarehouseUsers = () => {
               size="md"
               variant="ghost"
               onClick={() => setIsOpen(false)}
-              children='X'
+              children="X"
             />
           </div>
 
           <form
             onSubmit={handleSubmit((data) => {
-              handleAddWarehouse({warehouseDto: data, setActiveWarehouse, addToast });
+              handleAddWarehouse({ warehouseDto: data, setActiveWarehouse, addToast });
               setIsOpen(false);
             })}
             className="pt-4"
           >
-            <InputField label={"Warehouse Name"} type={"text"} {...register('warehouseName')} />
+            <InputField label={'Warehouse Name'} type={'text'} {...register('warehouseName')} />
             {errors.warehouseName && <p className="text-error text-sm">{errors.warehouseName.message}</p>}
 
             <section className="flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">
-              <Button children={"Cancel"} variant={"danger"} size={"sm"} onClick={() => setIsOpen(false)} type={"button"} />
-              <Button children={"Add"} variant={"add"} size={"sm"} type={"submit"} />
+              <Button children={'Cancel'} variant={'danger'} size={'sm'} onClick={() => setIsOpen(false)}
+                      type={'button'} />
+              <Button children={'Add'} variant={'add'} size={'sm'} type={'submit'} />
             </section>
           </form>
         </div>
       </dialog>
       <div className="mx-auto bg-base-100 rounded-xl border border-base-300 p-4 sm:p-8 overflow-scroll">
-        <div className="pb-6 mb-6 border-b border-base-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div
+          className="pb-6 mb-6 border-b border-base-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <WarehouseSelector
             selectedWarehouse={activeWarehouse.warehouseId}
             setActiveWarehouse={setActiveWarehouse}
@@ -152,20 +156,22 @@ const WarehouseUsers = () => {
               ))}
             </select>
             <Button
-              variant={"add"}
-              size={"sm"}
+              variant={'add'}
+              size={'sm'}
               onClick={async () => {
                 await addUser({ newUsername, newRole, setUsers, setNewUsername, setNewRole, addToast });
               }}
-              children={"Add user"}
+              children={'Add user'}
             />
           </div>
         ) : null}
-        <WarehouseUserTable users={users} activeWarehouse={activeWarehouse} setUsers={setUsers} setActiveWarehouse={setActiveWarehouse} addToast={addToast} />
+        <WarehouseUserTable users={users} activeWarehouse={activeWarehouse} setUsers={setUsers}
+                            setActiveWarehouse={setActiveWarehouse} addToast={addToast} />
       </div>
 
       <section className="mt-4">
-        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / usersPerPage)} searchParams={searchParams} setSearchParams={setSearchParams} />
+        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / usersPerPage)}
+                    searchParams={searchParams} setSearchParams={setSearchParams} />
       </section>
     </section>
   );

@@ -50,16 +50,10 @@ describe('LoginController (e2e)', () => {
       .post('/register')
       .send({ email: email })
       .expect(201);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const verificationToken: string =
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       mockMailService.sendVerificationEmail.mock.calls[
         mockMailService.sendVerificationEmail.mock.calls.length - 1
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ][1].verificationUrl.split(
-        'token=',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      )[1];
+      ][1].verificationUrl.split('token=')[1];
     return await request(app.getHttpServer())
       .post('/organizations/register?token=' + verificationToken)
       .send({
@@ -69,11 +63,11 @@ describe('LoginController (e2e)', () => {
         name: 'testOrg',
       });
   }
-  it('/login unauthorized (POST)', () => {
-    return request(app.getHttpServer())
+  it('/login unauthorized (POST)', async () => {
+    const response = await request(app.getHttpServer())
       .post('/login')
-      .send({ username: 'test', password: 'password1' })
-      .expect(401);
+      .send({ username: 'test', password: 'password1' });
+    expect(response.status).toBe(401);
   });
   it('/register /login (POST)', async () => {
     const loginData = {
@@ -81,10 +75,10 @@ describe('LoginController (e2e)', () => {
       password: 'password1',
     };
     await register(loginData.username, loginData.password);
-    return request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .post('/login')
-      .send({ username: loginData.username, password: loginData.password })
-      .expect(200);
+      .send({ username: loginData.username, password: loginData.password });
+    expect(response.status).toBe(200);
   });
   it('/login (POST) - should reject username with a space', async () => {
     const invalidData = {

@@ -7,6 +7,7 @@ import Button from '../../components/Button.tsx';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { OrganizationDto } from '@shared/dto/organization.dto.ts';
 import { useForm } from 'react-hook-form';
+
 export function InvalidToken() {
   return (
     <div>
@@ -17,6 +18,7 @@ export function InvalidToken() {
     </div>
   );
 }
+
 const resolver = classValidatorResolver(OrganizationDto);
 const CreateOrganization = () => {
   const [verifying, setVerifying] = useState(true);
@@ -26,13 +28,13 @@ const CreateOrganization = () => {
   const {
     register,
     handleSubmit,
-    formState: {errors},
+    formState: { errors },
   } = useForm<OrganizationDto>({ resolver });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   useEffect(() => {
     const verifyToken = async () => {
-      const token = new URLSearchParams(window.location.search).get("token");
+      const token = new URLSearchParams(window.location.search).get('token');
       if (!token) {
         setVerifying(false);
         return;
@@ -40,7 +42,7 @@ const CreateOrganization = () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/register/verify?token=${token}`, {
           method: 'GET',
-          credentials: 'include'
+          credentials: 'include',
         });
         const data: { valid?: boolean, error?: string, email?: string } = await response.json();
         if (!response.ok || !data.valid) {
@@ -55,7 +57,7 @@ const CreateOrganization = () => {
       }
     };
     verifyToken();
-  }, []);
+  }, [addToast]);
   const submit = async (organizationDto: OrganizationDto) => {
     setError('');
     setSuccess('');
@@ -63,19 +65,24 @@ const CreateOrganization = () => {
     const trimmedUsername = organizationDto.ownerUsername.trim();
     const password = organizationDto.ownerPassword;
     const organizationName = organizationDto.name.trim();
-    const token = new URLSearchParams(window.location.search).get("token");
+    const token = new URLSearchParams(window.location.search).get('token');
     try {
       const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/register?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ownerEmail: email, ownerUsername: trimmedUsername, ownerPassword: password, name: organizationName }),
+        body: JSON.stringify({
+          ownerEmail: email,
+          ownerUsername: trimmedUsername,
+          ownerPassword: password,
+          name: organizationName,
+        }),
       });
 
       const data: {
         message?: string;
       } = await response.json();
       if (!response.ok) {
-        if( data.message ){
+        if (data.message) {
           console.log(data.message);
           addToast('Error creating organization', 'error', 5000);
         }

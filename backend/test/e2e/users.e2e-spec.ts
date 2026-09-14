@@ -70,7 +70,6 @@ describe('UsersController (e2e)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('message');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(response.body.message).toBe('Account deleted successfully');
 
     // Verify user is gone
@@ -99,7 +98,6 @@ describe('UsersController (e2e)', () => {
     });
 
     expect(response.status).toBe(401);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(response.body.message).toBe('Invalid password');
   });
   it('/users (PATCH) - should update password with correct password', async () => {
@@ -123,7 +121,6 @@ describe('UsersController (e2e)', () => {
     });
 
     expect(response.status).toBe(200);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(response.body.message).toBe('Password updated successfully');
     const user = await dataSource
       .getRepository('user')
@@ -153,7 +150,6 @@ describe('UsersController (e2e)', () => {
       confirmPassword: 'newpassword123',
     });
     expect(response.status).toBe(401);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(response.body.message).toBe('Invalid password');
   });
   it('/users (PATCH) - should not update password with incorrect confirm password', async () => {
@@ -176,7 +172,6 @@ describe('UsersController (e2e)', () => {
       confirmPassword: 'newpassword12',
     });
     expect(response.status).toBe(401);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(response.body.message).toBe('New passwords do not match');
   });
   afterEach(async () => {

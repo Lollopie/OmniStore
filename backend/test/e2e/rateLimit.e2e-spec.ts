@@ -38,34 +38,38 @@ describe('RateLimit (e2e)', () => {
   beforeEach(async () => {
     await redisClient.flushDb();
   });
-  it('/healthz', async () => {
+  it('/healthz should use rate limiting', async () => {
     for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
-      await request(app.getHttpServer()).get('/healthz').expect(200);
+      const response = await request(app.getHttpServer()).get('/healthz');
+      expect(response.status).toBe(200);
     }
-    await request(app.getHttpServer()).get('/healthz').expect(200);
+    const response = await request(app.getHttpServer()).get('/healthz');
+    expect(response.status).toBe(429);
   });
-  it('/auth/status', async () => {
+  it("/auth/status shouldn't use rate limiting", async () => {
     for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
-      await request(app.getHttpServer()).get('/auth/status').expect(401);
+      const response = await request(app.getHttpServer()).get('/auth/status');
+      expect(response.status).toBe(401);
     }
-    await request(app.getHttpServer()).get('/auth/status').expect(401);
+    const response = await request(app.getHttpServer()).get('/auth/status');
+    expect(response.status).toBe(401);
   });
-  it('/register', async () => {
+  it('/register should use rate limiting', async () => {
     for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/register')
-        .send({ email: 'test' + i.toString() + '@example.com' })
-        .expect(201);
+        .send({ email: 'test' + i.toString() + '@example.com' });
+      expect(response.status).toBe(201);
     }
-    await request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .post('/register')
-      .send({ email: 'test@example.com' })
-      .expect(429);
+      .send({ email: 'test@example.com' });
+    expect(response.status).toBe(429);
     await new Promise((resolve) => setTimeout(resolve, 1100));
-    await request(app.getHttpServer())
+    const laterResponse = await request(app.getHttpServer())
       .post('/register')
-      .send({ email: 'test@example.com' })
-      .expect(201);
+      .send({ email: 'test@example.com' });
+    expect(laterResponse.status).toBe(201);
   });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;

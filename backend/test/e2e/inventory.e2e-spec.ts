@@ -13,6 +13,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { registerAndLogin } from './utils/helper';
 import { CookieAccessInfo } from 'cookiejar';
 import { MailService } from '../../src/mail/mail.service';
+import { Cookie } from '../../src/user/user.decorator';
 
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -64,8 +65,9 @@ describe('InventoryController (e2e)', () => {
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
 
-  it('/inventory unauthorized (GET)', () => {
-    return request(app.getHttpServer()).get('/inventory').expect(401);
+  it('/inventory unauthorized (GET)', async () => {
+    const response = await request(app.getHttpServer()).get('/inventory');
+    expect(response.status).toBe(401);
   });
 
   it('/inventory without warehouse (GET)', async () => {
@@ -76,7 +78,8 @@ describe('InventoryController (e2e)', () => {
       'alice.inventory.test',
       'Password123',
     );
-    await agent.get('/inventory').expect(400);
+    const response = await agent.get('/inventory');
+    expect(response.status).toBe(400);
   });
 
   it('should create and read inventory for the authenticated user only', async () => {
@@ -94,19 +97,14 @@ describe('InventoryController (e2e)', () => {
       .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemName).toBe('Apples');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
 
     const listResponse = await agent.get('/inventory').expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(1);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0][0].itemName).toBe('Apples');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(listResponse.body[0][0].amount)).toBe('5');
   });
 
@@ -141,16 +139,12 @@ describe('InventoryController (e2e)', () => {
 
     const aliceList = await aliceAgent.get('/inventory').expect(200);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(aliceList.body[0]).toHaveLength(1);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(aliceList.body[1]).toBe(1);
 
     const bobList = await bobAgent.get('/inventory').expect(200);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(bobList.body[0]).toHaveLength(1);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(bobList.body[1]).toBe(1);
   });
   it('should enforce RLS isolation between two warehouses', async () => {
@@ -178,9 +172,7 @@ describe('InventoryController (e2e)', () => {
       .expect(201);
     const bobList = await aliceAgent.get('/inventory').expect(200);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(bobList.body[0]).toHaveLength(1);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(bobList.body[1]).toBe(1);
   });
   it('should only return 10 items', async () => {
@@ -199,15 +191,12 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe('1');
     }
     const listResponse = await agent.get('/inventory').expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
   });
   it('default sort by new', async () => {
@@ -226,22 +215,17 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe('1');
     }
     const listResponse = await agent.get('/inventory').expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
     for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0][i].itemName).toBe(
         (numberOfItems - i - 1).toString(),
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(listResponse.body[0][i].amount)).toBe('1');
     }
   });
@@ -261,20 +245,15 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe('1');
     }
     const listResponse = await agent.get('/inventory?sort=old').expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
     for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0][i].itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(listResponse.body[0][i].amount)).toBe('1');
     }
   });
@@ -294,9 +273,7 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe('1');
     }
     const listResponse = await agent
@@ -304,12 +281,9 @@ describe('InventoryController (e2e)', () => {
       .expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
     for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0][i].itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(listResponse.body[0][i].amount)).toBe('1');
     }
   });
@@ -329,9 +303,7 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe('1');
     }
     const listResponse = await agent
@@ -339,14 +311,11 @@ describe('InventoryController (e2e)', () => {
       .expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
     for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0][i].itemName).toBe(
         (numberOfItems - i - 1).toString(),
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(listResponse.body[0][i].amount)).toBe('1');
     }
   });
@@ -366,21 +335,16 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: i.toString() })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe(i.toString());
     }
     const listResponse = await agent
       .get('/inventory?sort=amount asc')
       .expect(200);
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
     for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0][i].itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(listResponse.body[0][i].amount)).toBe(i.toString());
     }
   });
@@ -400,9 +364,7 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: i.toString() })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe(i.toString());
     }
     const listResponse = await agent
@@ -410,14 +372,11 @@ describe('InventoryController (e2e)', () => {
       .expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
     for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0][i].itemName).toBe(
         (numberOfItems - i - 1).toString(),
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(listResponse.body[0][i].amount)).toBe(
         (numberOfItems - i - 1).toString(),
       );
@@ -439,20 +398,16 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe('1');
 
       const createResponse2 = await agent
         .post('/inventory')
         .send({ itemName: (numberOfItems + i).toString(), amount: '2' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse2.body.itemName).toBe(
         (numberOfItems + i).toString(),
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse2.body.amount)).toBe('2');
     }
     const listResponse = await agent
@@ -460,12 +415,9 @@ describe('InventoryController (e2e)', () => {
       .expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
     for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0][i].itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(listResponse.body[0][i].amount)).toBe('1');
     }
   });
@@ -485,20 +437,16 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe('1');
 
       const createResponse2 = await agent
         .post('/inventory')
         .send({ itemName: (numberOfItems + i).toString(), amount: '2' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse2.body.itemName).toBe(
         (numberOfItems + i).toString(),
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse2.body.amount)).toBe('2');
     }
     const listResponse = await agent
@@ -506,14 +454,11 @@ describe('InventoryController (e2e)', () => {
       .expect(200);
 
     expect(listResponse.body).toHaveLength(2);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body[0]).toHaveLength(10);
     for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0][i].itemName).toBe(
         (i + numberOfItems).toString(),
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(listResponse.body[0][i].amount)).toBe('2');
     }
   });
@@ -533,9 +478,7 @@ describe('InventoryController (e2e)', () => {
         .post('/inventory')
         .send({ itemName: i.toString(), amount: '1' })
         .expect(201);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createResponse.body.itemName).toBe(i.toString());
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(String(createResponse.body.amount)).toBe('1');
     }
     for (let i = 0; i < Math.ceil(numberOfItems / 10); i++) {
@@ -543,14 +486,11 @@ describe('InventoryController (e2e)', () => {
         .get('/inventory?page=' + (i + 1))
         .expect(200);
       expect(listResponse.body).toHaveLength(2);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(listResponse.body[0]).toHaveLength(10);
       for (let j = 0; j < 10; j++) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(listResponse.body[0][j].itemName).toBe(
           (numberOfItems - (i * 10 + j + 1)).toString(),
         );
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(String(listResponse.body[0][j].amount)).toBe('1');
       }
     }
@@ -570,26 +510,20 @@ describe('InventoryController (e2e)', () => {
       .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemName).toBe('Apples');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemId).toBeDefined();
 
     const listResponse = await agent
       .patch('/inventory')
       .send({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         itemId: createResponse.body.itemId,
         itemName: 'Apples',
         amount: '5',
       })
       .expect(200);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body['amount']).toBe(5);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body['itemName']).toBe('Apples');
   });
   it('edit no itemId', async () => {
@@ -607,11 +541,8 @@ describe('InventoryController (e2e)', () => {
       .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemName).toBe('Apples');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemId).toBeDefined();
 
     await agent
@@ -637,11 +568,8 @@ describe('InventoryController (e2e)', () => {
       .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemName).toBe('Apples');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemId).toBeDefined();
 
     await agent
@@ -668,23 +596,18 @@ describe('InventoryController (e2e)', () => {
       .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemName).toBe('Apples');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemId).toBeDefined();
 
     const listResponse = await agent
       .delete('/inventory')
       .send({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         itemId: createResponse.body.itemId,
         itemName: 'Apples',
         amount: '5',
       })
       .expect(200);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(listResponse.body['message']).toBe('Item has been deleted.');
   });
   it('delete no itemId', async () => {
@@ -702,11 +625,8 @@ describe('InventoryController (e2e)', () => {
       .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemName).toBe('Apples');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemId).toBeDefined();
 
     await agent
@@ -732,11 +652,8 @@ describe('InventoryController (e2e)', () => {
       .send({ itemName: 'Apples', amount: '5' })
       .expect(201);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemName).toBe('Apples');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(createResponse.body.amount)).toBe('5');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(createResponse.body.itemId).toBeDefined();
 
     await agent
@@ -767,13 +684,9 @@ describe('InventoryController (e2e)', () => {
       .send({ itemName: 'Cookies', amount: '5' })
       .expect(201);
     const searchResponse = await agent.get('/inventory?search=Coo').expect(200);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(searchResponse.body[1]).toBe(1);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(searchResponse.body[0][0].itemName).toBe('Cookies');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(String(searchResponse.body[0][0].amount)).toBe('5');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(searchResponse.body[0][0].itemId).toBeDefined();
   });
   it('non existent warehouseId', async () => {
@@ -788,22 +701,15 @@ describe('InventoryController (e2e)', () => {
       'token',
       new CookieAccessInfo('127.0.0.1', '/', false, false),
     );
-    const assignedToken: {
-      userId: string;
-      username: string;
-      activeWarehouseId: string;
-      activeRole: string;
-    } = jwtService.decode(aliceToken.value);
+    const assignedToken: Cookie = jwtService.decode(aliceToken.value);
     aliceToken.value = jwtService.sign({
-      userId: assignedToken.userId,
-      username: assignedToken.username,
+      ...assignedToken,
       activeWarehouseId: '019fa8c5-6daa-73cb-bcdd-c6d56fb5ae05',
-      activeRole: assignedToken.activeRole,
     });
-    await agent
+    const response = await agent
       .post('/inventory')
-      .send({ itemName: 'Apples', amount: '5' })
-      .expect(400);
+      .send({ itemName: 'Apples', amount: '5' });
+    expect(response.status).toBe(400);
   });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;
