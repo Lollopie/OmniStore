@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import tailwindcss from '@tailwindcss/vite'
-import * as path from 'node:path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import tailwindcss from '@tailwindcss/vite';
+import * as path from 'node:path';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,12 +14,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, '../shared/src'),
+      '@assets': path.resolve(__dirname, './src/assets'),
     },
-    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   server: {
     fs: {
-      allow: ['..']
+      allow: ['..'],
     },
     watch: {
       usePolling: true,
@@ -28,4 +29,4 @@ export default defineConfig({
     strictPort: true,
     port: 5173,
   },
-})
+});

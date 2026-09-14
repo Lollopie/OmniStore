@@ -152,7 +152,7 @@ describe('InventoryService', () => {
         expect.objectContaining({
           where: {
             warehouseId: 'warehouse-1',
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
             itemName: expect.objectContaining({
               _type: 'ilike',
               _value: '%name%',
@@ -167,7 +167,7 @@ describe('InventoryService', () => {
         expect.objectContaining({
           where: {
             warehouseId: 'warehouse-1',
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
             itemName: expect.objectContaining({
               _type: 'ilike',
               _value: '%name%',
@@ -225,7 +225,7 @@ describe('InventoryService', () => {
     it('should throw an error if the item is not found', async () => {
       mockInventoryRepository.findOne.mockResolvedValueOnce(null);
       await expect(
-        service.updateItem({ itemName: 'item-1', amount: 200 }),
+        service.updateItem({ itemName: 'item-1', amount: '200' }),
       ).rejects.toThrow(new NotFoundException('Item not found'));
     });
     it('should update the item', async () => {
@@ -277,19 +277,27 @@ describe('InventoryService', () => {
   describe('deleteItem', () => {
     it('should throw an error if the item is not found', async () => {
       mockInventoryRepository.findOne.mockResolvedValueOnce(null);
-      await expect(service.deleteItem({ itemId: 'item-1' })).rejects.toThrow(
-        new NotFoundException('Item not found'),
-      );
+      await expect(
+        service.deleteItem({ itemId: 'item-1', itemName: 'item', amount: '1' }),
+      ).rejects.toThrow(new NotFoundException('Item not found'));
     });
     it('should delete the item if it exists', async () => {
-      await service.deleteItem({ itemId: 'item-1' });
+      await service.deleteItem({
+        itemId: 'item-1',
+        itemName: 'item',
+        amount: '1',
+      });
       expect(mockInventoryRepository.delete).toHaveBeenCalledWith({
         itemId: 'item-1',
         warehouseId: 'warehouse-1',
       });
     });
     it('should return the delete result', async () => {
-      const result = await service.deleteItem({ itemId: 'item-1' });
+      const result = await service.deleteItem({
+        itemId: 'item-1',
+        itemName: 'item',
+        amount: '1',
+      });
       expect(result).toEqual({ affected: 1 });
     });
   });

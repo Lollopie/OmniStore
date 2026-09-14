@@ -3,15 +3,26 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import jestPlugin from 'eslint-plugin-jest';
+import { defineConfig } from 'eslint/config';
 
-export default tseslint.config(
+export default defineConfig(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: ['eslint.config.mjs', '**/dist/**'],
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  eslintPluginPrettierRecommended,
   {
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+      jest: jestPlugin,
+    },
+  },
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.recommended,
+      eslintPluginPrettierRecommended,
+    ],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -32,5 +43,13 @@ export default tseslint.config(
       '@typescript-eslint/return-await': ['error', 'always'],
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
+  },
+  {
+    files: ['**/*.{js}'],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    files: ['test/**/*.{ts,tsx}'],
+    extends: [jestPlugin.configs['flat/recommended']],
   },
 );

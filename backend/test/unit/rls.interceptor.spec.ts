@@ -164,7 +164,6 @@ describe('LogoutController', () => {
     });
     it('should pass to the next function', async () => {
       await firstValueFrom(rlsInterceptor.intercept(mockContext, mockNext));
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(mockNext.handle).toHaveBeenCalled();
     });
     it('should return result', async () => {

@@ -61,7 +61,6 @@ describe('RegisterService', () => {
           warehouse_id: 'warehouse-1',
           role: 'member',
           token_hash: 'mocked-hashed-token',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           expires_at: expect.any(Date),
         },
         rawToken: 'mocked-raw-token',
@@ -84,7 +83,6 @@ describe('RegisterService', () => {
         warehouse_id: 'warehouse-1',
         role: 'member',
         token_hash: 'mocked-hashed-token',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         expires_at: expect.any(Date),
       });
     });

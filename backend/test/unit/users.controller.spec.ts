@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CanActivate } from '@nestjs/common';
 import { AuthGuard } from '../../src/auth/auth.guard';
 import { UsersService } from '../../src/user/users.service';
+import { Response } from 'express';
 describe('UsersController', () => {
   let usersController: UsersController;
   const mockUsersService = {
@@ -73,13 +74,12 @@ describe('UsersController', () => {
   });
   describe('deleteAccount', () => {
     it('should call usersService deleteAccount with userId and password', async () => {
-      const mockResponse: any = {
+      const mockResponse = {
         clearCookie: jest.fn(),
-      };
+      } as unknown as Response;
       await usersController.deleteAccount(
         { password: 'password1' },
         mockUserToken,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
       expect(mockUsersService.deleteUser).toHaveBeenCalledWith(
@@ -88,16 +88,14 @@ describe('UsersController', () => {
       );
     });
     it('should clear cookie', async () => {
-      const mockResponse: any = {
+      const mockResponse = {
         clearCookie: jest.fn(),
-      };
+      } as unknown as Response;
       await usersController.deleteAccount(
         { password: 'password1' },
         mockUserToken,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('token', {
         httpOnly: true,
         secure: false,
@@ -105,13 +103,12 @@ describe('UsersController', () => {
       });
     });
     it('should return success message', async () => {
-      const mockResponse: any = {
+      const mockResponse = {
         clearCookie: jest.fn(),
-      };
+      } as unknown as Response;
       const result = await usersController.deleteAccount(
         { password: 'password1' },
         mockUserToken,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
       expect(result).toEqual({ message: 'Account deleted successfully' });

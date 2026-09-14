@@ -2,6 +2,7 @@ interface FeatureBoxProps {
   svgName: string;
   text: string;
 }
+
 export default function FeatureBox({ svgName, text }: FeatureBoxProps) {
   return (
     <div className="basis-1/6 border-2 border-accent rounded-lg p-3 pt-7 flex flex-col justify-start items-center">

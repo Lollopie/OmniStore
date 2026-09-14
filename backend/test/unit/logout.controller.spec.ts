@@ -1,5 +1,6 @@
 import { LogoutController } from '../../src/logout/logout.controller';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Response } from 'express';
 describe('LogoutController', () => {
   let logoutController: LogoutController;
   beforeEach(async () => {
@@ -15,12 +16,10 @@ describe('LogoutController', () => {
   });
   describe('logout', () => {
     it('should set clearCookie with expected parameters', () => {
-      const mockResponse: any = {
+      const mockResponse = {
         clearCookie: jest.fn(),
-      };
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      } as unknown as Response;
       logoutController.logout(mockResponse);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('token', {
         httpOnly: true,
         secure: false,
@@ -28,10 +27,9 @@ describe('LogoutController', () => {
       });
     });
     it('should return message', () => {
-      const mockResponse: any = {
+      const mockResponse = {
         clearCookie: jest.fn(),
-      };
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      } as unknown as Response;
       const response = logoutController.logout(mockResponse);
       expect(response).toEqual({ message: 'Logout successful' });
     });

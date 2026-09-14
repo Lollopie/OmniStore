@@ -31,7 +31,6 @@ describe('AuthGuard', () => {
     signAsync: jest.fn().mockResolvedValue('valid-token'),
   };
   beforeAll(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     token = await mockJwtService.signAsync(validCookie);
     mockRequest = makeMockRequest<AuthenticatedRequest>({
       token: token,

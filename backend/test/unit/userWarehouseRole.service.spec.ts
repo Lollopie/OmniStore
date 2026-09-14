@@ -235,7 +235,6 @@ describe('UserWarehouseRoleService', () => {
         mockUserWarehouseRoleRepository.createQueryBuilder,
       ).toHaveBeenCalledWith('user_warehouse_role');
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().innerJoin,
       ).toHaveBeenCalledWith(
         'UserEntity',
@@ -243,17 +242,14 @@ describe('UserWarehouseRoleService', () => {
         'user.userId = user_warehouse_role.userId',
       );
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().where,
       ).toHaveBeenCalledWith('user_warehouse_role.warehouseId = :warehouseId', {
         warehouseId: 'warehouse-1',
       });
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().getCount,
       ).toHaveBeenCalled();
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().select,
       ).toHaveBeenCalledWith([
         'user.userId AS "userId"',
@@ -261,33 +257,27 @@ describe('UserWarehouseRoleService', () => {
         'user_warehouse_role.role AS role',
       ]);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().offset,
       ).toHaveBeenCalledWith(0);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().limit,
       ).toHaveBeenCalledWith(10);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().getRawMany,
       ).toHaveBeenCalled();
     });
     it('should calculate paging correctly', async () => {
       await userWarehouseRoleService.getUsers(2, 10, '');
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().offset,
       ).toHaveBeenCalledWith(10);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().limit,
       ).toHaveBeenCalledWith(10);
     });
     it('should trim search term', async () => {
       await userWarehouseRoleService.getUsers(1, 10, '  search  ');
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserWarehouseRoleRepository.createQueryBuilder().andWhere,
       ).toHaveBeenCalledWith('user.username ILIKE :search', {
         search: `%search%`,

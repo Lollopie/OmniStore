@@ -39,7 +39,7 @@ describe('GuardDBService', () => {
           role: 'owner',
         },
       ]);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       const result = await guardDBService.getUserOrgRole('user-1', 'org-1');
       expect(result).toEqual('owner');
     });
@@ -109,7 +109,6 @@ describe('GuardDBService', () => {
           role: 'admin',
         },
       ]);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const result = await guardDBService.getUserWarehouseRole(
         'user-1',
         'warehouse-1',

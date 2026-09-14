@@ -6,6 +6,8 @@ import { OrganizationRolesGuard } from '../../src/roles/organizationRoles/organi
 import { OrganizationService } from '../../src/organization/organization.service';
 import { AuthService } from '../../src/auth/auth.service';
 import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
+import { Response } from 'express';
+import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 describe('OrganizationController', () => {
   let organizationController: OrganizationController;
   class MockGuard implements CanActivate {
@@ -80,7 +82,7 @@ describe('OrganizationController', () => {
   });
   describe('register', () => {
     it('should call organizationService createOrganization', async () => {
-      const mockResponse: any = {};
+      const mockResponse = {} as unknown as Response;
       await organizationController.register(
         'token',
         {
@@ -89,7 +91,6 @@ describe('OrganizationController', () => {
           ownerUsername: 'username',
           ownerPassword: 'password1',
         },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
       expect(mockOrganizationService.createOrganization).toHaveBeenCalledWith(
@@ -103,7 +104,7 @@ describe('OrganizationController', () => {
       );
     });
     it('should call authService createAndSendCookie', async () => {
-      const mockResponse: any = {};
+      const mockResponse = {} as unknown as Response;
       await organizationController.register(
         'token',
         {
@@ -112,7 +113,6 @@ describe('OrganizationController', () => {
           ownerUsername: 'username',
           ownerPassword: 'password1',
         },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
       expect(mockAuthService.createAndSendCookie).toHaveBeenCalledWith(
@@ -127,7 +127,7 @@ describe('OrganizationController', () => {
       );
     });
     it('should return message', async () => {
-      const mockResponse: any = {};
+      const mockResponse = {} as unknown as Response;
       const response = await organizationController.register(
         'token',
         {
@@ -136,7 +136,6 @@ describe('OrganizationController', () => {
           ownerUsername: 'username',
           ownerPassword: 'password1',
         },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         mockResponse,
       );
       expect(response).toEqual({
@@ -172,7 +171,7 @@ describe('OrganizationController', () => {
     it('should call userOrganizationRoleService updateUserRole', async () => {
       await organizationController.updateUserRole({
         username: 'username',
-        role: 'admin',
+        role: OrganizationRole.ADMIN,
       });
       expect(
         mockUserOrganizationRoleService.updateUserRole,
@@ -181,7 +180,7 @@ describe('OrganizationController', () => {
     it('should return userOrganizationRoleService updateUserRole return value', async () => {
       const response = await organizationController.updateUserRole({
         username: 'username',
-        role: 'admin',
+        role: OrganizationRole.ADMIN,
       });
       expect(response).toEqual({
         userId: 'user-1',

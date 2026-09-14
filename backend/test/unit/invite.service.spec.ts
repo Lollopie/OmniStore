@@ -161,7 +161,7 @@ describe('InviteService', () => {
         orgId: 'org-1',
         warehouseId: 'warehouse-1',
         role: 'member',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         expiresAt: expect.any(Date),
         tokenHash: 'mocked-hashed-token',
       });
@@ -190,7 +190,7 @@ describe('InviteService', () => {
         orgId: 'org-1',
         warehouseId: 'warehouse-1',
         role: 'member',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         expiresAt: expect.any(Date),
         tokenHash: 'mocked-hashed-token',
         inviteId: 'invite-1',
@@ -206,7 +206,7 @@ describe('InviteService', () => {
         orgId: 'org-1',
         warehouseId: 'warehouse-1',
         role: 'member',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         expiresAt: expect.any(Date),
         tokenHash: 'mocked-hashed-token',
         inviteId: 'invite-1',
@@ -227,7 +227,7 @@ describe('InviteService', () => {
         username: 'username',
         password: 'password1',
       });
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
       expect(mockTxRepoProvider.getManager().query).toHaveBeenCalledWith(
         'SELECT * FROM consume_invite($1, $2, $3, $4)',
         ['mocked-hashed-token', null, null, true],
@@ -238,14 +238,13 @@ describe('InviteService', () => {
         username: 'username',
         password: 'password1',
       });
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
       expect(mockTxRepoProvider.getManager().query).toHaveBeenCalledWith(
         'SELECT grant_invite_role($1, $2, $3, $4)',
         ['user-1', 'org-1', 'warehouse-1', 'member'],
       );
     });
     it('should throw error if no invite is found', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
       mockTxRepoProvider.getManager().query.mockImplementationOnce(() => {
         return new Promise(() => {
           throw new Error('invite_invalid_or_expired');
@@ -348,9 +347,8 @@ describe('InviteService', () => {
       const expiresAt = new Date(
         Date.now() + registerDurationMinutes * 60 * 1000,
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       const calledExpiresAt: Date =
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockInviteRepository.query.mock.calls[0][1][2];
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
@@ -368,9 +366,7 @@ describe('InviteService', () => {
           warehouseId: 'warehouse-1',
           role: 'member',
           tokenHash: 'mocked-hashed-token',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           expiresAt: expect.any(Date),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           createdAt: expect.any(Date),
         },
         rawToken: 'mocked-random-token',
@@ -421,7 +417,7 @@ describe('InviteService', () => {
         warehouseId: 'warehouse-1',
         role: 'member',
         tokenHash: 'mocked-hashed-token',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         expiresAt: expect.any(Date),
       });
     });

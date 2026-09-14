@@ -273,7 +273,6 @@ describe('OrganizationService', () => {
       expect(helper.mapRow).toHaveBeenCalledWith(mockOrganizationRepository, {
         org_id: 'org-1',
         name: 'organization',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         created_at: expect.any(Date),
       });
     });
@@ -294,7 +293,6 @@ describe('OrganizationService', () => {
         organization: {
           orgId: 'org-1',
           name: 'organization',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           createdAt: expect.any(Date),
         },
       });
@@ -314,7 +312,6 @@ describe('OrganizationService', () => {
       expect(result).toEqual({
         orgId: 'org-1',
         name: 'organization',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         createdAt: expect.any(Date),
       });
     });
@@ -330,7 +327,6 @@ describe('OrganizationService', () => {
         mockUserOrganizationRoleRepository.createQueryBuilder,
       ).toHaveBeenCalledWith('user_org_role');
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().innerJoin,
       ).toHaveBeenCalledWith(
         'UserEntity',
@@ -338,17 +334,14 @@ describe('OrganizationService', () => {
         'user.userId = user_org_role.userId',
       );
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().where,
       ).toHaveBeenCalledWith('user_org_role.orgId = :orgId', {
         orgId: 'org-1',
       });
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().getCount,
       ).toHaveBeenCalled();
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().select,
       ).toHaveBeenCalledWith([
         'user.userId AS "userId"',
@@ -356,22 +349,18 @@ describe('OrganizationService', () => {
         'user_org_role.role AS role',
       ]);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().offset,
       ).toHaveBeenCalledWith(0);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().limit,
       ).toHaveBeenCalledWith(10);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().getRawMany,
       ).toHaveBeenCalled();
     });
     it('should use trimmed search term', async () => {
       await organizationService.getUsers('  search  ', 1);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().andWhere,
       ).toHaveBeenCalledWith('user.username ILIKE :search', {
         search: `%search%`,
@@ -380,11 +369,9 @@ describe('OrganizationService', () => {
     it('should use paging', async () => {
       await organizationService.getUsers('', 2);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().offset,
       ).toHaveBeenCalledWith(10);
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         mockUserOrganizationRoleRepository.createQueryBuilder().limit,
       ).toHaveBeenCalledWith(10);
     });

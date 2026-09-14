@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../../src/auth/auth.service';
+import { Response } from 'express';
+import { Cookie } from '../../src/user/user.decorator';
 
 describe('AuthService', () => {
   const mockJwtService = {
@@ -41,17 +43,15 @@ describe('AuthService', () => {
   });
   describe('createAndSendCookie', () => {
     it('should create a JWT token and send it as a cookie in the response', () => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const mockResponse = {
         cookie: jest.fn(),
-      } as any;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const mockCookie = {} as any;
+      } as unknown as Response;
+
+      const mockCookie = {} as unknown as Cookie;
       mockJwtService.sign.mockReturnValue('mocked-jwt-token');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       service.createAndSendCookie(mockCookie, mockResponse);
       expect(mockJwtService.sign).toHaveBeenLastCalledWith(mockCookie);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
       expect(mockResponse.cookie).toHaveBeenLastCalledWith(
         'token',
         'mocked-jwt-token',
@@ -59,7 +59,7 @@ describe('AuthService', () => {
           httpOnly: true,
           secure: false,
           sameSite: 'lax',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
           maxAge: expect.any(Number),
         }),
       );

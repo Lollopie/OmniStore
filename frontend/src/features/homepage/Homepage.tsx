@@ -1,23 +1,16 @@
-import { useEffect, useState } from 'react';
 import NavBar from '../../components/NavBar.tsx';
 import FeatureBox from './components/FeatureBox.tsx';
 import { Link } from 'react-router';
 
 const Homepage = () => {
-  const [images, setImages] = useState([]);
-  useEffect(() => {
-    const imageModules = import.meta.glob('../../../public/images/companies/*.{png,jpg,jpeg,svg,webp}', {
-      eager: true,
-      import: 'default',
-    });
-    const loadedImages = Object.values(imageModules);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setImages(loadedImages);
-  }, []);
+  const images: string[] = Object.values(import.meta.glob('../../assets/companies/*.{png,jpg,jpeg,svg,webp}', {
+    eager: true,
+    import: 'default',
+  }));
   return (
     <div className="flex flex-col gap-10">
       <header>
-        <NavBar/>
+        <NavBar />
       </header>
       <main>
         <section className="flex flex-col gap-20 items-center">
@@ -34,14 +27,14 @@ const Homepage = () => {
               <Link to="/register" className="btn btn-primary mr-5">Get Started</Link>
             </section>
             <img
-              src="/public/images/inventory-light.png"
+              src="/images/inventory-light.png"
               alt="Inventory Management Illustration"
               width="600px"
               className="block [html[data-theme='omnistore-dark']_&]:hidden rounded-lg"
             />
 
             <img
-              src="/public/images/inventory-dark.png"
+              src="/images/inventory-dark.png"
               alt="Inventory Management Illustration"
               width="600px"
               className="hidden [html[data-theme='omnistore-dark']_&]:block rounded-lg"
