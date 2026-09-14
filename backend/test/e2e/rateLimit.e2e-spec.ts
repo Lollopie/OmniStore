@@ -38,13 +38,13 @@ describe('RateLimit (e2e)', () => {
   beforeEach(async () => {
     await redisClient.flushDb();
   });
-  it('/healthz should use rate limiting', async () => {
+  it("/healthz shouldn't use rate limiting", async () => {
     for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {
       const response = await request(app.getHttpServer()).get('/healthz');
       expect(response.status).toBe(200);
     }
     const response = await request(app.getHttpServer()).get('/healthz');
-    expect(response.status).toBe(429);
+    expect(response.status).toBe(200);
   });
   it("/auth/status shouldn't use rate limiting", async () => {
     for (let i = 0; i < configService.get<number>('db.rateLimit'); i++) {

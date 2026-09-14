@@ -702,6 +702,7 @@ describe('InventoryController (e2e)', () => {
       new CookieAccessInfo('127.0.0.1', '/', false, false),
     );
     const assignedToken: Cookie = jwtService.decode(aliceToken.value);
+    delete assignedToken.exp;
     aliceToken.value = jwtService.sign({
       ...assignedToken,
       activeWarehouseId: '019fa8c5-6daa-73cb-bcdd-c6d56fb5ae05',
