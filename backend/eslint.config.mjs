@@ -1,6 +1,7 @@
 // @ts-check
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import prettier from 'eslint-plugin-prettier';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import jestPlugin from 'eslint-plugin-jest';
@@ -8,12 +9,13 @@ import { defineConfig } from 'eslint/config';
 
 export default defineConfig(
   {
-    ignores: ['eslint.config.mjs', '**/dist/**'],
+    ignores: ['eslint.config.mjs', '**/dist/**', '**/coverage/**'],
   },
   {
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       jest: jestPlugin,
+      prettier: prettier,
     },
   },
   {
