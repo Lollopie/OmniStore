@@ -29,7 +29,12 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       target: development
-    command: ["npm", "run", "migration:run"]
+    command:
+      - sh
+      - -c
+      - |
+        npm run migration:run
+        npm run test:data:seed
     volumes:
       - ./backend:/usr/src/backend
       - /usr/src/backend/node_modules
@@ -95,9 +100,9 @@ services:
     image: redis:8-alpine
     container_name: redis_cache
     ports:
-        - "6379:6379"
+      - "6379:6379"
     networks:
-        - app-network
+      - app-network
   #6. Mailpit for email testing
   mailpit:
     image: axllent/mailpit:latest

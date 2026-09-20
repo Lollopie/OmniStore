@@ -1,0 +1,19 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": ".+\\.int-spec\\.ts$",
+  "transform": {
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "tsconfig": "tsconfig.json"
+      }
+    ]
+  },
+  "maxWorkers": 1,
+  "moduleNameMapper": {
+    "^@shared$": "<rootDir>/../../shared/dist/index.js",
+    "^@shared/(.*)$": "<rootDir>/../../shared/dist/$1"
+  }
+}

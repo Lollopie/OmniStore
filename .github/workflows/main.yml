@@ -78,9 +78,31 @@ jobs:
           MIGRATOR_PASSWORD: migratorpassword
           DATABASE_NAME: test
 
+      - name: Seed Test DB
+        run: npm run test:data:seed
+        working-directory: backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DATABASE_NAME: test
+
       - name: Run Unit Tests
         run: npm run test
         working-directory: backend
+
+      - name: Run Integration Tests
+        working-directory: backend
+        run: npm run test:int
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          APP_USER: nestjs_app_user
+          APP_PASSWORD: apppassword
+          DATABASE_NAME: test
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          REDIS_URL: redis://localhost:6379
 
       - name: Run E2E Tests
         working-directory: backend
@@ -215,7 +237,7 @@ jobs:
 
   cd-deploy:
     name: Deploy to Production
-    needs: [test_backend, test_playwright] # Only deploy if BOTH unit tests & Playwright pass
+    needs: [ test_backend, test_playwright ] # Only deploy if BOTH unit tests & Playwright pass
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render Deployment
