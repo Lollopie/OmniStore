@@ -78,17 +78,6 @@ jobs:
           MIGRATOR_PASSWORD: migratorpassword
           DATABASE_NAME: test
 
-      - name: Seed Test DB
-        run: npm run test:data:seed
-        working-directory: backend
-        env:
-          DATABASE_HOST: localhost
-          SEED_HOST: localhost
-          DATABASE_PORT: 5432
-          DB_USER: test_user
-          DB_PASSWORD: test_password
-          DATABASE_NAME: test
-
       - name: Run Unit Tests
         run: npm run test
         working-directory: backend

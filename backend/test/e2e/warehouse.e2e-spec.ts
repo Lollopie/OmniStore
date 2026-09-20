@@ -8,8 +8,10 @@ import dbConfig from '../../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
-import { inviteAndAccept, registerAndLogin } from './utils/helper';
+import { login } from './utils/helper';
 import { MailService } from '../../src/mail/mail.service';
+import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
+import { ScenarioBuilder } from './utils/scenarioBuilder';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -43,16 +45,14 @@ describe('WarehouseController (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     app.use(cookieParser());
     await app.init();
-    dataSource = moduleFixture.get<DataSource>(DataSource);
+    dataSource = await SeedingDataSource.initialize();
   });
   it('Warehouse Create', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withUser('user1', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const warehouseResponse = await agent
       .post('/warehouses')
       .send({
@@ -69,13 +69,12 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse Select', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const warehouseResponse = await agent
       .post('/warehouses')
       .send({
@@ -96,39 +95,33 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse getUsers', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-      'testOrg',
-      true,
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const getUsersResponse = await agent.get('/warehouses/users').expect(200);
     expect(getUsersResponse.body['total']).toEqual(1);
     expect(getUsersResponse.body['data']).toEqual([
       {
         userId: expect.any(String),
-        username: 'username',
+        username: 'user1',
         role: 'admin',
       },
     ]);
   });
   it('Warehouse patchUsers', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-      'testOrg',
-      true,
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const patchUserResponse = await agent
       .patch('/warehouses/users')
       .send({
-        username: 'username',
+        username: 'user1',
         role: 'staff',
       })
       .expect(200);
@@ -139,15 +132,12 @@ describe('WarehouseController (e2e)', () => {
     });
   });
   it('Warehouse patch non-existent user', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-      'testOrg',
-      true,
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const patchUserResponse = await agent
       .patch('/warehouses/users')
       .send({
@@ -158,30 +148,17 @@ describe('WarehouseController (e2e)', () => {
     expect(patchUserResponse.body.message).toEqual('User not found');
   });
   it('Warehouse patch user not in warehouse', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-      'testOrg',
-      true,
-    );
-    await inviteAndAccept(
-      app,
-      mockMailService,
-      agent,
-      'username2@example.org',
-      'admin',
-    );
-    await agent
-      .post('/warehouses')
-      .send({ warehouseName: 'Warehouse 2' })
-      .expect(201);
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']))
+      .then((b) => b.withUser('user2', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const postUsersResponse = await agent
       .patch('/warehouses/users')
       .send({
-        username: 'username2',
+        username: 'user2',
         role: 'admin',
       })
       .expect(404);
@@ -190,22 +167,13 @@ describe('WarehouseController (e2e)', () => {
     );
   });
   it('Warehouse getUsers search', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-      'testOrg',
-      true,
-    );
-    await inviteAndAccept(
-      app,
-      mockMailService,
-      agent,
-      'username2@example.org',
-      'admin',
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']))
+      .then((b) => b.withUser('user2', 'owner', ['Warehouse 1'], ['admin']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const getUsersResponse = await agent
       .get('/warehouses/users?search=2')
       .expect(200);
@@ -213,7 +181,7 @@ describe('WarehouseController (e2e)', () => {
     expect(getUsersResponse.body['data']).toEqual([
       {
         userId: expect.any(String),
-        username: 'username2',
+        username: 'user2',
         role: 'admin',
       },
     ]);

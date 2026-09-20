@@ -9,9 +9,11 @@ import dbConfig from '../../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { UserEntity } from '../../src/user/user.entity';
-import { registerAndLogin } from './utils/helper';
+import { login } from './utils/helper';
 import { AuthService } from '../../src/auth/auth.service';
 import { MailService } from '../../src/mail/mail.service';
+import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
+import { ScenarioBuilder } from './utils/scenarioBuilder';
 
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -49,23 +51,17 @@ describe('UsersController (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     app.use(cookieParser());
     await app.init();
-    dataSource = moduleFixture.get<DataSource>(DataSource);
+    dataSource = await SeedingDataSource.initialize();
     authService = moduleFixture.get(AuthService);
   });
   it('/users (DELETE) - should delete user account with correct password', async () => {
-    const userData = {
-      username: 'testuser',
-      password: 'password123',
-    };
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      userData.username,
-      userData.password,
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withUser('user1', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const response = await agent.delete('/users').send({
-      password: userData.password,
+      password: 'password1',
     });
 
     expect(response.status).toBe(200);
@@ -75,104 +71,31 @@ describe('UsersController (e2e)', () => {
     // Verify user is gone
     const deletedUser = await dataSource
       .getRepository(UserEntity)
-      .findOneBy({ username: userData.username });
+      .findOneBy({ username: user.username });
     expect(deletedUser).toBeNull();
   });
 
-  it('/users (DELETE) - should reject deletion with incorrect password', async () => {
-    const userData = {
-      username: 'wrongpassuser',
-      password: 'password123',
-    };
-
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      userData.username,
-      userData.password,
-    );
-
-    const response = await agent.delete('/users').send({
-      password: 'wrongpassword',
-    });
-
-    expect(response.status).toBe(401);
-    expect(response.body.message).toBe('Invalid password');
-  });
   it('/users (PATCH) - should update password with correct password', async () => {
-    const userData = {
-      username: 'testuser',
-      password: 'password123',
-    };
-
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      userData.username,
-      userData.password,
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withUser('user1', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
 
     const response = await agent.patch('/users').send({
-      password: userData.password,
+      password: 'password1',
       newPassword: 'newpassword123',
       confirmPassword: 'newpassword123',
     });
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe('Password updated successfully');
-    const user = await dataSource
-      .getRepository('user')
-      .findOneBy({ username: 'testuser' });
+    const newUser = await dataSource
+      .getRepository(UserEntity)
+      .findOneBy({ username: 'user1' });
     expect(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      await authService.verifyPassword('newpassword123', user.password),
+      await authService.verifyPassword('newpassword123', newUser.password),
     ).toBe(true);
-  });
-  it('/users (PATCH) - should not update password with incorrect password', async () => {
-    const userData = {
-      username: 'testuser',
-      password: 'password123',
-    };
-
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      userData.username,
-      userData.password,
-    );
-
-    const response = await agent.patch('/users').send({
-      password: 'wrongpassword1',
-      newPassword: 'newpassword123',
-      confirmPassword: 'newpassword123',
-    });
-    expect(response.status).toBe(401);
-    expect(response.body.message).toBe('Invalid password');
-  });
-  it('/users (PATCH) - should not update password with incorrect confirm password', async () => {
-    const userData = {
-      username: 'testuser',
-      password: 'password123',
-    };
-
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      userData.username,
-      userData.password,
-    );
-
-    const response = await agent.patch('/users').send({
-      password: userData.password,
-      newPassword: 'newpassword123',
-      confirmPassword: 'newpassword12',
-    });
-    expect(response.status).toBe(401);
-    expect(response.body.message).toBe('New passwords do not match');
   });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;

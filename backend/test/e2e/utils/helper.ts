@@ -2,35 +2,16 @@ import request from 'supertest';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import TestAgent from 'supertest/lib/agent';
 
-export async function registerAndLogin(
+export async function login(
   app: NestExpressApplication,
-  mockMailService: {
-    sendVerificationEmail: jest.Mock<any, any, any>;
-  },
-  email: string,
   username: string,
   password: string,
-  organizationName?: string,
-  createWarehouse?: boolean,
 ) {
   const agent = request.agent(app.getHttpServer());
-  await agent.post('/register').send({ email });
-  organizationName = organizationName ? organizationName : 'Test Organization';
-  const verificationToken: string =
-    mockMailService.sendVerificationEmail.mock.calls[
-      mockMailService.sendVerificationEmail.mock.calls.length - 1
-    ][1].verificationUrl.split('token=')[1];
-  await agent.post('/organizations/register?token=' + verificationToken).send({
-    ownerEmail: email,
-    ownerUsername: username,
-    ownerPassword: password,
-    name: organizationName,
-  });
-  await agent.post('/login').send({ username, password });
-
-  if (createWarehouse) {
-    await agent.post('/warehouses').send({ warehouseName: 'Test Warehouse' });
-  }
+  await agent
+    .post('/login')
+    .send({ username: username, password: password })
+    .expect(200);
   return agent;
 }
 

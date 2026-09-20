@@ -29,12 +29,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       target: development
-    command:
-      - sh
-      - -c
-      - |
-        npm run migration:run
-        npm run test:data:seed
+    command: [ "npm", "run", "migration:run" ]
     volumes:
       - ./backend:/usr/src/backend
       - /usr/src/backend/node_modules

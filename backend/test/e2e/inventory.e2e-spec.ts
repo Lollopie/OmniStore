@@ -10,11 +10,12 @@ import dbConfig from '../../src/config/db.config';
 import cookieParser from 'cookie-parser';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { registerAndLogin } from './utils/helper';
+import { login } from './utils/helper';
 import { CookieAccessInfo } from 'cookiejar';
 import { MailService } from '../../src/mail/mail.service';
 import { Cookie } from '../../src/user/user.decorator';
-
+import { ScenarioBuilder } from './utils/scenarioBuilder';
+import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -61,7 +62,7 @@ describe('InventoryController (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     app.use(cookieParser());
     await app.init();
-    dataSource = moduleFixture.get<DataSource>(DataSource);
+    dataSource = await SeedingDataSource.initialize();
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
 
@@ -71,27 +72,24 @@ describe('InventoryController (e2e)', () => {
   });
 
   it('/inventory without warehouse (GET)', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withUser('user1', 'owner', undefined, undefined));
+
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const response = await agent.get('/inventory');
     expect(response.status).toBe(400);
   });
 
-  it('should create and read inventory for the authenticated user only', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
+  it('should create and read inventory for warehouse', async () => {
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse1'], ['admin']));
+
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const createResponse = await agent
       .post('/inventory')
       .send({ itemName: 'Apples', amount: '5' })
@@ -109,580 +107,118 @@ describe('InventoryController (e2e)', () => {
   });
 
   it('should enforce RLS isolation between two orgs', async () => {
-    const aliceAgent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.rls',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const bobAgent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test2@example.org',
-      'bob.inventory.rls',
-      'Password123',
-      'testOrg2',
-      true,
-    );
-    await aliceAgent
-      .post('/inventory')
-      .send({ itemName: 'Alice item', amount: '1' })
-      .expect(201);
+    const aliceScenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse1'], ['admin']))
+      .then((b) => b.withInventory('Warehouse1', 'Apple', 1));
+    const alice = aliceScenarioBuilder['users']['user1'];
+    const aliceAgent = await login(app, alice.username, 'password1');
 
-    await bobAgent
-      .post('/inventory')
-      .send({ itemName: 'Bob item', amount: '2' })
-      .expect(201);
+    const bobScenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org2')
+      .then((b) => b.withWarehouse('Warehouse2'))
+      .then((b) => b.withUser('user2', 'owner', ['Warehouse2'], ['admin']))
+      .then((b) => b.withInventory('Warehouse2', 'Banana', 2));
+    const bob = bobScenarioBuilder['users']['user2'];
+    const bobAgent = await login(app, bob.username, 'password1');
 
     const aliceList = await aliceAgent.get('/inventory').expect(200);
 
     expect(aliceList.body[0]).toHaveLength(1);
     expect(aliceList.body[1]).toBe(1);
+    expect(aliceList.body[0][0]['itemName']).toBe('Apple');
+    expect(aliceList.body[0][0]['amount']).toBe(1);
 
     const bobList = await bobAgent.get('/inventory').expect(200);
 
     expect(bobList.body[0]).toHaveLength(1);
     expect(bobList.body[1]).toBe(1);
+    expect(bobList.body[0][0]['itemName']).toBe('Banana');
+    expect(bobList.body[0][0]['amount']).toBe(2);
   });
   it('should enforce RLS isolation between two warehouses', async () => {
-    const aliceAgent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.rls',
-      'Password123',
-      'testOrg',
-      true,
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withWarehouse('Warehouse2'))
+      .then((b) =>
+        b.withUser(
+          'user1',
+          'owner',
+          ['Warehouse1', 'Warehouse2'],
+          ['admin', 'admin'],
+        ),
+      )
+      .then((b) => b.withInventory('Warehouse1', 'Apple', 1))
+      .then((b) => b.withInventory('Warehouse2', 'Banana', 2));
 
-    await aliceAgent
-      .post('/inventory')
-      .send({ itemName: 'Alice item', amount: '1' })
-      .expect(201);
-    await aliceAgent
-      .post('/warehouses')
-      .send({ warehouseName: 'Warehouse 2' })
-      .expect(201);
-    await aliceAgent
-      .post('/inventory')
-      .send({ itemName: 'Bob item', amount: '2' })
-      .expect(201);
-    const bobList = await aliceAgent.get('/inventory').expect(200);
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
+
+    const bobList = await agent.get('/inventory').expect(200);
 
     expect(bobList.body[0]).toHaveLength(1);
     expect(bobList.body[1]).toBe(1);
   });
-  it('should only return 10 items', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 15;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: '1' })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe('1');
-    }
-    const listResponse = await agent.get('/inventory').expect(200);
-
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-  });
-  it('default sort by new', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 10;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: '1' })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe('1');
-    }
-    const listResponse = await agent.get('/inventory').expect(200);
-
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-    for (let i = 0; i < 10; i++) {
-      expect(listResponse.body[0][i].itemName).toBe(
-        (numberOfItems - i - 1).toString(),
-      );
-      expect(String(listResponse.body[0][i].amount)).toBe('1');
-    }
-  });
-  it('sort by old', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 10;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: '1' })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe('1');
-    }
-    const listResponse = await agent.get('/inventory?sort=old').expect(200);
-
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-    for (let i = 0; i < 10; i++) {
-      expect(listResponse.body[0][i].itemName).toBe(i.toString());
-      expect(String(listResponse.body[0][i].amount)).toBe('1');
-    }
-  });
-  it('sort by itemName asc', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 10;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: '1' })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe('1');
-    }
-    const listResponse = await agent
-      .get('/inventory?sort=itemName asc')
-      .expect(200);
-
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-    for (let i = 0; i < 10; i++) {
-      expect(listResponse.body[0][i].itemName).toBe(i.toString());
-      expect(String(listResponse.body[0][i].amount)).toBe('1');
-    }
-  });
-  it('sort by itemName desc', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 10;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: '1' })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe('1');
-    }
-    const listResponse = await agent
-      .get('/inventory?sort=itemName desc')
-      .expect(200);
-
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-    for (let i = 0; i < 10; i++) {
-      expect(listResponse.body[0][i].itemName).toBe(
-        (numberOfItems - i - 1).toString(),
-      );
-      expect(String(listResponse.body[0][i].amount)).toBe('1');
-    }
-  });
-  it('sort by amount asc', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 10;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: i.toString() })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe(i.toString());
-    }
-    const listResponse = await agent
-      .get('/inventory?sort=amount asc')
-      .expect(200);
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-    for (let i = 0; i < 10; i++) {
-      expect(listResponse.body[0][i].itemName).toBe(i.toString());
-      expect(String(listResponse.body[0][i].amount)).toBe(i.toString());
-    }
-  });
-  it('sort by amount desc', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 10;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: i.toString() })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe(i.toString());
-    }
-    const listResponse = await agent
-      .get('/inventory?sort=amount desc')
-      .expect(200);
-
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-    for (let i = 0; i < 10; i++) {
-      expect(listResponse.body[0][i].itemName).toBe(
-        (numberOfItems - i - 1).toString(),
-      );
-      expect(String(listResponse.body[0][i].amount)).toBe(
-        (numberOfItems - i - 1).toString(),
-      );
-    }
-  });
-  it('sort by amount asc tiebreaker', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 10;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: '1' })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe('1');
-
-      const createResponse2 = await agent
-        .post('/inventory')
-        .send({ itemName: (numberOfItems + i).toString(), amount: '2' })
-        .expect(201);
-      expect(createResponse2.body.itemName).toBe(
-        (numberOfItems + i).toString(),
-      );
-      expect(String(createResponse2.body.amount)).toBe('2');
-    }
-    const listResponse = await agent
-      .get('/inventory?sort=amount asc')
-      .expect(200);
-
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-    for (let i = 0; i < 10; i++) {
-      expect(listResponse.body[0][i].itemName).toBe(i.toString());
-      expect(String(listResponse.body[0][i].amount)).toBe('1');
-    }
-  });
-  it('sort by amount desc tiebreaker', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 10;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: '1' })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe('1');
-
-      const createResponse2 = await agent
-        .post('/inventory')
-        .send({ itemName: (numberOfItems + i).toString(), amount: '2' })
-        .expect(201);
-      expect(createResponse2.body.itemName).toBe(
-        (numberOfItems + i).toString(),
-      );
-      expect(String(createResponse2.body.amount)).toBe('2');
-    }
-    const listResponse = await agent
-      .get('/inventory?sort=amount desc')
-      .expect(200);
-
-    expect(listResponse.body).toHaveLength(2);
-    expect(listResponse.body[0]).toHaveLength(10);
-    for (let i = 0; i < 10; i++) {
-      expect(listResponse.body[0][i].itemName).toBe(
-        (i + numberOfItems).toString(),
-      );
-      expect(String(listResponse.body[0][i].amount)).toBe('2');
-    }
-  });
-  it('pagination', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const numberOfItems = 100;
-    for (let i = 0; i < numberOfItems; i++) {
-      const createResponse = await agent
-        .post('/inventory')
-        .send({ itemName: i.toString(), amount: '1' })
-        .expect(201);
-      expect(createResponse.body.itemName).toBe(i.toString());
-      expect(String(createResponse.body.amount)).toBe('1');
-    }
-    for (let i = 0; i < Math.ceil(numberOfItems / 10); i++) {
-      const listResponse = await agent
-        .get('/inventory?page=' + (i + 1))
-        .expect(200);
-      expect(listResponse.body).toHaveLength(2);
-      expect(listResponse.body[0]).toHaveLength(10);
-      for (let j = 0; j < 10; j++) {
-        expect(listResponse.body[0][j].itemName).toBe(
-          (numberOfItems - (i * 10 + j + 1)).toString(),
-        );
-        expect(String(listResponse.body[0][j].amount)).toBe('1');
-      }
-    }
-  });
-  it('edit item', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const createResponse = await agent
-      .post('/inventory')
-      .send({ itemName: 'Apples', amount: '5' })
-      .expect(201);
-
-    expect(createResponse.body.itemName).toBe('Apples');
-    expect(String(createResponse.body.amount)).toBe('5');
-    expect(createResponse.body.itemId).toBeDefined();
-
+  it('should allow for item editing', async () => {
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse1'], ['admin']))
+      .then((b) => b.withInventory('Warehouse1', 'Apple', 1));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
+    const item = scenarioBuilder['inventory']['Apple'];
     const listResponse = await agent
       .patch('/inventory')
       .send({
-        itemId: createResponse.body.itemId,
-        itemName: 'Apples',
-        amount: '5',
+        itemId: item.itemId,
+        itemName: 'Banana',
+        amount: '10',
       })
       .expect(200);
 
-    expect(listResponse.body['amount']).toBe(5);
-    expect(listResponse.body['itemName']).toBe('Apples');
-  });
-  it('edit no itemId', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const createResponse = await agent
-      .post('/inventory')
-      .send({ itemName: 'Apples', amount: '5' })
-      .expect(201);
+    expect(listResponse.body['amount']).toBe(10);
+    expect(listResponse.body['itemName']).toBe('Banana');
 
-    expect(createResponse.body.itemName).toBe('Apples');
-    expect(String(createResponse.body.amount)).toBe('5');
-    expect(createResponse.body.itemId).toBeDefined();
-
-    await agent
-      .patch('/inventory')
-      .send({
-        itemName: 'Apples',
-        amount: '5',
-      })
-      .expect(400);
-  });
-  it('edit wrong itemId', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const createResponse = await agent
-      .post('/inventory')
-      .send({ itemName: 'Apples', amount: '5' })
-      .expect(201);
-
-    expect(createResponse.body.itemName).toBe('Apples');
-    expect(String(createResponse.body.amount)).toBe('5');
-    expect(createResponse.body.itemId).toBeDefined();
-
-    await agent
-      .patch('/inventory')
-      .send({
-        itemId: '019fa8c5-9e10-7dca-bc57-02af04a588f8',
-        itemName: 'Apples',
-        amount: '5',
-      })
-      .expect(404);
+    const postEditList = await agent.get('/inventory').expect(200);
+    expect(postEditList.body[0][0]['itemName']).toBe('Banana');
+    expect(postEditList.body[0][0]['amount']).toBe(10);
   });
   it('delete item', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const createResponse = await agent
-      .post('/inventory')
-      .send({ itemName: 'Apples', amount: '5' })
-      .expect(201);
-
-    expect(createResponse.body.itemName).toBe('Apples');
-    expect(String(createResponse.body.amount)).toBe('5');
-    expect(createResponse.body.itemId).toBeDefined();
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse1'], ['admin']))
+      .then((b) => b.withInventory('Warehouse1', 'Apple', 1));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
+    const item = scenarioBuilder['inventory']['Apple'];
 
     const listResponse = await agent
       .delete('/inventory')
       .send({
-        itemId: createResponse.body.itemId,
+        itemId: item.itemId,
         itemName: 'Apples',
         amount: '5',
       })
       .expect(200);
     expect(listResponse.body['message']).toBe('Item has been deleted.');
-  });
-  it('delete no itemId', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const createResponse = await agent
-      .post('/inventory')
-      .send({ itemName: 'Apples', amount: '5' })
-      .expect(201);
-
-    expect(createResponse.body.itemName).toBe('Apples');
-    expect(String(createResponse.body.amount)).toBe('5');
-    expect(createResponse.body.itemId).toBeDefined();
-
-    await agent
-      .delete('/inventory')
-      .send({
-        itemName: 'Apples',
-        amount: '5',
-      })
-      .expect(400);
-  });
-  it('delete wrong itemId', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    const createResponse = await agent
-      .post('/inventory')
-      .send({ itemName: 'Apples', amount: '5' })
-      .expect(201);
-
-    expect(createResponse.body.itemName).toBe('Apples');
-    expect(String(createResponse.body.amount)).toBe('5');
-    expect(createResponse.body.itemId).toBeDefined();
-
-    await agent
-      .delete('/inventory')
-      .send({
-        itemId: '019fa8c5-9e10-7dca-bc57-02af04a588f8',
-        itemName: 'Apples',
-        amount: '5',
-      })
-      .expect(404);
+    const postDeleteList = await agent.get('/inventory').expect(200);
+    expect(postDeleteList.body[0]).toHaveLength(0);
+    expect(postDeleteList.body[1]).toBe(0);
   });
   it('search', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-      'testOrg',
-      true,
-    );
-    await agent
-      .post('/inventory')
-      .send({ itemName: 'Apples', amount: '5' })
-      .expect(201);
-    await agent
-      .post('/inventory')
-      .send({ itemName: 'Cookies', amount: '5' })
-      .expect(201);
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse1'], ['admin']))
+      .then((b) => b.withInventory('Warehouse1', 'Apple', 1))
+      .then((b) => b.withInventory('Warehouse1', 'Cookies', 5));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
+
     const searchResponse = await agent.get('/inventory?search=Coo').expect(200);
     expect(searchResponse.body[1]).toBe(1);
     expect(searchResponse.body[0][0].itemName).toBe('Cookies');
@@ -690,13 +226,12 @@ describe('InventoryController (e2e)', () => {
     expect(searchResponse.body[0][0].itemId).toBeDefined();
   });
   it('non existent warehouseId', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'alice.inventory.test',
-      'Password123',
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse1'], ['admin']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const aliceToken = agent.jar.getCookie(
       'token',
       new CookieAccessInfo('127.0.0.1', '/', false, false),

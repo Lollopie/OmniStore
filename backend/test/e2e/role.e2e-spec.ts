@@ -9,10 +9,12 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { inviteAndAccept, registerAndLogin } from './utils/helper';
+import { login } from './utils/helper';
 import { CookieAccessInfo } from 'cookiejar';
 import { MailService } from '../../src/mail/mail.service';
 import { Cookie } from '../../src/user/user.decorator';
+import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
+import { ScenarioBuilder } from './utils/scenarioBuilder';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
@@ -59,17 +61,15 @@ describe('RoleGuard (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     app.use(cookieParser());
     await app.init();
-    dataSource = moduleFixture.get<DataSource>(DataSource);
+    dataSource = await SeedingDataSource.initialize();
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
   it('RoleGuard no warehouse', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withUser('user1', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const roleGuardResponse = await agent
       .post('/inventory')
       .send({
@@ -80,33 +80,20 @@ describe('RoleGuard (e2e)', () => {
     expect(roleGuardResponse.body.message).toBe('No active Warehouse found');
   });
   it('RoleGuard non-existent warehouse', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withUser('user1', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const cookie = agent.jar.getCookie(
       'token',
       new CookieAccessInfo('127.0.0.1', '/', false, false),
     );
-    const token: {
-      userId: string;
-      username: string;
-      activeWarehouseId: string;
-      activeRole: string;
-    } = jwtService.decode(cookie.value);
-    const newToken: {
-      userId: string;
-      username: string;
-      activeWarehouseId: string;
-      activeRole: string;
-    } = {
-      userId: token.userId,
-      username: token.username,
+    const token: Cookie = jwtService.decode(cookie.value);
+    delete token.exp;
+    const newToken: Cookie = {
+      ...token,
       activeWarehouseId: '019fa8c5-6daa-73cb-bcdd-c6d56fb5ae05',
-      activeRole: 'admin',
     };
     cookie.value = jwtService.sign(newToken);
     const roleGuardResponse = await agent
@@ -119,15 +106,12 @@ describe('RoleGuard (e2e)', () => {
     expect(roleGuardResponse.body.message).toBe('Active Warehouse not found');
   });
   it('RoleGuard with permission', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-      'testOrg',
-      true,
-    );
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const response = await agent.post('/inventory').send({
       itemName: 'Apple',
       amount: '1',
@@ -135,26 +119,15 @@ describe('RoleGuard (e2e)', () => {
     expect(response.status).toBe(201);
   });
   it('RoleGuard without role in warehouse', async () => {
-    const firstAgent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-      'testOrg',
-      true,
-    );
-    const secondAgent = await inviteAndAccept(
-      app,
-      mockMailService,
-      firstAgent,
-      'test2@example.org',
-      'admin',
-    );
-    await firstAgent
-      .post('/warehouses')
-      .send({ warehouseName: 'Warehouse 2' })
-      .expect(201);
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']))
+      .then((b) => b.withUser('user2', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const userTwo = scenarioBuilder['users']['user2'];
+    const firstAgent = await login(app, user.username, 'password1');
+    const secondAgent = await login(app, userTwo.username, 'password1');
     const cookie = firstAgent.jar.getCookie(
       'token',
       new CookieAccessInfo('127.0.0.1', '/', false, false),
@@ -165,12 +138,11 @@ describe('RoleGuard (e2e)', () => {
     );
     const token: Cookie = jwtService.decode(cookie.value);
     const secondToken: Cookie = jwtService.decode(secondCookie.value);
+    delete token.exp;
     const newToken: Cookie = {
+      ...token,
       userId: secondToken.userId,
       username: secondToken.username,
-      activeWarehouseId: token.activeWarehouseId,
-      activeRole: 'admin',
-      orgId: secondToken.orgId,
     };
     cookie.value = jwtService.sign(newToken);
     secondAgent.jar.setCookie(cookie);
@@ -186,22 +158,12 @@ describe('RoleGuard (e2e)', () => {
     );
   });
   it('RoleGuard without permission', async () => {
-    const agent = await registerAndLogin(
-      app,
-      mockMailService,
-      'test@example.org',
-      'username',
-      'password1',
-      'testOrg',
-      true,
-    );
-    await agent
-      .patch('/warehouses/users')
-      .send({
-        username: 'username',
-        role: 'staff',
-      })
-      .expect(200);
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['staff']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
     const roleGuardResponse = await agent
       .post('/inventory')
       .send({
