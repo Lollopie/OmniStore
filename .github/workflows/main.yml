@@ -83,6 +83,7 @@ jobs:
         working-directory: backend
         env:
           DATABASE_HOST: localhost
+          SEED_HOST: localhost
           DATABASE_PORT: 5432
           DB_USER: test_user
           DB_PASSWORD: test_password
