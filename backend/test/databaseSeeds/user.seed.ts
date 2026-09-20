@@ -1,9 +1,9 @@
 import { DataSource } from 'typeorm';
-import { UserEntity } from '../user/user.entity';
-import { OrganizationEntity } from '../organization/organization.entity';
-import { UserOrganizationRoleEntity } from '../userOrganizationRole/userOrganizationRole.entity';
-import { UserWarehouseRoleEntity } from '../userWarehouseRole/userWarehouseRole.entity';
-import { WarehouseEntity } from '../warehouse/warehouse.entity';
+import { UserEntity } from '../../src/user/user.entity';
+import { OrganizationEntity } from '../../src/organization/organization.entity';
+import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
+import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehouseRole.entity';
+import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
 import * as bcrypt from 'bcrypt';
 import { OrganizationRole } from '../../../shared/src/enum/organizationRoles.enum';
 import { WarehouseRole } from '../../../shared/src/enum/warehouseRoles.enum';

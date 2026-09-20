@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { InventoryEntity } from '../inventory/inventory.entity';
-import { WarehouseEntity } from '../warehouse/warehouse.entity';
+import { InventoryEntity } from '../../src/inventory/inventory.entity';
+import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
 
 export async function seedInventories(dataSource: DataSource): Promise<void> {
   const inventoryRepository = dataSource.getRepository(InventoryEntity);

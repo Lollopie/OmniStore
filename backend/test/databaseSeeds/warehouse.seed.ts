@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { WarehouseEntity } from '../warehouse/warehouse.entity';
-import { OrganizationEntity } from '../organization/organization.entity';
+import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
+import { OrganizationEntity } from '../../src/organization/organization.entity';
 
 export async function seedWarehouses(datasource: DataSource): Promise<void> {
   const warehouseRepository = datasource.getRepository(WarehouseEntity);
