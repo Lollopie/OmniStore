@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { CanActivate, Injectable, ValidationPipe } from '@nestjs/common';
@@ -8,18 +7,22 @@ import authConfig from '../../src/config/auth.config';
 import dbConfig from '../../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
-import { DataSource } from 'typeorm';
 import { JwtModule } from '@nestjs/jwt';
+import appConfig from '../../src/config/app.config';
+import emailConfig from '../../src/config/email.config';
 import { ScenarioBuilder } from './utils/scenarioBuilder';
-import { login } from './utils/helper';
+import { DataSource } from 'typeorm';
 import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
+import { getLatestEmailFor, login } from './utils/helper';
+import fetch from 'nodemailer/lib/fetch';
+import request from 'supertest';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
   canActivate(): boolean {
     return true;
   }
 }
-describe('AuthController (e2e)', () => {
+describe('Invite (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   beforeAll(async () => {
@@ -27,7 +30,7 @@ describe('AuthController (e2e)', () => {
       imports: [
         ConfigModule.forRoot({
           envFilePath: [`.env.${process.env.NODE_ENV || 'test'}`, `.env`],
-          load: [authConfig, dbConfig],
+          load: [appConfig, authConfig, dbConfig, emailConfig],
         }),
         AppModule,
         JwtModule.registerAsync({
@@ -37,7 +40,7 @@ describe('AuthController (e2e)', () => {
           useFactory: (configService: ConfigService) => ({
             secret: configService.get<string>('auth.jwtSecret'),
             signOptions: {
-              expiresIn: 1,
+              expiresIn: configService.get<number>('auth.jwtExpiresIn'),
             },
           }),
         }),
@@ -54,19 +57,49 @@ describe('AuthController (e2e)', () => {
     await app.init();
     dataSource = await SeedingDataSource.initialize();
   });
-  it('/auth/status no token', async () => {
-    const response = await request(app.getHttpServer()).get('/auth/status');
-    expect(response.status).toBe(401);
-  });
-  it('/auth/status logged in', async () => {
+  it('should be able to send invite', async () => {
     const scenarioBuilder = await ScenarioBuilder.create(dataSource)
       .withOrganization('Org1')
-      .then((b) => b.withUser('user1', 'owner', undefined, undefined));
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse1'], ['admin']));
     const user = scenarioBuilder['users']['user1'];
     const agent = await login(app, user.username, 'password1');
-
-    const response = await agent.get('/auth/status');
-    expect(response.status).toBe(200);
+    await agent
+      .post('/warehouses/invites')
+      .send({ email: 'user2@example.org', role: 'admin' })
+      .expect(201);
+    const response = await getLatestEmailFor('user2@example.org');
+    expect(response['HTML']).toBeDefined();
+  });
+  it('should be able to accept invite', async () => {
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse1'], ['admin']));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
+    await agent
+      .post('/warehouses/invites')
+      .send({ email: 'user2@example.org', role: 'admin' })
+      .expect(201);
+    const response = await getLatestEmailFor('user2@example.org');
+    const verificationToken: string = response['HTML']
+      .split('token=')[1]
+      .split('"')[0];
+    const registerResponse = await request(app.getHttpServer())
+      .post('/invites/accept?token=' + verificationToken)
+      .send({
+        username: 'user2',
+        password: 'password1',
+      });
+    expect(registerResponse.status).toBe(201);
+    expect(registerResponse.body['message']).toBe(
+      'Invite accepted successfully',
+    );
+    const loginResponse = await request(app.getHttpServer())
+      .post('/login')
+      .send({ username: 'user2', password: 'password1' });
+    expect(loginResponse.status).toBe(200);
   });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;
@@ -80,6 +113,9 @@ describe('AuthController (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
+    fetch('http://localhost:8025/api/v1/messages', {
+      method: 'DELETE',
+    });
   });
   afterAll(async () => {
     await dataSource.destroy();

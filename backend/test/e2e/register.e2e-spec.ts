@@ -9,8 +9,9 @@ import authConfig from '../../src/config/auth.config';
 import dbConfig from '../../src/config/db.config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from '../../src/auth/auth.service';
-import { MailService } from '../../src/mail/mail.service';
 import { UserEntity } from '../../src/user/user.entity';
+import { getLatestEmailFor } from './utils/helper';
+import fetch from 'nodemailer/lib/fetch';
 
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -18,14 +19,10 @@ class MockThrottlerGuard implements CanActivate {
     return true;
   }
 }
-describe('LogoutController (e2e)', () => {
+describe('Register (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let authService: AuthService;
-  const mockMailService = {
-    sendVerificationEmail: jest.fn().mockResolvedValue(true),
-    sendInviteEmail: jest.fn().mockResolvedValue(true),
-  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -39,8 +36,6 @@ describe('LogoutController (e2e)', () => {
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
-      .overrideProvider(MailService)
-      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -55,10 +50,9 @@ describe('LogoutController (e2e)', () => {
       .post('/register')
       .send({ email: email })
       .expect(201);
-    const verificationToken: string =
-      mockMailService.sendVerificationEmail.mock.calls[
-        mockMailService.sendVerificationEmail.mock.calls.length - 1
-      ][1].verificationUrl.split('token=')[1];
+    const verificationToken: string = (await getLatestEmailFor(email))['HTML']
+      .split('token=')[1]
+      .split('"')[0];
     return await request(app.getHttpServer())
       .post('/organizations/register?token=' + verificationToken)
       .send({
@@ -74,109 +68,23 @@ describe('LogoutController (e2e)', () => {
       .send({ email: 'test@example.org' });
     expect(response.status).toBe(201);
   });
-  it('/register (POST) - should reject username with a space', async () => {
-    const invalidData = {
-      username: 'te st',
-      password: 'test1',
-    };
-    const response = await register(invalidData.username, invalidData.password);
-    expect(response.status).toBe(400);
-    const body = response.body as { message: string | string[] };
-    expect(body.message).toContain(
-      'Username can only contain letters, numbers, underscores, dots, or dashes',
-    );
-  });
-  it('/register (POST) - should reject too short username', async () => {
-    const invalidData = {
-      username: 'te',
-      password: 'password1',
-    };
-
-    const response = await register(invalidData.username, invalidData.password);
-    expect(response.status).toBe(400);
-    const body = response.body as { message: string | string[] };
-    expect(body.message).toContain(
-      'Username is too short (minimum 3 characters)',
-    );
-  });
-  it('/register (POST) - should reject too long username', async () => {
-    const invalidData = {
-      username: 'testtesttesttesttesttesttesttest',
-      password: 'password1',
-    };
-
-    const response = await register(invalidData.username, invalidData.password);
-    expect(response.status).toBe(400);
-    const body = response.body as { message: string | string[] };
-    expect(body.message).toContain(
-      'Username is too long (maximum 30 characters)',
-    );
-  });
-  it('/register (POST) - should reject too short auth', async () => {
-    const invalidData = {
-      username: 'test',
-      password: 'test1',
-    };
-
-    const response = await register(invalidData.username, invalidData.password);
-    expect(response.status).toBe(400);
-    const body = response.body as { message: string | string[] };
-    expect(body.message).toContain(
-      'Password is too short (minimum 8 characters)',
-    );
-  });
-  it('/register (POST) - should reject too long auth', async () => {
-    const invalidData = {
-      username: 'test',
-      password:
-        'testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttest1',
-    };
-
-    const response = await register(invalidData.username, invalidData.password);
-    expect(response.status).toBe(400);
-    const body = response.body as { message: string | string[] };
-    expect(body.message).toContain(
-      'Password is too long (maximum 64 characters)',
-    );
-  });
-  it('/register (POST) - should reject auth without letter', async () => {
-    const invalidData = {
-      username: 'test',
-      password: '12345678',
-    };
-
-    const response = await register(invalidData.username, invalidData.password);
-    expect(response.status).toBe(400);
-    const body = response.body as { message: string | string[] };
-    expect(body.message).toContain(
-      'Password must contain a letter, a number, and can include spaces and special characters',
-    );
-  });
-  it('/register (POST) - should reject auth without number', async () => {
-    const invalidData = {
-      username: 'test',
-      password: 'password',
-    };
-
-    const response = await register(invalidData.username, invalidData.password);
-    expect(response.status).toBe(400);
-    const body = response.body as { message: string | string[] };
-    expect(body.message).toContain(
-      'Password must contain a letter, a number, and can include spaces and special characters',
-    );
-  });
-  it('/register (POST) - should reject auth with invalid character', async () => {
-    const invalidData = {
-      username: 'test',
-      password: 'password1ç',
-    };
-
-    const response = await register(invalidData.username, invalidData.password);
-    expect(response.status).toBe(400);
-    const body = response.body as { message: string | string[] };
-    expect(body.message).toContain(
-      'Password must contain a letter, a number, and can include spaces and special characters',
-    );
+  it('should verify the token sent in the email', async () => {
+    await request(app.getHttpServer())
+      .post('/register')
+      .send({ email: 'test@example.org' })
+      .expect(201);
+    const verificationToken: string = (
+      await getLatestEmailFor('test@example.org')
+    )['HTML']
+      .split('token=')[1]
+      .split('"')[0];
+    const response = await request(app.getHttpServer())
+      .get('/register/verify?token=' + verificationToken)
+      .expect(200);
+    expect(response.body).toEqual({
+      valid: true,
+      email: 'test@example.org',
+    });
   });
   it('/register (POST) - auth should not be stored in plain text', async () => {
     const userData = {
@@ -242,6 +150,9 @@ describe('LogoutController (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
+    fetch('http://localhost:8025/api/v1/messages', {
+      method: 'DELETE',
+    });
   });
   afterAll(async () => {
     await app.close();

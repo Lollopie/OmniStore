@@ -32,17 +32,14 @@ describe('InviteController', () => {
         }),
       ).rejects.toThrow(new BadRequestException('Invite token is required'));
     });
-    it("should return invite service's return value", async () => {
+    it('should return a success message', async () => {
       await expect(
         inviteController.acceptInvite('a', {
           username: 'testuser',
           password: 'testpassword1',
         }),
       ).resolves.toEqual({
-        userId: 'user-1',
-        email: 'user@example.org',
-        username: 'user',
-        password: 'password1',
+        message: 'Invite accepted successfully',
       });
     });
   });

@@ -186,6 +186,38 @@ describe('WarehouseController (e2e)', () => {
       },
     ]);
   });
+  it('should be able to add an org user to a warehouse', async () => {
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withWarehouse('Warehouse 1'))
+      .then((b) => b.withUser('user1', 'owner', ['Warehouse 1'], ['admin']))
+      .then((b) => b.withUser('user2', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
+    const postUsersResponse = await agent
+      .post('/warehouses/users')
+      .send({
+        username: 'user2',
+        role: 'admin',
+      })
+      .expect(201);
+    expect(postUsersResponse.body).toEqual({
+      userId: expect.any(String),
+      warehouseId: expect.any(String),
+      role: 'admin',
+    });
+    const getUsersResponse = await agent
+      .get('/warehouses/users?search=2')
+      .expect(200);
+    expect(getUsersResponse.body['total']).toEqual(1);
+    expect(getUsersResponse.body['data']).toEqual([
+      {
+        userId: expect.any(String),
+        username: 'user2',
+        role: 'admin',
+      },
+    ]);
+  });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;
     const tableNames = entities

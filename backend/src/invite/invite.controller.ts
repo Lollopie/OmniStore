@@ -19,6 +19,13 @@ export class InviteController {
     if (!inviteToken) {
       throw new BadRequestException('Invite token is required');
     }
-    return await this.inviteService.acceptInvite(inviteToken, registerDto);
+    const result = await this.inviteService.acceptInvite(
+      inviteToken,
+      registerDto,
+    );
+    if (result) {
+      return { message: 'Invite accepted successfully' };
+    }
+    return { error: 'Failed to accept invite' };
   }
 }
