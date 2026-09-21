@@ -1,5 +1,4 @@
 import { DataSource } from 'typeorm';
-import { config } from 'dotenv';
 
 for (const v of [
   'DATABASE_HOST',

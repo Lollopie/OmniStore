@@ -93,6 +93,8 @@ jobs:
           DATABASE_NAME: test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_URL: redis://localhost:6379
+          DB_USER: test_user
+          DB_PASSWORD: test_password
 
       - name: Run E2E Tests
         working-directory: backend
@@ -105,6 +107,8 @@ jobs:
           DATABASE_NAME: test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_URL: redis://localhost:6379
+          DB_USER: test_user
+          DB_PASSWORD: test_password
 
   test_playwright:
     name: Playwright E2E Tests
