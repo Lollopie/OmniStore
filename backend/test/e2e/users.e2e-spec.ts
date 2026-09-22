@@ -11,7 +11,6 @@ import cookieParser from 'cookie-parser';
 import { UserEntity } from '../../src/user/user.entity';
 import { login } from './utils/helper';
 import { AuthService } from '../../src/auth/auth.service';
-import { MailService } from '../../src/mail/mail.service';
 import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
 import { ScenarioBuilder } from './utils/scenarioBuilder';
 
@@ -26,10 +25,6 @@ describe('UsersController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let authService: AuthService;
-  const mockMailService = {
-    sendVerificationEmail: jest.fn().mockResolvedValue(true),
-    sendInviteEmail: jest.fn().mockResolvedValue(true),
-  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -43,8 +38,6 @@ describe('UsersController (e2e)', () => {
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
-      .overrideProvider(MailService)
-      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();

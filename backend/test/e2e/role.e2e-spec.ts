@@ -11,7 +11,6 @@ import { DataSource } from 'typeorm';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { login } from './utils/helper';
 import { CookieAccessInfo } from 'cookiejar';
-import { MailService } from '../../src/mail/mail.service';
 import { Cookie } from '../../src/user/user.decorator';
 import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
 import { ScenarioBuilder } from './utils/scenarioBuilder';
@@ -25,10 +24,6 @@ describe('RoleGuard (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
   let jwtService: JwtService;
-  const mockMailService = {
-    sendVerificationEmail: jest.fn().mockResolvedValue(true),
-    sendInviteEmail: jest.fn().mockResolvedValue(true),
-  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -53,8 +48,6 @@ describe('RoleGuard (e2e)', () => {
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
-      .overrideProvider(MailService)
-      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();

@@ -9,7 +9,6 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
 import { login } from './utils/helper';
-import { MailService } from '../../src/mail/mail.service';
 import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
 import { ScenarioBuilder } from './utils/scenarioBuilder';
 @Injectable()
@@ -21,10 +20,6 @@ class MockThrottlerGuard implements CanActivate {
 describe('WarehouseController (e2e)', () => {
   let app: NestExpressApplication;
   let dataSource: DataSource;
-  const mockMailService = {
-    sendVerificationEmail: jest.fn().mockResolvedValue(true),
-    sendInviteEmail: jest.fn().mockResolvedValue(true),
-  };
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -37,8 +32,6 @@ describe('WarehouseController (e2e)', () => {
     })
       .overrideProvider(ThrottlerGuard)
       .useClass(MockThrottlerGuard)
-      .overrideProvider(MailService)
-      .useValue(mockMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();

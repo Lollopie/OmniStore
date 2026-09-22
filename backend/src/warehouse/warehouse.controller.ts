@@ -67,7 +67,7 @@ export class WarehouseController {
       'admin',
     );
     if (warehouse) {
-      const cookie = {
+      const cookie: Cookie = {
         userId: userToken.userId,
         username: userToken.username,
         orgId: this.clsService.get<string>('orgId'),
@@ -75,12 +75,11 @@ export class WarehouseController {
         activeRole: 'admin',
       };
       this.authService.createAndSendCookie(cookie, res);
-      const response: { name: string; warehouseId: string; role: string } = {
+      return {
         name: warehouse.name,
         warehouseId: warehouse.warehouseId,
         role: 'admin',
       };
-      return response;
     }
     return { error: 'Creation failed' };
   }

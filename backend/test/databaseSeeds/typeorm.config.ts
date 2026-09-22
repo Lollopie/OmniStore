@@ -1,14 +1,12 @@
 import { DataSource } from 'typeorm';
+import { UserEntity } from '../../src/user/user.entity';
+import { InventoryEntity } from '../../src/inventory/inventory.entity';
+import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
+import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehouseRole.entity';
+import { OrganizationEntity } from '../../src/organization/organization.entity';
+import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
+import { InviteEntity } from '../../src/invite/invite.entity';
 
-for (const v of [
-  'DATABASE_HOST',
-  'DB_USER',
-  'DB_PASSWORD',
-  'DATABASE_NAME',
-  'DATABASE_PORT',
-]) {
-  if (!process.env[v]) throw new Error(`Missing required env var: ${v}`);
-}
 export const SeedingDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DATABASE_HOST,
@@ -17,5 +15,13 @@ export const SeedingDataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: process.env.DATABASE_NAME,
   migrations: [],
-  entities: ['src/**/*.entity.ts'],
+  entities: [
+    UserEntity,
+    InventoryEntity,
+    WarehouseEntity,
+    UserWarehouseRoleEntity,
+    OrganizationEntity,
+    UserOrganizationRoleEntity,
+    InviteEntity,
+  ],
 });
