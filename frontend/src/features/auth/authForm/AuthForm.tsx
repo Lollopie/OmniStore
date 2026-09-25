@@ -5,6 +5,8 @@ import { RegisterDto } from '@shared/dto/register.dto';
 import InputField from '../../../components/InputField.tsx';
 import Button from '../../../components/Button.tsx';
 import { PasswordInput } from '../../../components/PasswordInput.tsx';
+import { HomeNavBar } from '../../homepage/components/HomeNavBar.tsx';
+import { HomepageFooter } from '../../homepage/components/HomepageFooter.tsx';
 
 type LoginResponse = {
   warehouses: { warehouseId: string; name: string; role: string }[] | null;
@@ -25,14 +27,22 @@ interface AuthFormProps {
   onSuccess?: () => void;
   handleResponse: (data: LoginResponse) => void;
 }
+
 const resolver = classValidatorResolver(RegisterDto);
-export default function AuthForm({ title, buttonText, endpoint, successMessage, onSuccess, handleResponse }: AuthFormProps) {
+export default function AuthForm({
+                                   title,
+                                   buttonText,
+                                   endpoint,
+                                   successMessage,
+                                   onSuccess,
+                                   handleResponse,
+                                 }: AuthFormProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const {
     register,
     handleSubmit,
-    formState: {errors},
+    formState: { errors },
   } = useForm<RegisterDto>({ resolver });
   const submit = async (registerDto: RegisterDto) => {
     setError('');
@@ -46,13 +56,13 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: trimmedUsername, password }),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       const data: LoginResponse = await response.json();
       handleResponse(data);
       if (!response.ok) {
-        if( data.message ){
+        if (data.message) {
           setError(data.message);
         }
       } else {
@@ -65,28 +75,39 @@ export default function AuthForm({ title, buttonText, endpoint, successMessage, 
   };
 
   return (
-    <div className="max-w-md mx-auto">
-      <form onSubmit={handleSubmit((data) => submit(data))}>
-        <h2 className="mb-6 text-2xl font-bold">{title}</h2>
+    <div className="min-h-screen flex flex-col pt-5 gap-10">
+      <header>
+        <HomeNavBar />
+      </header>
+      <main className="grow">
+        <div className="max-w-md mx-auto">
+          <form onSubmit={handleSubmit((data) => submit(data))} className="px-4">
+            <h2 className="mb-6 text-2xl font-bold">{title}</h2>
 
-        {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
-        {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
-        <InputField
-          label="Username"
-          type="text"
-          {...register('username')}
-        />
-        {errors.username && <p className="mb-4 text-sm text-error font-medium">{errors.username.message}</p>}
-        <PasswordInput
-          label="Password"
-          type="password"
-          {...register('password')}
-        />
-        {errors.password && <p className="mb-4 text-sm text-error font-medium">{errors.password.message}</p>}
-        <Button type="submit" className="mt-4">
-          {buttonText}
-        </Button>
-      </form>
+            {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
+            {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
+            <InputField
+              label="Username"
+              type="text"
+              {...register('username')}
+            />
+            {errors.username && <p className="mb-4 text-sm text-error font-medium">{errors.username.message}</p>}
+            <PasswordInput
+              label="Password"
+              type="password"
+              {...register('password')}
+            />
+            {errors.password && <p className="mb-4 text-sm text-error font-medium">{errors.password.message}</p>}
+            <Button type="submit" className="mt-4">
+              {buttonText}
+            </Button>
+          </form>
+        </div>
+      </main>
+      <footer className="justify-self-end">
+        <HomepageFooter />
+      </footer>
     </div>
+
   );
 }

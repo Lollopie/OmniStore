@@ -10,12 +10,7 @@ import { useForm } from 'react-hook-form';
 
 export function InvalidToken() {
   return (
-    <div>
-      <h2 className="text-lg mb-4">
-        Invalid token. Please try again.
-      </h2>
-      <Register />
-    </div>
+    <Register message="Invalid token. Please try again." />
   );
 }
 
@@ -94,7 +89,7 @@ const CreateOrganization = () => {
     }
   };
   return (
-    <section className="max-w-md mx-auto">
+    <section>
       {verifying ? <p>Verifying token...</p> : tokenValid ?
         <form onSubmit={handleSubmit((data) => submit(data))}>
           <h2 className="mb-6 text-2xl font-bold">Create Organization</h2>

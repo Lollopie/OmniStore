@@ -1,14 +1,15 @@
 const VARIANTS = {
-  primary: " focus:ring-accent ",
-  danger: "  focus:ring-error "
+  primary: ' focus:ring-accent ',
+  danger: '  focus:ring-error ',
 };
 const SIZES = {
-  xs: "input-xs",
-  sm: "input-sm",
-  md: "input-md",
-  lg: "input-lg",
-  xl: "input-xl"
-}
+  xs: 'input-xs',
+  sm: 'input-sm',
+  md: 'input-md',
+  lg: 'input-lg',
+  xl: 'input-xl',
+};
+
 interface InputFieldProps extends React.HTMLProps<HTMLInputElement> {
   variant?: keyof typeof VARIANTS;
   label?: string;
@@ -18,12 +19,20 @@ interface InputFieldProps extends React.HTMLProps<HTMLInputElement> {
   inputClassName?: string;
 }
 
-export default function InputField({ variant, label, fieldSize, setValue, fieldsetClassName, inputClassName, ...props }: InputFieldProps) {
-  const baseInputFieldStyle = "input focus:outline-none focus:ring-2 focus:border-none ";
+export default function InputField({
+                                     variant,
+                                     label,
+                                     fieldSize,
+                                     setValue,
+                                     fieldsetClassName,
+                                     inputClassName,
+                                     ...props
+                                   }: InputFieldProps) {
+  const baseInputFieldStyle = 'input focus:outline-none focus:ring-2 focus:border-none ';
   const variantStyle = variant ? VARIANTS[variant] : VARIANTS['primary'];
   return (
     <fieldset className={`fieldset ${fieldsetClassName || ''}`}>
-      {label && <label htmlFor={label} className="label text-base-content">
+      {label && <label htmlFor={label} className="label mb-2 text-base-content/50">
         {label}
       </label>}
       <input

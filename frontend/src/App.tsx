@@ -17,6 +17,9 @@ import CreateOrganization from './features/organization/Create Organization.tsx'
 import Organization from './features/organization/organization.tsx';
 import WarehouseUsers from './features/warehouse/pages/warehouseUsers.tsx';
 import { WarehouseInvites } from './features/warehouse/pages/warehouseInvites.tsx';
+import Pricing from './features/homepage/pages/Pricing.tsx';
+import Features from './features/homepage/pages/Features.tsx';
+import Contact from './features/homepage/pages/Contact.tsx';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -27,6 +30,7 @@ function GuestRoute() {
   const { isAuthenticated } = useAuth();
   return !isAuthenticated ? <Outlet /> : <Navigate to="/organizations" replace />;
 }
+
 export function AppLayout() {
   return (
     <div className="min-h-screen bg-base-200 pt-5">
@@ -40,11 +44,12 @@ export function AppLayout() {
 
 export function HomeLayout() {
   return (
-    <div className="min-h-screen bg-base-200 pt-5">
+    <div className="min-h-screen bg-base-200">
       <Outlet />
     </div>
   );
 }
+
 function AppContent() {
   const { loading } = useAuth();
   useTheme();
@@ -63,20 +68,23 @@ function AppContent() {
         <Route element={<GuestRoute />}>
           <Route element={<HomeLayout />}>
             <Route path="/" element={<Homepage />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register/verify" element={<CreateOrganization />} />
+            <Route path="/invites/accept" element={<InviteManager />} />
           </Route>
           <Route element={<AppLayout />}>
-            <Route path="/register" element={<Register />} />
-            <Route path="/register/verify" element={<CreateOrganization />} />
-            <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Navigate to="/login" replace />} />
-            <Route path="/invites/accept" element={<InviteManager />} />
           </Route>
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/organizations" element={<Organization />} />
-            <Route path="/warehouses" element={<WarehouseManager />} >
+            <Route path="/warehouses" element={<WarehouseManager />}>
               <Route index element={<Navigate to="users" replace />} />
               <Route path="users" element={<WarehouseUsers />} />
               <Route path="invites" element={<WarehouseInvites />} />

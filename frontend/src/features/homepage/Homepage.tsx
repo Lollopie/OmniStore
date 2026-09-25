@@ -1,6 +1,7 @@
-import NavBar from '../../components/NavBar.tsx';
 import FeatureBox from './components/FeatureBox.tsx';
 import { Link } from 'react-router';
+import { HomeNavBar } from './components/HomeNavBar.tsx';
+import { HomepageFooter } from './components/HomepageFooter.tsx';
 
 const Homepage = () => {
   const images: string[] = Object.values(import.meta.glob('../../assets/companies/*.{png,jpg,jpeg,svg,webp}', {
@@ -8,14 +9,14 @@ const Homepage = () => {
     import: 'default',
   }));
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-10 pt-5">
       <header>
-        <NavBar />
+        <HomeNavBar />
       </header>
       <main>
         <section className="flex flex-col gap-20 items-center">
-          <section className="card max-w-7xl flex flex-row gap-10 justify-between p-8 items-center
-                       bg-base-100">
+          <section className="card max-w-7xl flex flex-col lg:flex-row gap-10 justify-between p-8 items-center
+                       bg-base-100 mx-5">
             <section className="flex-1 flex flex-col gap-4 items-start">
               <h1 className="text-3xl text-left text-base-400">
                 Total Control Over Your Inventory. Zero Friction for Your Team.
@@ -67,8 +68,8 @@ const Homepage = () => {
               </p>
             </div>
           </section>
-          <section className="max-w-7xl overflow-hidden flex flex-col gap-10">
-            <h1 className="text-3xl text-center text-base-400">
+          <section className="max-w-lvw xl:max-w-7xl overflow-clip flex flex-col gap-10 px-5">
+            <h1 className="text-3xl text-center text-wrap text-base-400">
               Trusted by Leading Companies Worldwide
             </h1>
             <section className="flex marquee-wrapper">
@@ -96,19 +97,22 @@ const Homepage = () => {
               </div>
             </section>
           </section>
-          <section className="card max-w-7xl w-full py-12 px-8 flex flex-col gap-10 bg-base-100">
+          <section className="card max-w-lvw xl:max-w-7xl py-12 px-8 flex flex-col gap-10 bg-base-100 mx-5">
             <h1 className="text-3xl text-center text-base-400">
               Features
             </h1>
-            <section className="flex flex-row gap-5 justify-around w-full">
-              <FeatureBox svgName="user.icon" text="Role-Based Access Control" />
-              <FeatureBox svgName="lock.icon" text="Row-Level Security" />
-              <FeatureBox svgName="bar-chart.icon" text="Advanced Analytics & Reporting" />
-              <FeatureBox svgName="rising-chart.icon" text="Real-Time Inventory Tracking" />
+            <section className="flex flex-row flex-wrap gap-5 justify-around w-full">
+              <FeatureBox svgName="house.icon" text="Multi-Warehouse Management" />
+              <FeatureBox svgName="role.icon" text="Role-Based Access Control" />
+              <FeatureBox svgName="rls.icon" text="Row-Level Security" />
+              <FeatureBox svgName="boxes.icon" text="Real-Time Inventory Tracking" />
             </section>
+            <Link to={'/features'} className="btn btn-accent btn-lg w-full sm:w-96 mx-auto">
+              Learn More
+            </Link>
           </section>
-          <section className="card max-w-7xl bg-base-100 p-8">
-            <p className="text-4xl text-base-400 p-15">
+          <section className="card max-w-lvw xl:max-w-7xl bg-base-100 p-8 mx-5">
+            <p className="text-4xl text-base-400 p-5 md:p-15">
               "OmniStore transformed how our warehouse team operates.
               The role-based permissions mean our floor staff move fast without risking data integrity,
               and the app interface is insanely responsive."
@@ -119,12 +123,8 @@ const Homepage = () => {
           </section>
         </section>
       </main>
-      <footer className="mt-20">
-        <section className="w-full bg-base-100 p-10 text-center">
-          <p>
-            &copy; {new Date().getFullYear()} OmniStore. All rights reserved.
-          </p>
-        </section>
+      <footer className="mt-10">
+        <HomepageFooter />
       </footer>
     </div>
 

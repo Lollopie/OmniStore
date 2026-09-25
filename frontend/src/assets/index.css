@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@plugin "daisyui";
 
+@plugin "daisyui";
 
 
 @plugin "daisyui/theme" {
@@ -39,7 +39,6 @@
 }
 
 
-
 @plugin "daisyui/theme" {
     name: "omnistore-dark";
     default: false;
@@ -75,15 +74,13 @@
     --noise: 0;
 }
 
-@property --speed {
-    syntax: '<time>';
-    inherits: true;
-    initial-value: 25s;
-}
-
 @keyframes infinite-scroll {
-    from { transform: translateX(0); }
-    to { transform: translateX(-100%); }
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-100%);
+    }
 }
 
 .animate-infinite-scroll {
@@ -93,5 +90,4 @@
 
 .marquee-wrapper:hover .animate-infinite-scroll {
     animation-play-state: paused;
-
 }
