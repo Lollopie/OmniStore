@@ -6,6 +6,7 @@ import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehou
 import { OrganizationEntity } from '../../src/organization/organization.entity';
 import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
 import { InviteEntity } from '../../src/invite/invite.entity';
+import { ContactEntity } from '../../src/contact/contact.entity';
 
 export const SeedingDataSource = new DataSource({
   type: 'postgres',
@@ -23,5 +24,6 @@ export const SeedingDataSource = new DataSource({
     OrganizationEntity,
     UserOrganizationRoleEntity,
     InviteEntity,
+    ContactEntity,
   ],
 });

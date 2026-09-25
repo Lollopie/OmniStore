@@ -5,10 +5,14 @@ import {
   PasswordResetContext,
   VerificationEmailContext,
 } from './interfaces/mail-contexts.interface';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MailService {
-  constructor(private readonly mailerService: MailerService) {}
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly configService: ConfigService,
+  ) {}
   async sendEmail(
     to: string,
     subject: string,
@@ -48,6 +52,15 @@ export class MailService {
       `You have been invited to ${context.organizationName}`,
       './invite',
       context,
+    );
+  }
+
+  async sendContactEmail(): Promise<void> {
+    await this.sendEmail(
+      this.configService.get<string>('email.contactRecipient')!,
+      `New contact message received`,
+      './contactMessage',
+      [],
     );
   }
 }

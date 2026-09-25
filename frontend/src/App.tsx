@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router';
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router';
 import Register from './features/auth/authForm/Register';
 import Login from './features/auth/authForm/Login';
 import Inventory from './features/inventory/Inventory.tsx';
@@ -20,6 +20,7 @@ import { WarehouseInvites } from './features/warehouse/pages/warehouseInvites.ts
 import Pricing from './features/homepage/pages/Pricing.tsx';
 import Features from './features/homepage/pages/Features.tsx';
 import Contact from './features/homepage/pages/Contact.tsx';
+import { useEffect } from 'react';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -53,6 +54,12 @@ export function HomeLayout() {
 function AppContent() {
   const { loading } = useAuth();
   useTheme();
+
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   if (loading) {
     return (

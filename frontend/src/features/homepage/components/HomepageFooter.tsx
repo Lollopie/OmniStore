@@ -71,7 +71,7 @@ export function HomepageFooter() {
                 <use href="/icons.svg#email.icon" />
               </svg>
               <a href="mailto:contact@florian-piel.space"
-                 className="transition transform duration-500 hover:text-blue-600 text-sm text-base-content/80">
+                 className="transition transform duration-200 hover:text-blue-600 text-sm text-base-content/80">
                 contact@florian-piel.space
               </a>
             </div>
@@ -83,9 +83,10 @@ export function HomepageFooter() {
                    className="text-accent size-5 inline">
                 <use href="/icons.svg#phone.icon" />
               </svg>
-              <p className="text-sm text-base-content/80">
+              <a href="tel:+15551234567"
+                 className="transition transform duration-200 hover:text-blue-600 text-sm text-base-content/80">
                 +1 (555) 123-4567
-              </p>
+              </a>
             </div>
             <div className="flex flex-row gap-2 items-center">
               <svg xmlns="http://www.w3.org/2000/svg"

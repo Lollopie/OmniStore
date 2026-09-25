@@ -22,6 +22,7 @@ import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehou
 import { OrganizationEntity } from '../../src/organization/organization.entity';
 import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
 import { InviteEntity } from '../../src/invite/invite.entity';
+import { ContactEntity } from '../../src/contact/contact.entity';
 describe('Inventory (Int)', () => {
   let inventoryController: InventoryController;
   let entityManager: EntityManager;
@@ -81,6 +82,7 @@ describe('Inventory (Int)', () => {
                 OrganizationEntity,
                 UserOrganizationRoleEntity,
                 InviteEntity,
+                ContactEntity,
               ],
               synchronize: configService.get<boolean>('db.databaseSynchronize'),
               migrationsRun: false,

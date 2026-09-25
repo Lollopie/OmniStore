@@ -32,6 +32,7 @@ import { Response } from 'express';
 import { UsersService } from '../../src/user/users.service';
 import { JwtModule } from '@nestjs/jwt';
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
+import { ContactEntity } from '../../src/contact/contact.entity';
 describe('Warehouse (Int)', () => {
   let warehouseController: WarehouseController;
   let entityManager: EntityManager;
@@ -107,6 +108,7 @@ describe('Warehouse (Int)', () => {
                 OrganizationEntity,
                 UserOrganizationRoleEntity,
                 InviteEntity,
+                ContactEntity,
               ],
               synchronize: configService.get<boolean>('db.databaseSynchronize'),
               migrationsRun: false,

@@ -39,6 +39,9 @@ import { AuthService } from './auth/auth.service';
 import { InviteEntity } from './invite/invite.entity';
 import appConfig from './config/app.config';
 import { ResendTransport } from './mail/resend.transport';
+import { ContactController } from './contact/contact.controller';
+import { ContactService } from './contact/contact.service';
+import { ContactEntity } from './contact/contact.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -68,6 +71,7 @@ import { ResendTransport } from './mail/resend.transport';
             OrganizationEntity,
             UserOrganizationRoleEntity,
             InviteEntity,
+            ContactEntity,
           ],
           synchronize: configService.get<boolean>('db.databaseSynchronize'),
           migrationsRun: false,
@@ -154,6 +158,7 @@ import { ResendTransport } from './mail/resend.transport';
     AuthController,
     LogoutController,
     HealthController,
+    ContactController,
   ],
   providers: [
     RegisterService,
@@ -164,6 +169,7 @@ import { ResendTransport } from './mail/resend.transport';
     GuardDBService,
     ThrottlerGuard,
     AuthService,
+    ContactService,
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: RlsInterceptor },
   ],

@@ -1,8 +1,21 @@
 import { HomeNavBar } from '../components/HomeNavBar.tsx';
 import { HomepageFooter } from '../components/HomepageFooter.tsx';
 import InputField from '../../../components/InputField.tsx';
+import Button from '../../../components/Button.tsx';
+import { classValidatorResolver } from '@hookform/resolvers/class-validator';
+import { ContactDto } from '@shared/dto/contact.dto';
+import { useForm } from 'react-hook-form';
+import { sendContactMessage } from '../hooks/sendContactMessage.ts';
+import { useToast } from '../../toast';
 
+const resolver = classValidatorResolver(ContactDto);
 const Contact = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ContactDto>({ resolver });
+  const { addToast } = useToast();
   return (
     <div className="flex flex-col gap-10 pt-5">
       <header>
@@ -24,32 +37,39 @@ const Contact = () => {
             <img src="/images/contact.jpg"
                  className="block rounded-lg w-full lg:w-1/2"
             />
-            <form className="flex flex-col gap-4 w-full lg:w-1/2" action="/contact" method="POST">
+            <form className="flex flex-col gap-4 w-full lg:w-1/2"
+                  onSubmit={handleSubmit((data) => {
+                    sendContactMessage({ ...data, addToast });
+                  })}
+            >
               <div className="flex flex-row w-full gap-6">
-                <InputField label="First Name" name="firstName" type="text" placeholder="Enter your first name"
+                {errors.fName && <p className="text-error text-sm">{errors.fName.message}</p>}
+                <InputField label="First Name" name="fName" type="text" placeholder="Enter your first name"
                             fieldsetClassName="inline w-1/2"
                             inputClassName="bg-base-200 block w-full"
-                            required
+                            {...register('fName')}
                 />
-                <InputField label="Last Name" name="lastName" type="text" placeholder="Enter your last name"
+                {errors.lName && <p className="text-error text-sm">{errors.lName.message}</p>}
+                <InputField label="Last Name" name="lName" type="text" placeholder="Enter your last name"
                             fieldsetClassName="inline w-1/2"
                             inputClassName="bg-base-200 block w-full"
-                            required
+                            {...register('lName')}
                 />
               </div>
-
+              {errors.email && <p className="text-error text-sm">{errors.email.message}</p>}
               <InputField label="Email" name="email" type="email" placeholder="Enter your email address"
                           inputClassName="bg-base-200 w-full"
-                          required
+                          {...register('email')}
               />
+              {errors.message && <p className="text-error text-sm">{errors.message.message}</p>}
               <fieldset className="fieldset">
                 <label htmlFor="message" className="text-base-content/50 mb-2">Message</label>
                 <textarea name="message" placeholder="Enter your message"
                           className="textarea textarea-bordered w-full bg-base-200 h-32"
-                          required
+                          {...register('message')}
                 />
               </fieldset>
-              <button type="submit" className="btn btn-primary mt-4">Send Message</button>
+              <Button type="submit" className="btn btn-primary mt-4">Send Message</Button>
             </form>
           </section>
           <section className="flex flex-col lg:flex-row lg:flex-wrap gap-4 max-w-7xl mx-auto mt-10">

@@ -1,34 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TxRepoProvider } from '../../src/rls/txrepo.service';
-import { ClsService } from 'nestjs-cls';
-import { DataSource, EntityManager } from 'typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import appConfig from '../../src/config/app.config';
-import authConfig from '../../src/config/auth.config';
-import dbConfig from '../../src/config/db.config';
 import emailConfig from '../../src/config/email.config';
-import { LoginController } from '../../src/login/login.controller';
-import { LoginService } from '../../src/login/login.service';
+import dbConfig from '../../src/config/db.config';
+import { MailService } from '../../src/mail/mail.service';
+import { DataSource, EntityManager } from 'typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../../src/user/user.entity';
+import { InviteEntity } from '../../src/invite/invite.entity';
+import { ClsService } from 'nestjs-cls';
+import { TxRepoProvider } from '../../src/rls/txrepo.service';
+import authConfig from '../../src/config/auth.config';
 import { InventoryEntity } from '../../src/inventory/inventory.entity';
 import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
 import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehouseRole.entity';
 import { OrganizationEntity } from '../../src/organization/organization.entity';
 import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
-import { InviteEntity } from '../../src/invite/invite.entity';
-import { AuthService } from '../../src/auth/auth.service';
-import { JwtModule } from '@nestjs/jwt';
-import { UsersService } from '../../src/user/users.service';
-import { ScenarioBuilder } from '../e2e/utils/scenarioBuilder';
-import { Response } from 'express';
-import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { ContactEntity } from '../../src/contact/contact.entity';
-describe('Login (Int)', () => {
-  let loginController: LoginController;
-  let entityManager: EntityManager;
+import { ContactController } from '../../src/contact/contact.controller';
+import { ContactService } from '../../src/contact/contact.service';
+
+describe('Contact', () => {
+  let contactController: ContactController;
+  let contactService: ContactService;
   let dataSource: DataSource;
+  let entityManager: EntityManager;
   let testingModule: TestingModule;
+  const mockMailService = {
+    sendContactEmail: jest.fn(),
+  };
   const mockClsService = {
     get: jest.fn().mockImplementation((key: string) => {
       if (key === 'entityManager') {
@@ -40,13 +40,12 @@ describe('Login (Int)', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     testingModule = await Test.createTestingModule({
-      controllers: [LoginController],
+      controllers: [ContactController],
       providers: [
-        LoginService,
+        ContactService,
         TxRepoProvider,
-        AuthService,
-        UsersService,
         { provide: ClsService, useValue: mockClsService },
+        { provide: MailService, useValue: mockMailService },
       ],
       imports: [
         await ConfigModule.forRoot({
@@ -83,54 +82,37 @@ describe('Login (Int)', () => {
             };
           },
         }),
-        JwtModule.registerAsync({
-          global: true,
-          imports: [ConfigModule],
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService) => ({
-            secret: configService.get<string>('auth.jwtSecret'),
-            signOptions: {
-              expiresIn: configService.get<number>('auth.jwtExpiresIn'),
-            },
-          }),
-        }),
       ],
     }).compile();
 
-    loginController = testingModule.get<LoginController>(LoginController);
+    contactController = testingModule.get<ContactController>(ContactController);
+    contactService = testingModule.get<ContactService>(ContactService);
     dataSource = testingModule.get<DataSource>(DataSource);
     entityManager = dataSource.createEntityManager();
   });
   it('should be defined', () => {
-    expect(loginController).toBeDefined();
+    expect(contactController).toBeDefined();
+    expect(contactService).toBeDefined();
   });
-  describe('login', () => {
-    it('should login user', async () => {
-      const scenarioBuilder = await ScenarioBuilder.create(dataSource)
-        .withOrganization('Org1')
-        .then((b) => b.withUser('User1', 'owner', undefined, undefined));
-      const user = scenarioBuilder['users']['User1'];
-      const orgId = scenarioBuilder['org'].orgId;
-      const loginResponse = await loginController.login(
-        {
-          username: user.username,
-          password: 'password1',
-        },
-        {
-          cookie: jest.fn(),
-        } as unknown as Response,
-      );
-      expect(loginResponse).toBeDefined();
-      expect(loginResponse).toEqual({
-        message: 'Authentication successful',
-        orgId: orgId,
-        orgRole: OrganizationRole.OWNER,
-        warehouses: [],
-        activeWarehouse: null,
-        activeRole: null,
-        userId: user.userId,
-        username: 'User1',
+  describe('send contact message', () => {
+    it('should save the contact message and send a notification', async () => {
+      await contactController.postMessage({
+        fName: 'John',
+        lName: 'Doe',
+        email: 'example@example.org',
+        message: 'Hello, this is a test message.',
       });
+      const contactMessage = await dataSource
+        .getRepository(ContactEntity)
+        .findOne({ where: { email: 'example@example.org' } });
+      expect(contactMessage).toBeDefined();
+      expect(contactMessage).toMatchObject({
+        fName: 'John',
+        lName: 'Doe',
+        email: 'example@example.org',
+        message: 'Hello, this is a test message.',
+      });
+      expect(mockMailService.sendContactEmail).toHaveBeenCalled();
     });
   });
   afterEach(async () => {
@@ -145,7 +127,6 @@ describe('Login (Int)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
-    await dataSource.destroy();
     await testingModule.close();
   });
 });

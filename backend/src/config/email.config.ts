@@ -12,4 +12,5 @@ export default registerAs('email', () => ({
     parseInt(process.env.INVITE_TOKEN_EXPIRATION_HOURS!, 10) || 24,
   registerTokenExpiresMinutes:
     parseInt(process.env.REGISTER_TOKEN_EXPIRATION_MINUTES!, 10) || 30,
+  contactRecipient: process.env.CONTACT_RECIPIENT || null,
 }));

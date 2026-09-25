@@ -32,6 +32,7 @@ import { OrganizationService } from '../../src/organization/organization.service
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import { InviteContext } from '../../src/mail/interfaces/mail-contexts.interface';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
+import { ContactEntity } from '../../src/contact/contact.entity';
 describe('Invite (Int)', () => {
   let inviteController: InviteController;
   let warehouseController: WarehouseController;
@@ -114,6 +115,7 @@ describe('Invite (Int)', () => {
                 OrganizationEntity,
                 UserOrganizationRoleEntity,
                 InviteEntity,
+                ContactEntity,
               ],
               synchronize: configService.get<boolean>('db.databaseSynchronize'),
               migrationsRun: false,

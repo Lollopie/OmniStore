@@ -31,6 +31,7 @@ import { VerificationEmailContext } from '../../src/mail/interfaces/mail-context
 import { Response } from 'express';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { ScenarioBuilder } from '../e2e/utils/scenarioBuilder';
+import { ContactEntity } from '../../src/contact/contact.entity';
 describe('Organization (Int)', () => {
   let organizationController: OrganizationController;
   let registerController: RegisterController;
@@ -99,6 +100,7 @@ describe('Organization (Int)', () => {
                 OrganizationEntity,
                 UserOrganizationRoleEntity,
                 InviteEntity,
+                ContactEntity,
               ],
               synchronize: configService.get<boolean>('db.databaseSynchronize'),
               migrationsRun: false,

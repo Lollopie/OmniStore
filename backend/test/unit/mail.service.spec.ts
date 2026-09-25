@@ -1,11 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MailService } from '../../src/mail/mail.service';
 import { MailerService } from '@nestjs-modules/mailer';
+import { ConfigService } from '@nestjs/config';
 
 describe('MailService', () => {
   let mailService: MailService;
   const mockMailerService = {
     sendMail: jest.fn(),
+  };
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      switch (key) {
+        case 'email.contactRecipient':
+          return 'test@example.org';
+      }
+    }),
   };
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -15,6 +24,10 @@ describe('MailService', () => {
         {
           provide: MailerService,
           useValue: mockMailerService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -89,6 +102,17 @@ describe('MailService', () => {
           verificationUrl: 'https://www.example.org',
           expiresInHours: 1,
         },
+      });
+    });
+    describe('sendContactEmail', () => {
+      it('should call nestjs mailerService with expected parameters', async () => {
+        await mailService.sendContactEmail();
+        expect(mockMailerService.sendMail).toHaveBeenCalledWith({
+          to: 'test@example.org',
+          subject: `New contact message received`,
+          template: './contactMessage',
+          context: [],
+        });
       });
     });
   });

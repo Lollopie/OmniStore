@@ -22,6 +22,7 @@ import { ScenarioBuilder } from '../e2e/utils/scenarioBuilder';
 import { Cookie } from '../../src/user/user.decorator';
 import { UsersService } from '../../src/user/users.service';
 import { Response } from 'express';
+import { ContactEntity } from '../../src/contact/contact.entity';
 describe('Users (Int)', () => {
   let usersController: UsersController;
   let authService: AuthService;
@@ -74,6 +75,7 @@ describe('Users (Int)', () => {
                 OrganizationEntity,
                 UserOrganizationRoleEntity,
                 InviteEntity,
+                ContactEntity,
               ],
               synchronize: configService.get<boolean>('db.databaseSynchronize'),
               migrationsRun: false,

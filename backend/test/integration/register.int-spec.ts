@@ -22,6 +22,7 @@ import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
 import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehouseRole.entity';
 import { OrganizationEntity } from '../../src/organization/organization.entity';
 import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
+import { ContactEntity } from '../../src/contact/contact.entity';
 
 describe('Register', () => {
   let registerController: RegisterController;
@@ -82,6 +83,7 @@ describe('Register', () => {
                 OrganizationEntity,
                 UserOrganizationRoleEntity,
                 InviteEntity,
+                ContactEntity,
               ],
               synchronize: configService.get<boolean>('db.databaseSynchronize'),
               migrationsRun: false,
