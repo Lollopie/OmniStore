@@ -25,14 +25,13 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
       credentials: 'include',
     }) as SelectResponse;
     if (response.ok) {
-      localStorage.setItem('activeWarehouse', JSON.stringify(warehouseId));
+      localStorage.setItem('activeWarehouse', warehouseId);
       const { activeRole } = await response.json();
-      localStorage.setItem('activeRole', JSON.stringify(activeRole));
+      localStorage.setItem('activeRole', activeRole);
       activeWarehouse.role = activeRole;
       setActiveWarehouse(activeWarehouse);
       addToast(`Changed active warehouse to ${activeWarehouse.name || activeWarehouse.warehouseId}`, 'info', 5000);
-    }
-    else {
+    } else {
       addToast(`Failed to change active warehouse.`, 'error', 5000);
     }
   };
@@ -42,10 +41,10 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
   }
   return (
     <fieldset className="fieldset sm:max-w-xs w-full">
-      <legend className="fieldset-legend ml-1">Active Warehouse: </legend>
+      <legend className="fieldset-legend ml-1">Active Warehouse:</legend>
       <select className="select select-sm focus:border-none focus:outline-none focus:ring-2 focus:ring-accent w-full"
-        value={selectedWarehouse}
-        onChange={handleChange}
+              value={selectedWarehouse}
+              onChange={handleChange}
       >
         <option value="" disabled>-- Select a Warehouse --</option>
         {warehouses.map((warehouse: { warehouseId: string, name: string }) => (

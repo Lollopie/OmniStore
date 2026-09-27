@@ -7,6 +7,8 @@ import Button from '../../components/Button.tsx';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { OrganizationDto } from '@shared/dto/organization.dto.ts';
 import { useForm } from 'react-hook-form';
+import { HomeNavBar } from '../homepage/components/HomeNavBar.tsx';
+import { HomepageFooter } from '../homepage/components/HomepageFooter.tsx';
 
 export function InvalidToken() {
   return (
@@ -89,48 +91,60 @@ const CreateOrganization = () => {
     }
   };
   return (
-    <section>
-      {verifying ? <p>Verifying token...</p> : tokenValid ?
-        <form onSubmit={handleSubmit((data) => submit(data))}>
-          <h2 className="mb-6 text-2xl font-bold">Create Organization</h2>
+    <div className="min-h-screen flex flex-col pt-5 gap-10">
+      <header>
+        <HomeNavBar />
+      </header>
+      <main className="grow">
+        <section className="mx-auto max-w-md">
+          {verifying ? <p>Verifying token...</p> : tokenValid ?
+            <form onSubmit={handleSubmit((data) => submit(data))}>
+              <h2 className="mb-6 text-2xl font-bold">Create Organization</h2>
 
-          {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
-          {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
-          <div className="flex flex-col gap-2">
-            <InputField
-              label="Email"
-              value={email}
-              disabled
-              inputClassName="bg-base-100"
-              type="email"
-              {...register('ownerEmail')}
-            />
-            <InputField
-              label="Username"
-              type="text"
-              {...register('ownerUsername')}
-            />
-            {errors.ownerUsername && <p className="text-sm text-error font-medium">{errors.ownerUsername.message}</p>}
-            <PasswordInput
-              label="Password"
-              type="password"
-              {...register('ownerPassword')}
-            />
-            {errors.ownerPassword && <p className="text-sm text-error font-medium">{errors.ownerPassword.message}</p>}
-            <InputField
-              label="Organization Name"
-              type="text"
-              {...register('name')}
-            />
-            {errors.name && <p className="text-sm text-error font-medium">{errors.name.message}</p>}
-            <Button type="submit" className="mt-4 self-start">
-              Create
-            </Button>
-          </div>
-        </form>
-        :
-        <InvalidToken />}
-    </section>
+              {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
+              {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
+              <div className="flex flex-col gap-2">
+                <InputField
+                  label="Email"
+                  value={email}
+                  disabled
+                  inputClassName="bg-base-100"
+                  type="email"
+                  {...register('ownerEmail')}
+                />
+                <InputField
+                  label="Username"
+                  type="text"
+                  {...register('ownerUsername')}
+                />
+                {errors.ownerUsername &&
+                  <p className="text-sm text-error font-medium">{errors.ownerUsername.message}</p>}
+                <PasswordInput
+                  label="Password"
+                  type="password"
+                  {...register('ownerPassword')}
+                />
+                {errors.ownerPassword &&
+                  <p className="text-sm text-error font-medium">{errors.ownerPassword.message}</p>}
+                <InputField
+                  label="Organization Name"
+                  type="text"
+                  {...register('name')}
+                />
+                {errors.name && <p className="text-sm text-error font-medium">{errors.name.message}</p>}
+                <Button type="submit" className="mt-4 self-start">
+                  Create
+                </Button>
+              </div>
+            </form>
+            :
+            <InvalidToken />}
+        </section>
+      </main>
+      <footer className="justify-self-end">
+        <HomepageFooter />
+      </footer>
+    </div>
   );
 };
 

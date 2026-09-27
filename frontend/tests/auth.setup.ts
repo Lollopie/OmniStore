@@ -1,5 +1,6 @@
 import { test as setup, expect } from '@playwright/test';
 import { getLatestEmailFor } from './utils/mail';
+
 const authPath = 'playwright/.auth/';
 setup('create warehouse account', async ({ request, page }) => {
   await page.goto('/');
@@ -12,7 +13,7 @@ setup('create warehouse account', async ({ request, page }) => {
   const response = await request.post(`${process.env.VITE_NESTJS_HOST_URL}/register`, {
     data: {
       email: credentials.email,
-    }
+    },
   });
   expect(response.status()).toBe(201);
   const message = await getLatestEmailFor(page, credentials.email);
@@ -25,11 +26,11 @@ setup('create warehouse account', async ({ request, page }) => {
       ownerUsername: credentials.username,
       ownerPassword: credentials.password,
       name: credentials.orgName,
-    }
+    },
   });
   expect(creationResponse.status()).toBe(201);
   const url = `${process.env.VITE_NESTJS_HOST_URL}/login`;
-  const loginSuccess = await page.evaluate(async ({url, credentials}) => {
+  const loginSuccess = await page.evaluate(async ({ url, credentials }) => {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -40,7 +41,7 @@ setup('create warehouse account', async ({ request, page }) => {
       }),
     });
     return res.ok;
-  }, {url, credentials});
+  }, { url, credentials });
   expect(loginSuccess).toBeTruthy();
   await page.context().storageState({ path: authPath + 'warehouse.json' });
 });
@@ -55,7 +56,7 @@ setup('create inventory account', async ({ request, page }) => {
   const response = await request.post(`${process.env.VITE_NESTJS_HOST_URL}/register`, {
     data: {
       email: credentials.email,
-    }
+    },
   });
   expect(response.status()).toBe(201);
   const message = await getLatestEmailFor(page, credentials.email);
@@ -68,11 +69,11 @@ setup('create inventory account', async ({ request, page }) => {
       ownerUsername: credentials.username,
       ownerPassword: credentials.password,
       name: credentials.orgName,
-    }
+    },
   });
   expect(creationResponse.status()).toBe(201);
   const url = `${process.env.VITE_NESTJS_HOST_URL}/login`;
-  const loginSuccess = await page.evaluate(async ({url, credentials}) => {
+  const loginSuccess = await page.evaluate(async ({ url, credentials }) => {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -83,7 +84,7 @@ setup('create inventory account', async ({ request, page }) => {
       }),
     });
     return res.ok;
-  }, {url, credentials});
+  }, { url, credentials });
   expect(loginSuccess).toBeTruthy();
   const warehouseUrl = `${process.env.VITE_NESTJS_HOST_URL}/warehouses`;
   const warehouseAddSuccess = await page.evaluate(async (warehouseUrl) => {
@@ -98,8 +99,8 @@ setup('create inventory account', async ({ request, page }) => {
     const json = await res.json();
     const activeWarehouse = json['warehouseId'];
     const activeRole = json['role'];
-    localStorage.setItem('activeWarehouse', JSON.stringify(activeWarehouse));
-    localStorage.setItem('activeRole', JSON.stringify(activeRole));
+    localStorage.setItem('activeWarehouse', activeWarehouse);
+    localStorage.setItem('activeRole', activeRole);
     localStorage.setItem('userWarehouses', JSON.stringify([json]));
     return res.ok;
   }, warehouseUrl);

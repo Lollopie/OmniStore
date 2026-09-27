@@ -9,6 +9,7 @@ interface ItemFormProps {
   onSubmit: (data: { itemName: string; amount: number }) => void;
   onCancel: () => void;
 }
+
 const resolver = classValidatorResolver(InventoryDto);
 export const ItemForm = ({
                            submitLabel,
@@ -18,9 +19,9 @@ export const ItemForm = ({
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm<InventoryDto>({
-    resolver
+    resolver,
   });
 
   const submit = (inventoryDto: InventoryDto) => {
@@ -29,10 +30,10 @@ export const ItemForm = ({
 
   return (
     <form onSubmit={handleSubmit((data) => submit(data))} className="flex flex-col">
-      <div className="w-full flex flex-col items-center justify-center mt-3 sm:px-4">
-        <InputField label="Item Name" type="text" {...register('itemName')} />
+      <div className="w-full flex flex-col items-start mt-3 sm:px-4">
+        <InputField label="Item Name" type="text" fieldsetClassName="w-full" {...register('itemName')} />
         {errors.itemName && <p className="mb-4 text-sm text-error font-medium">{errors.itemName.message}</p>}
-        <InputField label="Amount" type="number" {...register('amount')} />
+        <InputField label="Amount" type="number" fieldsetClassName="w-full" {...register('amount')} />
         {errors.amount && <p className="mb-4 text-sm text-error font-medium">{errors.amount.message}</p>}
       </div>
       <footer className="w-full flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">

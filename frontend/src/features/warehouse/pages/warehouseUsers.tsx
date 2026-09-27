@@ -39,7 +39,7 @@ const WarehouseUsers = () => {
   const [activeWarehouse, setActiveWarehouse] = useState<Warehouse>(() => {
     try {
       const rawStoredId = localStorage.getItem('activeWarehouse');
-      const warehouseId = rawStoredId ? JSON.parse(rawStoredId) : '';
+      const warehouseId = rawStoredId ? rawStoredId : '';
       return getWarehouseFromWarehouseId(warehouseId);
     } catch (error) {
       console.error('Failed to parse activeWarehouse from localStorage:', error);

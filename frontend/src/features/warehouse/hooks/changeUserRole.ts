@@ -1,5 +1,6 @@
 import type { Warehouse, WarehouseUser } from '../pages/warehouseUsers.tsx';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
+
 interface Props {
   user: WarehouseUser;
   newRole: string;
@@ -7,7 +8,8 @@ interface Props {
   setActiveWarehouse: React.Dispatch<React.SetStateAction<Warehouse>>;
   addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
-export const changeUserRole = async ({user, newRole, setUsers, setActiveWarehouse, addToast}: Props) => {
+
+export const changeUserRole = async ({ user, newRole, setUsers, setActiveWarehouse, addToast }: Props) => {
   try {
     const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses/users`, {
       method: 'PATCH',
@@ -21,11 +23,11 @@ export const changeUserRole = async ({user, newRole, setUsers, setActiveWarehous
     }
     const currentUsername = readStoredValue('username');
     if (user.username === currentUsername) {
-      localStorage.setItem('activeRole', JSON.stringify(newRole));
+      localStorage.setItem('activeRole', newRole);
       setActiveWarehouse((prev: Warehouse) => ({ ...prev, role: newRole }));
       const warehouses: Warehouse[] = JSON.parse(localStorage.getItem('userWarehouses') || '[]');
       const updatedWarehouses = warehouses.map((warehouse) =>
-        warehouse.warehouseId === readStoredValue('activeWarehouse') ? { ...warehouse, role: newRole } : warehouse
+        warehouse.warehouseId === readStoredValue('activeWarehouse') ? { ...warehouse, role: newRole } : warehouse,
       );
       localStorage.setItem('userWarehouses', JSON.stringify(updatedWarehouses));
     }
@@ -33,7 +35,7 @@ export const changeUserRole = async ({user, newRole, setUsers, setActiveWarehous
     addToast(`Successfully set User role for "${user.username}"`, 'success', 5000);
   } catch (err) {
     addToast('Failed to update role.', 'error', 5000);
-    if (err instanceof Error){
+    if (err instanceof Error) {
       console.error(err);
     }
   }

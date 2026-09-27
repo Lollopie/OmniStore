@@ -28,7 +28,7 @@ test.describe('Warehouse Flow', () => {
     await page.getByLabel('Warehouse Name').fill('Test Warehouse');
 
     const createResponse = page.waitForResponse(
-      (res) => res.url().includes('/warehouses') && res.request().method() === 'POST'
+      (res) => res.url().includes('/warehouses') && res.request().method() === 'POST',
     );
     await page.getByRole('button', { name: 'Add', exact: true }).filter({ hasText: 'Add' }).click();
     await createResponse;
@@ -40,14 +40,14 @@ test.describe('Warehouse Flow', () => {
   test('adds a secondary user to the warehouse', async () => {
     const targetUser = await registerUser(page);
     await page.goto('/warehouses/users');
-    await page.locator('.select').selectOption({ label: 'Test Warehouse' });
+    await page.getByRole('group', { name: 'Active Warehouse:' }).getByRole('combobox').selectOption({ label: 'Test Warehouse' });
     await expect(page.getByText('Add user', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Add' }).filter({ hasNotText: 'Add' }).click();
     await expect(page.getByRole('heading', { name: 'Add Warehouse' })).toBeVisible();
     await page.getByLabel('Warehouse Name').fill('Test Warehouse 2');
 
     const createResponse = page.waitForResponse(
-      (res) => res.url().includes('/warehouses') && res.request().method() === 'POST'
+      (res) => res.url().includes('/warehouses') && res.request().method() === 'POST',
     );
     await page.locator('button[type="submit"]').click();
     await createResponse;
@@ -56,11 +56,11 @@ test.describe('Warehouse Flow', () => {
     await page.getByPlaceholder('Username to add').fill(targetUser);
     await page.getByText('Add user', { exact: true }).click();
     const addResponse = page.waitForResponse(
-      (res) => res.url().includes('/warehouses/users') && res.request().method() === 'POST'
+      (res) => res.url().includes('/warehouses/users') && res.request().method() === 'POST',
     );
     await addResponse;
     await expect(
-      page.getByText(`Added user "${targetUser}" to active warehouse`)
+      page.getByText(`Added user "${targetUser}" to active warehouse`),
     ).toBeVisible();
     const userTableRow = page.getByRole('row').filter({ hasText: targetUser });
     await expect(userTableRow).toBeVisible();
@@ -68,7 +68,7 @@ test.describe('Warehouse Flow', () => {
   test('search user', async () => {
     // Because we use the shared 'page' instance, localStorage values remain intact!
     await page.goto('/warehouses');
-    await page.locator('.select').selectOption({ label: 'Test Warehouse' });
+    await page.getByRole('group', { name: 'Active Warehouse:' }).getByRole('combobox').selectOption({ label: 'Test Warehouse' });
     await expect(page.getByText('Add user', { exact: true })).toBeVisible();
 
     const username = await page.evaluate(() => localStorage.getItem('username'));
@@ -79,7 +79,7 @@ test.describe('Warehouse Flow', () => {
     }
 
     const searchResponse = page.waitForResponse(
-      (res) => res.url().includes('/warehouses/users') && res.request().method() === 'GET'
+      (res) => res.url().includes('/warehouses/users') && res.request().method() === 'GET',
     );
 
     await page.getByPlaceholder('Search...').fill('test');

@@ -4,13 +4,12 @@ import { getLatestEmailFor } from './mail';
 export async function registerUser(page: Page) {
   const credentials = {
     email: `warehouse_user_${Date.now()}@example.com`,
-    username:  `warehouse_user_${Date.now()}`,
-    password:  'password123',
-  }
+    username: `warehouse_user_${Date.now()}`,
+    password: 'password123',
+  };
   await page.getByRole('link', { name: 'Invites' }).click();
-  await expect(page.getByRole('heading', { name: 'Warehouse Invites' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Invite User' })).toBeVisible();
   await page.getByPlaceholder('Enter user email').fill(credentials.email);
-  console.log(await page.localStorage.getItem('activeRole'));
   await page.getByText('Invite', { exact: true }).click();
   const message = await getLatestEmailFor(page, credentials.email);
   const match = message.HTML.match(/token=([0-9a-zA-Z]*)"/);
@@ -20,7 +19,7 @@ export async function registerUser(page: Page) {
     data: {
       username: credentials.username,
       password: credentials.password,
-    }
+    },
   });
   expect(creationResponse.status()).toBe(201);
   return credentials.username;

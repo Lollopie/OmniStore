@@ -7,7 +7,9 @@ import { WAREHOUSE_INVITATION_PERMISSIONS } from '@shared';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 import { createWarehouseInvite } from '../hooks/createWarehouseInvite.ts';
 import { useToast } from '../../toast';
+
 const resolver = classValidatorResolver(WarehouseInviteDto);
+
 export function WarehouseInvites() {
   const {
     register,
@@ -16,16 +18,15 @@ export function WarehouseInvites() {
   } = useForm<WarehouseInviteDto>({ resolver });
   const { addToast } = useToast();
   return (
-    <section className="card bg-base-100 max-w-2xl mx-auto">
+    <section className="card bg-base-100 rounded-xl border border-base-300 p-4 max-w-2xl mx-auto">
       <div className="card-body">
-        <h1 className="text-2xl font-bold mb-4">Warehouse Invites</h1>
         <section>
           <h2 className="text-lg font-semibold mb-2">
-            <span className="font-semibold">Invite User</span>
+            Invite User
           </h2>
           <form
             onSubmit={handleSubmit((data) => createWarehouseInvite(data, addToast))}
-          className="flex flex-col gap-4 items-start">
+            className="flex flex-col gap-4 items-start">
             <InputField
               label="Email"
               placeholder="Enter user email" {...register('email')}
@@ -55,5 +56,5 @@ export function WarehouseInvites() {
         </section>
       </div>
     </section>
-  )
+  );
 }

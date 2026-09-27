@@ -15,14 +15,3 @@ export const clearUserSession = (): void => {
     localStorage.removeItem(key);
   });
 };
-
-export const purgeAllUserData = (): void => {
-  const currentTheme = localStorage.getItem(PERSISTENT_KEYS.THEME);
-
-  localStorage.clear();
-  sessionStorage.clear();
-
-  if (currentTheme) {
-    localStorage.setItem(PERSISTENT_KEYS.THEME, currentTheme);
-  }
-};

@@ -9,19 +9,19 @@ export default function Login() {
       title="Login"
       buttonText="Login"
       endpoint="/login"
-      successMessage='Login successful!'
+      successMessage="Login successful!"
       onSuccess={() => setIsAuthenticated(true)}
       handleResponse={(data) => {
         localStorage.setItem('userWarehouses', JSON.stringify(data.warehouses));
         localStorage.setItem(
           'activeWarehouse',
-          JSON.stringify(data.warehouses && data.warehouses[0] ? data.warehouses[0].warehouseId : ''),
+          data.warehouses && data.warehouses[0] ? data.warehouses[0].warehouseId : '',
         );
-        localStorage.setItem('activeRole', JSON.stringify(data.activeRole));
-        localStorage.setItem('userId', JSON.stringify(data.userId));
-        localStorage.setItem('username', JSON.stringify(data.username));
-        localStorage.setItem('orgId', JSON.stringify(data.orgId));
-        localStorage.setItem('orgRole', JSON.stringify(data.orgRole));
+        localStorage.setItem('activeRole', data.activeRole);
+        localStorage.setItem('userId', data.userId);
+        localStorage.setItem('username', data.username);
+        localStorage.setItem('orgId', data.orgId);
+        localStorage.setItem('orgRole', data.orgRole);
       }}
     />
   );

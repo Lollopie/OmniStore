@@ -5,29 +5,44 @@ import { useAuth } from '../features/auth/authContext/';
 import Button from './Button.tsx';
 // export interface NavBarProps {
 // }
+
+const PrimaryLinks = [
+  { name: 'Organization', href: '/organizations' },
+  { name: 'Warehouses', href: '/warehouses' },
+  { name: 'Inventory', href: '/inventory' },
+  { name: 'Settings', href: '/settings' },
+];
+
+const activeLinkClass = 'btn btn-ghost font-bold text-primary font-semibold';
+const inactiveLinkClass = 'btn btn-ghost';
+
+const activeLinkClassMobile = 'btn btn-ghost  btn-lg w-full text-center font-bold text-primary font-semibold';
+const inactiveLinkClassMobile = 'btn btn-ghost btn-lg w-full text-center';
+
 export default function NavBar() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const { isAuthenticated, logout } = useAuth();
-  const handleLogout= async () => {
+  const currentSite = window.location.pathname;
+  const handleLogout = async () => {
+    console.log(isAuthenticated);
     if (isAuthenticated) {
       try {
         const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/logout`, {
           method: 'POST',
-          credentials: 'include'
+          credentials: 'include',
         });
-        if(response.ok){
+        if (response.ok) {
           logout();
         }
-      }
-      catch (err) {
+      } catch (err) {
         console.log(err);
       }
     }
-  }
+  };
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;
-    if (!dialog){
+    if (!dialog) {
       return;
     }
     if (isOpen) {
@@ -42,22 +57,27 @@ export default function NavBar() {
       <Logo />
       <nav>
         <ul className="hidden md:flex py-2 gap-5">
-            {!isAuthenticated &&
-              <>
-                <li><Link to="/login" className="btn btn-ghost">Login</Link></li>
-                <li><Link to="/register" className="btn btn-primary mr-5">Register</Link></li>
-              </>
-            }
-            {isAuthenticated &&
-              <>
-                <li><Link to="/organizations" className="btn btn-ghost">Organization</Link></li>
-                <li><Link to="/warehouses" className="btn btn-ghost">Warehouses</Link></li>
-                <li><Link to="/inventory" className="btn btn-ghost">Inventory</Link></li>
-                <li><Link to="/settings" className="btn btn-ghost">Settings</Link></li>
-                <li><Link to="/logout" onClick={handleLogout} className="btn btn-ghost mr-5">Logout</Link></li>
-              </>
-            }
-          </ul>
+          {!isAuthenticated &&
+            <>
+              <li><Link to="/login" className="btn btn-ghost">Login</Link></li>
+              <li><Link to="/register" className="btn btn-primary mr-5">Register</Link></li>
+            </>
+          }
+          {isAuthenticated &&
+            <>
+              {PrimaryLinks.map((link) => (
+                <li key={link.name}>
+                  <Link to={link.href}
+                        className={currentSite.includes(link.href) ? activeLinkClass : inactiveLinkClass}
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+              <li><Link to="/logout" onClick={handleLogout} className="btn btn-ghost mr-5">Logout</Link></li>
+            </>
+          }
+        </ul>
         <dialog
           ref={dialogRef}
           onClose={() => setIsOpen(false)}
@@ -74,18 +94,29 @@ export default function NavBar() {
             <ul className="flex flex-col gap-4 text-lg font-medium my-auto">
               {!isAuthenticated ? (
                 <>
-                  <li><Link to="/login" onClick={() => setIsOpen(false)} className="btn btn-outline btn-lg w-full">Login</Link></li>
-                  <li><Link to="/register" onClick={() => setIsOpen(false)} className="btn btn-primary btn-lg w-full">Register</Link></li>
+                  <li><Link to="/login" onClick={() => setIsOpen(false)}
+                            className="btn btn-outline btn-lg w-full">Login</Link></li>
+                  <li><Link to="/register" onClick={() => setIsOpen(false)}
+                            className="btn btn-primary btn-lg w-full">Register</Link></li>
                 </>
               ) : (
                 <>
-                  <li><Link to="/organizations" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Organization</Link></li>
-                  <li><Link to="/warehouses" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Warehouses</Link></li>
-                  <li><Link to="/inventory" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Inventory</Link></li>
-                  <li><Link to="/settings" onClick={() => setIsOpen(false)} className="btn btn-ghost btn-lg justify-start">Settings</Link></li>
-                  <div className="divider my-4"></div>
+                  {PrimaryLinks.map((link) => (
+                    <li>
+                      <Link to={link.href}
+                            onClick={() => setIsOpen(false)}
+                            className={link.href === currentSite ? activeLinkClassMobile : inactiveLinkClassMobile}
+                            aria-current={link.href === currentSite ? 'page' : undefined}>{
+                        link.name}
+                      </Link>
+                    </li>
+                  ))}
                   <li>
-                    <Button onClick={() => { handleLogout(); setIsOpen(false); }} variant="danger" className="w-full">
+                    <Button onClick={(e) => {
+                      e.preventDefault();
+                      handleLogout();
+                      setIsOpen(false);
+                    }} variant="danger" className="w-full">
                       Logout
                     </Button>
                   </li>
