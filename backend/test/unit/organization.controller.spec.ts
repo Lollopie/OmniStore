@@ -3,13 +3,16 @@ import { SubscriptionGuard } from '../../src/payment/subscription.guard';
 import { OrganizationController } from '../../src/organization/organization.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '../../src/auth/auth.guard';
-import { CanActivate } from '@nestjs/common';
+import { CanActivate, NotFoundException } from '@nestjs/common';
 import { OrganizationRolesGuard } from '../../src/roles/organizationRoles/organizationRoles.guard';
 import { OrganizationService } from '../../src/organization/organization.service';
 import { AuthService } from '../../src/auth/auth.service';
 import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
 import { Response } from 'express';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
+import { InviteService } from '../../src/invite/invite.service';
+import { MailService } from '../../src/mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 describe('OrganizationController', () => {
   let organizationController: OrganizationController;
   class MockGuard implements CanActivate {
@@ -31,6 +34,10 @@ describe('OrganizationController', () => {
         createdAt: new Date(),
       },
     }),
+    findByOrgId: jest.fn().mockResolvedValue({
+      orgId: 'org-1',
+      name: 'organization',
+    }),
     getUsers: jest.fn().mockResolvedValue({
       data: {
         userId: 'user-1',
@@ -49,6 +56,24 @@ describe('OrganizationController', () => {
       organizationId: 'org-1',
       role: 'admin',
     }),
+  };
+  const mockInvite = {
+    invite: { inviteId: 'invite-1', email: 'new@example.org' },
+    rawToken: 'raw-token',
+  };
+  const mockInviteService = {
+    inviteOrganizationUser: jest.fn().mockResolvedValue(mockInvite),
+    resendInvite: jest.fn().mockResolvedValue(mockInvite),
+    revokeInvite: jest.fn(),
+    getPendingInvites: jest.fn().mockResolvedValue([{ inviteId: 'invite-1' }]),
+  };
+  const mockMailService = {
+    sendInviteEmail: jest.fn(),
+  };
+  const mockConfigService = {
+    get: jest.fn((key: string) =>
+      key === 'app.frontendUrl' ? 'http://frontend' : undefined,
+    ),
   };
   const mockSubscriptionService = {
     getSubscription: jest.fn(),
@@ -79,6 +104,9 @@ describe('OrganizationController', () => {
           useValue: mockUserOrganizationRoleService,
         },
         { provide: SubscriptionService, useValue: mockSubscriptionService },
+        { provide: InviteService, useValue: mockInviteService },
+        { provide: MailService, useValue: mockMailService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     })
       .overrideGuard(AuthGuard)
@@ -256,6 +284,79 @@ describe('OrganizationController', () => {
         organizationId: 'org-1',
         role: 'admin',
       });
+    });
+  });
+  describe('getInvites', () => {
+    it('should return inviteService getPendingInvites return value', async () => {
+      const response = await organizationController.getInvites();
+      expect(response).toEqual([{ inviteId: 'invite-1' }]);
+    });
+  });
+  describe('inviteUser', () => {
+    it('should call inviteService inviteOrganizationUser', async () => {
+      await organizationController.inviteUser(
+        { email: 'new@example.org', role: OrganizationRole.ADMIN },
+        userToken,
+      );
+      expect(mockInviteService.inviteOrganizationUser).toHaveBeenCalledWith(
+        'new@example.org',
+        'admin',
+      );
+    });
+    it('should send the invite email with the accept link', async () => {
+      await organizationController.inviteUser(
+        { email: 'new@example.org', role: OrganizationRole.MEMBER },
+        userToken,
+      );
+      expect(mockOrganizationService.findByOrgId).toHaveBeenCalledWith('org-1');
+      expect(mockMailService.sendInviteEmail).toHaveBeenCalledWith(
+        'new@example.org',
+        {
+          organizationName: 'organization',
+          verificationUrl: 'http://frontend/invites/accept?token=raw-token',
+          expiresInHours: 24,
+        },
+      );
+    });
+    it('should throw if the organization is not found', async () => {
+      mockOrganizationService.findByOrgId.mockResolvedValueOnce(null);
+      await expect(
+        organizationController.inviteUser(
+          { email: 'new@example.org', role: OrganizationRole.MEMBER },
+          userToken,
+        ),
+      ).rejects.toThrow(new NotFoundException('Organization not found'));
+      expect(mockMailService.sendInviteEmail).not.toHaveBeenCalled();
+    });
+    it('should return message', async () => {
+      const response = await organizationController.inviteUser(
+        { email: 'new@example.org', role: OrganizationRole.MEMBER },
+        userToken,
+      );
+      expect(response).toEqual({ message: 'Invite sent successfully.' });
+    });
+  });
+  describe('resendInvite', () => {
+    it('should call inviteService resendInvite and send the email', async () => {
+      const response = await organizationController.resendInvite(
+        'invite-1',
+        userToken,
+      );
+      expect(mockInviteService.resendInvite).toHaveBeenCalledWith('invite-1');
+      expect(mockMailService.sendInviteEmail).toHaveBeenCalledWith(
+        'new@example.org',
+        expect.objectContaining({
+          verificationUrl: 'http://frontend/invites/accept?token=raw-token',
+        }),
+      );
+      expect(response).toEqual({ message: 'Invite sent successfully.' });
+    });
+  });
+  describe('revokeInvite', () => {
+    it('should call inviteService revokeInvite', async () => {
+      const response = await organizationController.revokeInvite('invite-1');
+      expect(mockInviteService.revokeInvite).toHaveBeenCalledWith('invite-1');
+      expect(response).toEqual({ message: 'Invite revoked.' });
     });
   });
 });

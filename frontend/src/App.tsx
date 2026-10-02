@@ -14,7 +14,9 @@ import { AuthProvider, useAuth } from './features/auth/authContext/';
 import InviteManager from './features/invite/invite.tsx';
 import Homepage from './features/homepage/Homepage.tsx';
 import CreateOrganization from './features/organization/Create Organization.tsx';
-import Organization from './features/organization/organization.tsx';
+import { OrganizationManager } from './features/organization/organization.tsx';
+import OrganizationMembers from './features/organization/pages/organizationMembers.tsx';
+import { OrganizationInvites } from './features/organization/pages/organizationInvites.tsx';
 import WarehouseUsers from './features/warehouse/pages/warehouseUsers.tsx';
 import { WarehouseInvites } from './features/warehouse/pages/warehouseInvites.tsx';
 import Pricing from './features/homepage/pages/Pricing.tsx';
@@ -99,7 +101,10 @@ function AppContent() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route path="/organizations" element={<Organization />} />
+            <Route path="/organizations" element={<OrganizationManager />}>
+              <Route index element={<OrganizationMembers />} />
+              <Route path="invites" element={<OrganizationInvites />} />
+            </Route>
             <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/warehouses" element={<WarehouseManager />}>

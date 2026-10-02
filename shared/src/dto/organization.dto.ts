@@ -36,3 +36,13 @@ export class OrganizationUpdateRoleDto {
   @IsEnum(OrganizationRole, { message: 'Invalid role' })
   role: OrganizationRole;
 }
+export class OrganizationInviteDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail({}, { message: 'Invalid email address' })
+  email: string;
+
+  @IsNotEmpty()
+  @IsEnum(OrganizationRole, { message: 'Invalid role' })
+  role: OrganizationRole;
+}

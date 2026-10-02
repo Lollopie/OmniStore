@@ -1,4 +1,4 @@
-import type { OrganizationUser } from '../organization.tsx';
+import type { OrganizationUser } from '../pages/organizationMembers.tsx';
 
 interface Props {
   searchTerm?: string;

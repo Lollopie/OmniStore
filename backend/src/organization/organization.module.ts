@@ -7,9 +7,10 @@ import { MailService } from '../mail/mail.service';
 import { GuardDBService } from '../utils/guardDB.service';
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
 import { PaymentModule } from '../payment/payment.module';
+import { InviteModule } from '../invite/invite.module';
 
 @Module({
-  imports: [PaymentModule],
+  imports: [PaymentModule, InviteModule],
   providers: [
     OrganizationService,
     AuthService,

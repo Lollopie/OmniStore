@@ -9,7 +9,13 @@ import { TxRepoProvider } from '../../src/rls/txrepo.service';
 import { ConfigService } from '@nestjs/config';
 import * as helper from '../../src/utils/helper';
 import { mapRow } from '../../src/utils/helper';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { IsNull } from 'typeorm';
+import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 
 jest.mock('../../src/utils/helper', () => ({
   mapRow: jest.fn().mockReturnValue({
@@ -26,6 +32,7 @@ jest.mock('../../src/utils/helper', () => ({
 
 describe('InviteService', () => {
   let inviteService: InviteService;
+  let actorOrgRole = 'admin';
   const mockConfigService = {
     get: jest.fn<number, [string]>((key: string) => {
       if (key === 'email.inviteTokenExpiresHours') {
@@ -45,6 +52,9 @@ describe('InviteService', () => {
       if (field === 'orgId') {
         return 'org-1';
       }
+      if (field === 'orgRole') {
+        return actorOrgRole;
+      }
       throw new Error('Unexpected field');
     }),
     set: jest.fn(),
@@ -57,6 +67,9 @@ describe('InviteService', () => {
       };
     }),
     save: jest.fn((inputValue: InviteEntity) => inputValue),
+    delete: jest.fn(),
+    findOne: jest.fn(),
+    createQueryBuilder: jest.fn(),
     query: jest.fn().mockReturnValue([
       {
         invite_id: 'invite-1',
@@ -117,6 +130,7 @@ describe('InviteService', () => {
   };
   beforeEach(async () => {
     jest.clearAllMocks();
+    actorOrgRole = 'admin';
     const moduleRef = await Test.createTestingModule({
       providers: [
         InviteService,
@@ -419,6 +433,178 @@ describe('InviteService', () => {
 
         expiresAt: expect.any(Date),
       });
+    });
+  });
+  describe('inviteOrganizationUser', () => {
+    it('should create an org-only invite with the org role', async () => {
+      await inviteService.inviteOrganizationUser(
+        'example@example.org',
+        OrganizationRole.ADMIN,
+      );
+      expect(mockInviteRepository.create).toHaveBeenCalledWith({
+        email: 'example@example.org',
+        orgId: 'org-1',
+        role: 'admin',
+        expiresAt: expect.any(Date),
+        tokenHash: 'mocked-hashed-token',
+      });
+    });
+    it('should return saved invite and raw invite token', async () => {
+      const response = await inviteService.inviteOrganizationUser(
+        'example@example.org',
+        OrganizationRole.MEMBER,
+      );
+      expect(response.invite).toMatchObject({
+        inviteId: 'invite-1',
+        role: 'member',
+      });
+      expect(response.invite.warehouseId).toBeUndefined();
+      expect(response.rawToken).toEqual('mocked-random-token');
+    });
+    it('should remove older pending invites for the same email', async () => {
+      await inviteService.inviteOrganizationUser(
+        'example@example.org',
+        OrganizationRole.MEMBER,
+      );
+      expect(mockInviteRepository.delete).toHaveBeenCalledWith({
+        email: 'example@example.org',
+        orgId: 'org-1',
+        consumedAt: IsNull(),
+      });
+    });
+    it('should throw if the user already exists', async () => {
+      mockUserRepository.findOne.mockReturnValueOnce({ userId: 'user-2' });
+      await expect(
+        inviteService.inviteOrganizationUser(
+          'example@example.org',
+          OrganizationRole.MEMBER,
+        ),
+      ).rejects.toThrow(new BadRequestException('User already exists'));
+      expect(mockInviteRepository.save).not.toHaveBeenCalled();
+    });
+    it('should not allow admins to invite owners', async () => {
+      await expect(
+        inviteService.inviteOrganizationUser(
+          'example@example.org',
+          OrganizationRole.OWNER,
+        ),
+      ).rejects.toThrow(
+        new ForbiddenException(
+          'You do not have permission to invite users with this role',
+        ),
+      );
+      expect(mockInviteRepository.save).not.toHaveBeenCalled();
+    });
+    it('should allow owners to invite owners', async () => {
+      actorOrgRole = 'owner';
+      await inviteService.inviteOrganizationUser(
+        'example@example.org',
+        OrganizationRole.OWNER,
+      );
+      expect(mockInviteRepository.save).toHaveBeenCalled();
+    });
+    it('should not allow members to invite anyone', async () => {
+      actorOrgRole = 'member';
+      await expect(
+        inviteService.inviteOrganizationUser(
+          'example@example.org',
+          OrganizationRole.MEMBER,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+  describe('getPendingInvites', () => {
+    it('should query unconsumed invites of the current org', async () => {
+      const queryBuilder = {
+        leftJoin: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([{ inviteId: 'invite-1' }]),
+      };
+      mockInviteRepository.createQueryBuilder.mockReturnValueOnce(queryBuilder);
+      const response = await inviteService.getPendingInvites();
+      expect(queryBuilder.where).toHaveBeenCalledWith('invite.orgId = :orgId', {
+        orgId: 'org-1',
+      });
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'invite.consumedAt IS NULL',
+      );
+      expect(response).toEqual([{ inviteId: 'invite-1' }]);
+    });
+  });
+  describe('revokeInvite', () => {
+    it('should look up the invite in the current org', async () => {
+      mockInviteRepository.findOne.mockResolvedValueOnce({
+        inviteId: 'invite-1',
+        warehouseId: null,
+        role: 'member',
+      });
+      await inviteService.revokeInvite('invite-1');
+      expect(mockInviteRepository.findOne).toHaveBeenCalledWith({
+        where: { inviteId: 'invite-1', orgId: 'org-1', consumedAt: IsNull() },
+      });
+    });
+    it('should delete the invite', async () => {
+      mockInviteRepository.findOne.mockResolvedValueOnce({
+        inviteId: 'invite-1',
+        warehouseId: null,
+        role: 'member',
+      });
+      await inviteService.revokeInvite('invite-1');
+      expect(mockInviteRepository.delete).toHaveBeenCalledWith({
+        inviteId: 'invite-1',
+      });
+    });
+    it('should throw if the invite is not found', async () => {
+      mockInviteRepository.findOne.mockResolvedValueOnce(null);
+      await expect(inviteService.revokeInvite('invite-1')).rejects.toThrow(
+        new NotFoundException('Invite not found'),
+      );
+      expect(mockInviteRepository.delete).not.toHaveBeenCalled();
+    });
+    it('should not allow admins to revoke owner invites', async () => {
+      mockInviteRepository.findOne.mockResolvedValueOnce({
+        inviteId: 'invite-1',
+        warehouseId: null,
+        role: 'owner',
+      });
+      await expect(inviteService.revokeInvite('invite-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockInviteRepository.delete).not.toHaveBeenCalled();
+    });
+    it('should allow admins to revoke warehouse invites', async () => {
+      mockInviteRepository.findOne.mockResolvedValueOnce({
+        inviteId: 'invite-1',
+        warehouseId: 'warehouse-1',
+        role: 'admin',
+      });
+      await inviteService.revokeInvite('invite-1');
+      expect(mockInviteRepository.delete).toHaveBeenCalled();
+    });
+  });
+  describe('resendInvite', () => {
+    it('should save the invite with a new token and expiry', async () => {
+      mockInviteRepository.findOne.mockResolvedValueOnce({
+        inviteId: 'invite-1',
+        warehouseId: null,
+        role: 'member',
+        tokenHash: 'old-hash',
+        expiresAt: new Date(Date.now() - 1000),
+      });
+      const response = await inviteService.resendInvite('invite-1');
+      expect(response.invite.tokenHash).toEqual('mocked-hashed-token');
+      expect(response.invite.expiresAt.valueOf()).toBeGreaterThan(Date.now());
+      expect(response.rawToken).toEqual('mocked-random-token');
+    });
+    it('should throw if the invite is not found', async () => {
+      mockInviteRepository.findOne.mockResolvedValueOnce(null);
+      await expect(inviteService.resendInvite('invite-1')).rejects.toThrow(
+        new NotFoundException('Invite not found'),
+      );
+      expect(mockInviteRepository.save).not.toHaveBeenCalled();
     });
   });
 });
