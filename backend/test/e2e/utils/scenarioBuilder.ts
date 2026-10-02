@@ -1,4 +1,7 @@
-import { OrganizationEntity } from '../../../src/organization/organization.entity';
+import {
+  OrganizationEntity,
+  SubscriptionPlan,
+} from '../../../src/organization/organization.entity';
 import { UserEntity } from '../../../src/user/user.entity';
 import { WarehouseEntity } from '../../../src/warehouse/warehouse.entity';
 import { DataSource } from 'typeorm';
@@ -25,8 +28,11 @@ export class ScenarioBuilder {
     return builder;
   }
 
-  async withOrganization(name: string): Promise<ScenarioBuilder> {
-    this.org = await seedOrganization(this.ds, name);
+  async withOrganization(
+    name: string,
+    subscription?: SubscriptionPlan | null,
+  ): Promise<ScenarioBuilder> {
+    this.org = await seedOrganization(this.ds, name, subscription);
     return this;
   }
 

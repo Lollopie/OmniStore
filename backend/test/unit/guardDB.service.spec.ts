@@ -67,6 +67,58 @@ describe('GuardDBService', () => {
       expect(result).toEqual('organization');
     });
   });
+  describe('getOrgSubscription', () => {
+    it('should call get_org_subscription with correct parameters', async () => {
+      mockDataSource.query.mockReturnValueOnce([
+        {
+          subscription: 'starter',
+        },
+      ]);
+      await guardDBService.getOrgSubscription('org-1');
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT get_org_subscription($1) AS subscription`,
+        ['org-1'],
+      );
+    });
+    it('should return found subscription', async () => {
+      mockDataSource.query.mockReturnValueOnce([
+        {
+          subscription: 'starter',
+        },
+      ]);
+      const result = await guardDBService.getOrgSubscription('org-1');
+      expect(result).toEqual('starter');
+    });
+    it('should return null if organization has no subscription', async () => {
+      mockDataSource.query.mockReturnValueOnce([
+        {
+          subscription: null,
+        },
+      ]);
+      const result = await guardDBService.getOrgSubscription('org-1');
+      expect(result).toBeNull();
+    });
+  });
+  describe('setOrgSubscription', () => {
+    it('should call set_org_subscription with correct parameters', async () => {
+      mockDataSource.query.mockReturnValueOnce([]);
+      await guardDBService.setOrgSubscription('org-1', 'growth', 'sub_1');
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT set_org_subscription($1, $2, $3)`,
+        ['org-1', 'growth', 'sub_1'],
+      );
+    });
+  });
+  describe('clearOrgSubscription', () => {
+    it('should call clear_org_subscription with correct parameters', async () => {
+      mockDataSource.query.mockReturnValueOnce([]);
+      await guardDBService.clearOrgSubscription('sub_1');
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT clear_org_subscription($1)`,
+        ['sub_1'],
+      );
+    });
+  });
   describe('findWarehouse', () => {
     it('should call get_warehouse with correct parameters', async () => {
       mockDataSource.query.mockReturnValueOnce([

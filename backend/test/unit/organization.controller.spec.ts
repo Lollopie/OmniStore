@@ -50,6 +50,17 @@ describe('OrganizationController', () => {
       role: 'admin',
     }),
   };
+  const mockSubscriptionService = {
+    getSubscription: jest.fn(),
+    confirmCheckoutSession: jest.fn(),
+  };
+  const userToken = {
+    username: 'username',
+    userId: 'user-1',
+    orgId: 'org-1',
+    activeWarehouseId: '',
+    activeRole: '',
+  };
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
@@ -67,7 +78,7 @@ describe('OrganizationController', () => {
           provide: UserOrganizationRoleService,
           useValue: mockUserOrganizationRoleService,
         },
-        { provide: SubscriptionService, useValue: {} },
+        { provide: SubscriptionService, useValue: mockSubscriptionService },
       ],
     })
       .overrideGuard(AuthGuard)
@@ -84,6 +95,59 @@ describe('OrganizationController', () => {
   });
   it('should be defined', () => {
     expect(organizationController).toBeDefined();
+  });
+  describe('getSubscription', () => {
+    it('should return the current subscription', async () => {
+      mockSubscriptionService.getSubscription.mockResolvedValueOnce('starter');
+      const response = await organizationController.getSubscription(userToken);
+      expect(mockSubscriptionService.getSubscription).toHaveBeenCalledWith(
+        'org-1',
+      );
+      expect(response).toEqual({ subscription: 'starter' });
+    });
+    it('should not confirm a checkout session if already subscribed', async () => {
+      mockSubscriptionService.getSubscription.mockResolvedValueOnce('starter');
+      await organizationController.getSubscription(userToken, 'cs_test_1');
+      expect(
+        mockSubscriptionService.confirmCheckoutSession,
+      ).not.toHaveBeenCalled();
+    });
+    it('should return null without a sessionId if not subscribed', async () => {
+      mockSubscriptionService.getSubscription.mockResolvedValueOnce(null);
+      const response = await organizationController.getSubscription(userToken);
+      expect(
+        mockSubscriptionService.confirmCheckoutSession,
+      ).not.toHaveBeenCalled();
+      expect(response).toEqual({ subscription: null });
+    });
+    it('should confirm the checkout session and return the new subscription', async () => {
+      mockSubscriptionService.getSubscription
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce('growth');
+      mockSubscriptionService.confirmCheckoutSession.mockResolvedValueOnce(
+        true,
+      );
+      const response = await organizationController.getSubscription(
+        userToken,
+        'cs_test_1',
+      );
+      expect(
+        mockSubscriptionService.confirmCheckoutSession,
+      ).toHaveBeenCalledWith('cs_test_1', 'org-1');
+      expect(response).toEqual({ subscription: 'growth' });
+    });
+    it('should return null if the checkout session is not yet active', async () => {
+      mockSubscriptionService.getSubscription.mockResolvedValueOnce(null);
+      mockSubscriptionService.confirmCheckoutSession.mockResolvedValueOnce(
+        false,
+      );
+      const response = await organizationController.getSubscription(
+        userToken,
+        'cs_test_1',
+      );
+      expect(mockSubscriptionService.getSubscription).toHaveBeenCalledTimes(1);
+      expect(response).toEqual({ subscription: null });
+    });
   });
   describe('register', () => {
     it('should call organizationService createOrganization', async () => {
