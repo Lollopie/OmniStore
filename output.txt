@@ -1,0 +1,120 @@
+To set up reusable Handlebars partials (e.g., shared headers, footers, buttons) and layouts in NestJS MailerModule, you need to configure the partials option in your template settings and structure your template directories.Step 1: Establish Your Directory StructureOrganize your templates into dedicated directories for pages and partials inside src/mail/templates:Plaintextsrc/
+└── mail/
+    └── templates/
+        ├── partials/
+        │   ├── header.hbs
+        │   ├── footer.hbs
+        │   └── button.hbs
+        ├── layout.hbs
+        ├── verification.hbs
+        └── password-reset.hbs
+Step 2: Update nest-cli.jsonEnsure NestJS builds include all subdirectories (partials/, layouts/) when compiling to dist/:JSON{
+  "compilerOptions": {
+    "assets": [
+      {
+        "include": "mail/templates/**/*",
+        "outDir": "dist/src"
+      }
+    ]
+  }
+}
+Step 3: Configure MailerModule with Partials SupportPass the partials configuration inside template.options so Handlebars automatically registers every .hbs file in your partials/ folder:TypeScript// mail.module.ts or app.module.ts
+import { Module } from '@nestjs/common';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { join } from 'path';
+
+@Module({
+  imports: [
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        transport: {
+          host: config.get<string>('MAIL_HOST'),
+          port: config.get<number>('MAIL_PORT'),
+          auth: {
+            user: config.get<string>('MAIL_USER'),
+            pass: config.get<string>('MAIL_PASS'),
+          },
+        },
+        defaults: {
+          from: config.get<string>('MAIL_FROM'),
+        },
+        template: {
+          dir: join(__dirname, 'mail/templates'),
+          adapter: new HandlebarsAdapter(),
+          options: {
+            strict: true,
+            partials: {
+              dir: join(__dirname, 'mail/templates/partials'),
+              options: {
+                strict: true,
+              },
+            },
+          },
+        },
+      }),
+    }),
+  ],
+})
+export class MailModule {}
+Step 4: Define Reusable PartialsCreate partials in src/mail/templates/partials/. Note that the filename becomes the partial identifier in Handlebars.src/mail/templates/partials/header.hbs:Handlebars<header style="background-color: #1a202c; padding: 20px; text-align: center;">
+  <img src="https://yourdomain.com/logo.png" alt="Company Logo" width="120" />
+</header>
+src/mail/templates/partials/footer.hbs:Handlebars<footer style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 12px; color: #718096;">
+  <p>© {{ currentYear }} Your Company. All rights reserved.</p>
+  <p><a href="{{ unsubscribeUrl }}">Unsubscribe</a> from these emails.</p>
+</footer>
+src/mail/templates/partials/button.hbs:Handlebars<a href="{{ url }}" style="display: inline-block; background-color: #3182ce; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+  {{ text }}
+</a>
+Step 5: Implement Reusable Layouts / Page TemplatesThere are two primary approaches to apply layout wrappers to your emails:Option A: Including Partials Directly (Recommended for Simplicity)Include partials using {{> partialName }} inside any template file.src/mail/templates/verification.hbs:Handlebars<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: Arial, sans-serif; color: #2d3748; margin: 0; padding: 0;">
+
+  {{!-- Include Header Partial --}}
+  {{> header }}
+
+  <div style="padding: 30px;">
+    <h2>Hello, {{ userName }}!</h2>
+    <p>Please click below to verify your email address:</p>
+
+    {{!-- Include Button Partial with Local Scope Context --}}
+    {{> button url=verificationUrl text="Verify Email" }}
+  </div>
+
+  {{!-- Include Footer Partial --}}
+  {{> footer currentYear=2026 unsubscribeUrl=unsubscribeUrl }}
+
+</body>
+</html>
+Option B: Master Layout Pattern (Block Template Wrapping)Create a wrapper layout src/mail/templates/layout.hbs:Handlebars<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ emailSubject }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f7fafc; padding: 20px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px;">
+    <tr>
+      <td>
+        {{> header }}
+        <div style="padding: 24px;">
+          {{> @partial-block }} {{!-- Dynamic page content injected here --}}
+        </div>
+        {{> footer }}
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+Then wrap specific pages inside @partial-block in src/mail/templates/password-reset.hbs:Handlebars{{#> layout emailSubject="Reset Password" }}
+  <h3>Password Reset Request</h3>
+  <p>Hi {{ userName }}, click below to choose a new password:</p>
+  {{> button url=resetUrl text="Reset Password" }}
+{{/layout}}

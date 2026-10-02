@@ -17,6 +17,7 @@ import { WarehouseRoles } from '../roles/warehouseRoles/warehouseRoles.decorator
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import { DeleteResult } from 'typeorm';
 import { InventoryEntity } from './inventory.entity';
+import { SubscriptionGuard } from '../payment/subscription.guard';
 @Controller('inventory')
 @UseGuards(AuthGuard, WarehouseRolesGuard)
 export class InventoryController {
@@ -44,11 +45,13 @@ export class InventoryController {
     return await this.inventoryService.getInventory(searchTerm, page, sort);
   }
   @Post()
+  @UseGuards(SubscriptionGuard)
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async addItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
     return await this.inventoryService.createItem(item);
   }
   @Patch()
+  @UseGuards(SubscriptionGuard)
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async updateItem(@Body() item: InventoryDto): Promise<InventoryEntity> {
     if (!item.itemId) {
@@ -57,6 +60,7 @@ export class InventoryController {
     return await this.inventoryService.updateItem(item);
   }
   @Delete()
+  @UseGuards(SubscriptionGuard)
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async deleteItem(@Body() item: InventoryDto): Promise<{ message: string }> {
     if (!item.itemId) {

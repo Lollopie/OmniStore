@@ -1,5 +1,8 @@
 import { DataSource } from 'typeorm';
-import { OrganizationEntity } from '../../src/organization/organization.entity';
+import {
+  OrganizationEntity,
+  SubscriptionPlan,
+} from '../../src/organization/organization.entity';
 import { WarehouseEntity } from '../../src/warehouse/warehouse.entity';
 import { InventoryEntity } from '../../src/inventory/inventory.entity';
 import { UserEntity } from '../../src/user/user.entity';
@@ -10,12 +13,14 @@ import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehou
 export async function seedOrganization(
   dataSource: DataSource,
   orgName: string,
+  subscription: SubscriptionPlan | null = 'starter',
 ): Promise<OrganizationEntity> {
   const organizationRepository = dataSource.getRepository(OrganizationEntity);
 
   return await organizationRepository.save(
     organizationRepository.create({
       name: orgName,
+      subscription,
     }),
   );
 }

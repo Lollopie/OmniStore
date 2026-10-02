@@ -42,6 +42,8 @@ import { ResendTransport } from './mail/resend.transport';
 import { ContactController } from './contact/contact.controller';
 import { ContactService } from './contact/contact.service';
 import { ContactEntity } from './contact/contact.entity';
+import paymentConfig from './config/payment.config';
+import { PaymentModule } from './payment/payment.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -51,7 +53,7 @@ import { ContactEntity } from './contact/contact.entity';
         `.env`,
         '/etc/secrets/.env',
       ],
-      load: [appConfig, authConfig, dbConfig, emailConfig],
+      load: [appConfig, authConfig, dbConfig, emailConfig, paymentConfig],
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -152,6 +154,7 @@ import { ContactEntity } from './contact/contact.entity';
     UserWarehouseRoleModule,
     WarehouseModule,
     OrganizationModule,
+    PaymentModule,
   ],
   controllers: [
     RegisterController,

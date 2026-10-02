@@ -6,9 +6,10 @@ import { AuthService } from '../auth/auth.service';
 import { MailService } from '../mail/mail.service';
 import { GuardDBService } from '../utils/guardDB.service';
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
-  imports: [],
+  imports: [PaymentModule],
   providers: [
     OrganizationService,
     AuthService,

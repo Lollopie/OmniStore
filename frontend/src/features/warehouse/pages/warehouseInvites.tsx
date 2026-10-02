@@ -7,6 +7,7 @@ import { WAREHOUSE_INVITATION_PERMISSIONS } from '@shared';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 import { createWarehouseInvite } from '../hooks/createWarehouseInvite.ts';
 import { useToast } from '../../toast';
+import { useSubscription } from '../../payment/subscriptionContext';
 
 const resolver = classValidatorResolver(WarehouseInviteDto);
 
@@ -17,6 +18,7 @@ export function WarehouseInvites() {
     formState: { errors },
   } = useForm<WarehouseInviteDto>({ resolver });
   const { addToast } = useToast();
+  const { isReadOnly } = useSubscription();
   return (
     <section className="card bg-base-100 rounded-xl border border-base-300 p-4 max-w-2xl mx-auto">
       <div className="card-body">
@@ -49,7 +51,8 @@ export function WarehouseInvites() {
             </select>
             {errors.role && <p className="text-error">{errors.role.message}</p>}
             <Button
-              type="submit">
+              type="submit"
+              disabled={isReadOnly}>
               Invite
             </Button>
           </form>

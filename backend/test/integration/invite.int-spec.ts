@@ -1,3 +1,4 @@
+import { SubscriptionGuard } from '../../src/payment/subscription.guard';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InviteController } from '../../src/invite/invite.controller';
 import { InviteService } from '../../src/invite/invite.service';
@@ -136,6 +137,8 @@ describe('Invite (Int)', () => {
       ],
     })
       .overrideGuard(AuthGuard)
+      .useValue(MockGuard)
+      .overrideGuard(SubscriptionGuard)
       .useValue(MockGuard)
       .overrideGuard(WarehouseRolesGuard)
       .useValue(MockGuard)

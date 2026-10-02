@@ -20,6 +20,10 @@ import { WarehouseInvites } from './features/warehouse/pages/warehouseInvites.ts
 import Pricing from './features/homepage/pages/Pricing.tsx';
 import Features from './features/homepage/pages/Features.tsx';
 import Contact from './features/homepage/pages/Contact.tsx';
+import Subscribe from './features/payment/Subscribe.tsx';
+import CheckoutSuccess from './features/payment/CheckoutSuccess.tsx';
+import { SubscriptionProvider } from './features/payment/subscriptionContext';
+import ReadOnlyBanner from './features/payment/ReadOnlyBanner.tsx';
 import { useEffect } from 'react';
 
 function ProtectedRoute() {
@@ -36,6 +40,7 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-base-200 pt-5">
       <NavBar />
+      <ReadOnlyBanner />
       <main className="py-6 px-4 sm:px-6 lg:px-8">
         <Outlet />
       </main>
@@ -77,7 +82,6 @@ function AppContent() {
             <Route path="/" element={<Homepage />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/features" element={<Features />} />
-            <Route path="/contact" element={<Contact />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register/verify" element={<CreateOrganization />} />
@@ -88,9 +92,16 @@ function AppContent() {
           </Route>
         </Route>
 
+        {/* Reachable by logged-in users too, e.g. from the checkout fallback */}
+        <Route element={<HomeLayout />}>
+          <Route path="/contact" element={<Contact />} />
+        </Route>
+
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/organizations" element={<Organization />} />
+            <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/warehouses" element={<WarehouseManager />}>
               <Route index element={<Navigate to="users" replace />} />
               <Route path="users" element={<WarehouseUsers />} />
@@ -115,7 +126,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <SubscriptionProvider>
+        <AppContent />
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }

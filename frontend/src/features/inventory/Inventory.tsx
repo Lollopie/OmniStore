@@ -18,6 +18,7 @@ import { ItemForm } from './components/ItemForm.tsx';
 import { handleUpdateItem } from './hooks/handleUpdateItem.ts';
 import { handleDeleteItem } from './hooks/handleDeleteItem.ts';
 import { readStoredValue } from '../../hooks/readStoredValue.ts';
+import { useSubscription } from '../payment/subscriptionContext';
 
 export interface InventoryItem {
   itemId: string;
@@ -43,6 +44,7 @@ const InventoryManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { addToast } = useToast();
+  const { isReadOnly } = useSubscription();
   useEffect(() => {
     const controller = new AbortController();
     fetchInventory({
@@ -151,7 +153,7 @@ const InventoryManager = () => {
           </fieldset>
           {(readStoredValue('activeRole') === 'admin' ||
             readStoredValue('activeRole') === 'manager') && (
-            <AddButton onClick={() => setAddItemIsOpen(true)} className="btn-sm sm:btn-md" />
+            <AddButton onClick={() => setAddItemIsOpen(true)} disabled={isReadOnly} className="btn-sm sm:btn-md" />
           )}
         </div>
         <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -187,6 +189,7 @@ const InventoryManager = () => {
                                          children={<Edit size={16} className="stroke-current" />}
                                          variant="info"
                                          size="xs"
+                                         disabled={isReadOnly}
                                        />
                                        <Button
                                          onClick={() => handleDeleteItem(
@@ -201,6 +204,7 @@ const InventoryManager = () => {
                                          children={<Trash size={16} />}
                                          variant={'danger'}
                                          size={'xs'}
+                                         disabled={isReadOnly}
                                        />
                                      </div>}
                     />

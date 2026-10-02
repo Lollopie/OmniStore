@@ -1,3 +1,4 @@
+import { SubscriptionGuard } from '../../src/payment/subscription.guard';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InventoryController } from '../../src/inventory/inventory.controller';
 import { InventoryService } from '../../src/inventory/inventory.service';
@@ -92,6 +93,8 @@ describe('Inventory (Int)', () => {
       ],
     })
       .overrideGuard(AuthGuard)
+      .useValue(MockGuard)
+      .overrideGuard(SubscriptionGuard)
       .useValue(MockGuard)
       .overrideGuard(WarehouseRolesGuard)
       .useValue(MockGuard)

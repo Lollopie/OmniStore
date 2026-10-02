@@ -1,6 +1,7 @@
 import { HomeNavBar } from '../components/HomeNavBar.tsx';
 import PricingCard from '../components/Pricing Card.tsx';
 import { HomepageFooter } from '../components/HomepageFooter.tsx';
+import { PRICING_PLANS } from '../pricingPlans.ts';
 
 const Pricing = () => {
   return (
@@ -16,39 +17,14 @@ const Pricing = () => {
           Choose the plan that fits your business needs. Scale seamlessly as you grow.
         </p>
         <section className="flex gap-10 flex-col lg:flex-row justify-between items-center max-w-7xl mx-auto p-8">
-          <PricingCard title={'Starter'}
-                       subTitle={'For small teams getting organized'}
-                       price={29}
-                       features={[
-                         '1 warehouse',
-                         'Up to 5 users',
-                         'Role-based access control',
-                         'Real-time inventory tracking',
-                         'Email support',
-                       ]}
-          />
-          <PricingCard title={'Growth'}
-                       subTitle={'For multi-warehouse operations'}
-                       price={99}
-                       features={[
-                         'Up to 5 warehouses',
-                         'Up to 25 users',
-                         'Everything in Starter',
-                         'Priority support',
-                         '',
-                       ]}
-          />
-          <PricingCard title={'Enterprise'}
-                       subTitle={'For large-scale logistics teams'}
-                       price={299}
-                       features={[
-                         'Unlimited warehouses',
-                         'Unlimited users',
-                         'Everything in Growth',
-                         'Dedicated account manager',
-                         'SLA guarantee',
-                       ]}
-          />
+          {PRICING_PLANS.map((plan) => (
+            <PricingCard key={plan.id}
+                         title={plan.title}
+                         subTitle={plan.subTitle}
+                         price={plan.price}
+                         features={plan.features}
+            />
+          ))}
         </section>
       </main>
       <footer>

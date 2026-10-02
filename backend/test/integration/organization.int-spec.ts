@@ -1,3 +1,5 @@
+import { SubscriptionService } from '../../src/payment/subscription.service';
+import { SubscriptionGuard } from '../../src/payment/subscription.guard';
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganizationController } from '../../src/organization/organization.controller';
 import { TxRepoProvider } from '../../src/rls/txrepo.service';
@@ -63,6 +65,7 @@ describe('Organization (Int)', () => {
     testingModule = await Test.createTestingModule({
       controllers: [OrganizationController, RegisterController],
       providers: [
+        { provide: SubscriptionService, useValue: {} },
         TxRepoProvider,
         AuthService,
         OrganizationService,
@@ -121,6 +124,8 @@ describe('Organization (Int)', () => {
       ],
     })
       .overrideGuard(AuthGuard)
+      .useValue(MockGuard)
+      .overrideGuard(SubscriptionGuard)
       .useValue(MockGuard)
       .overrideGuard(OrganizationRolesGuard)
       .useValue(MockGuard)

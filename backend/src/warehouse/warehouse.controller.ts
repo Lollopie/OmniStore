@@ -40,6 +40,7 @@ import { InviteContext } from '../mail/interfaces/mail-contexts.interface';
 import { ConfigService } from '@nestjs/config';
 import { InviteEntity } from '../invite/invite.entity';
 import { OrganizationService } from '../organization/organization.service';
+import { SubscriptionGuard } from '../payment/subscription.guard';
 
 @Controller('warehouses')
 export class WarehouseController {
@@ -54,7 +55,7 @@ export class WarehouseController {
     private readonly orgService: OrganizationService,
   ) {}
   @Post()
-  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @UseGuards(AuthGuard, SubscriptionGuard, OrganizationRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   async create(
     @Body() warehouseData: WarehouseDto,
@@ -134,7 +135,12 @@ export class WarehouseController {
   }
 
   @Post('/invites')
-  @UseGuards(AuthGuard, OrganizationRolesGuard, WarehouseRolesGuard)
+  @UseGuards(
+    AuthGuard,
+    SubscriptionGuard,
+    OrganizationRolesGuard,
+    WarehouseRolesGuard,
+  )
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async inviteUser(@Body() warehouseInviteData: WarehouseInviteDto) {
@@ -175,7 +181,7 @@ export class WarehouseController {
     throw new Error('Invite creation failed');
   }
   @Patch('/users')
-  @UseGuards(AuthGuard, WarehouseRolesGuard)
+  @UseGuards(AuthGuard, SubscriptionGuard, WarehouseRolesGuard)
   @WarehouseRoles(WarehouseRole.ADMIN)
   async updateUserRole(@Body() warehouseUserRoleData: WarehouseUserRoleDto) {
     return await this.userWarehouseRoleService.updateUserRole(
@@ -184,7 +190,7 @@ export class WarehouseController {
     );
   }
   @Post('/users')
-  @UseGuards(AuthGuard, WarehouseRolesGuard)
+  @UseGuards(AuthGuard, SubscriptionGuard, WarehouseRolesGuard)
   @WarehouseRoles(WarehouseRole.ADMIN, WarehouseRole.MANAGER)
   async addUserToWarehouse(
     @Body() warehouseUserRoleData: WarehouseUserRoleDto,

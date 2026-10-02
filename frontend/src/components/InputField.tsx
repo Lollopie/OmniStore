@@ -26,6 +26,7 @@ export default function InputField({
                                      setValue,
                                      fieldsetClassName,
                                      inputClassName,
+                                     onChange,
                                      ...props
                                    }: InputFieldProps) {
   const baseInputFieldStyle = 'input focus:outline-none focus:ring-2 focus:border-none ';
@@ -40,7 +41,11 @@ export default function InputField({
         id={label}
         className={`${baseInputFieldStyle} ${variantStyle} ${inputClassName || ''} ${fieldSize ? SIZES[fieldSize] : ''}`}
         {...props}
-        onChange={e => setValue && setValue(e.target.value)}
+        onChange={e => {
+          // Forward to react-hook-form's register() handler as well as setValue
+          onChange?.(e);
+          setValue?.(e.target.value);
+        }}
       />
     </fieldset>
   );

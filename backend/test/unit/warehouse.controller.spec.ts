@@ -1,3 +1,4 @@
+import { SubscriptionGuard } from '../../src/payment/subscription.guard';
 import { WarehouseController } from '../../src/warehouse/warehouse.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { WarehouseService } from '../../src/warehouse/warehouse.service';
@@ -135,6 +136,8 @@ describe('WarehouseController', () => {
       ],
     })
       .overrideGuard(AuthGuard)
+      .useValue(MockGuard)
+      .overrideGuard(SubscriptionGuard)
       .useValue(MockGuard)
       .overrideGuard(OrganizationRolesGuard)
       .useValue(MockGuard)

@@ -1,3 +1,4 @@
+import { SubscriptionGuard } from '../../src/payment/subscription.guard';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TxRepoProvider } from '../../src/rls/txrepo.service';
 import { ClsService } from 'nestjs-cls';
@@ -129,6 +130,8 @@ describe('Warehouse (Int)', () => {
       ],
     })
       .overrideGuard(AuthGuard)
+      .useValue(MockGuard)
+      .overrideGuard(SubscriptionGuard)
       .useValue(MockGuard)
       .overrideGuard(WarehouseRolesGuard)
       .useValue(MockGuard)

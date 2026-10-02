@@ -12,6 +12,7 @@ import { generatePagination } from '../../../hooks/generatePagination.ts';
 import { SearchField } from '../../../components/SearchField.tsx';
 import { useDebounce } from '../../../hooks/useDebounce.ts';
 import { useToast } from '../../toast';
+import { useSubscription } from '../../payment/subscriptionContext';
 import { getWarehouseFromWarehouseId } from '../hooks/getWarehouseFromWarehouseId.ts';
 import { addUser } from '../hooks/addUser.ts';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
@@ -56,6 +57,7 @@ const WarehouseUsers = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { addToast } = useToast();
+  const { isReadOnly } = useSubscription();
   const {
     register,
     handleSubmit,
@@ -113,7 +115,7 @@ const WarehouseUsers = () => {
             <section className="flex flex-col-reverse gap-3 px-4 py-4 mt-4 sm:flex-row sm:justify-end">
               <Button children={'Cancel'} variant={'danger'} size={'sm'} onClick={() => setIsOpen(false)}
                       type={'button'} />
-              <Button children={'Add'} variant={'add'} size={'sm'} type={'submit'} />
+              <Button children={'Add'} variant={'add'} size={'sm'} type={'submit'} disabled={isReadOnly} />
             </section>
           </form>
         </div>
@@ -126,7 +128,7 @@ const WarehouseUsers = () => {
             setActiveWarehouse={setActiveWarehouse}
             addToast={addToast}
           />
-          <AddButton className="btn-sm sm:btn-md" onClick={() => setIsOpen(true)} />
+          <AddButton className="btn-sm sm:btn-md" disabled={isReadOnly} onClick={() => setIsOpen(true)} />
         </div>
 
         <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -158,6 +160,7 @@ const WarehouseUsers = () => {
             <Button
               variant={'add'}
               size={'sm'}
+              disabled={isReadOnly}
               onClick={async () => {
                 await addUser({ newUsername, newRole, setUsers, setNewUsername, setNewRole, addToast });
               }}

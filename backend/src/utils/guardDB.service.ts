@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
+import { SubscriptionPlan } from '../organization/organization.entity';
 
 @Injectable()
 export class GuardDBService {
@@ -22,6 +23,30 @@ export class GuardDBService {
       [orgId],
     );
     return row.name;
+  }
+  async getOrgSubscription(orgId: string): Promise<SubscriptionPlan | null> {
+    const [row]: { subscription: SubscriptionPlan | null }[] =
+      await this.dataSource.query(
+        `SELECT get_org_subscription($1) AS subscription`,
+        [orgId],
+      );
+    return row.subscription;
+  }
+  async setOrgSubscription(
+    orgId: string,
+    plan: SubscriptionPlan,
+    stripeSubscriptionId: string,
+  ): Promise<void> {
+    await this.dataSource.query(`SELECT set_org_subscription($1, $2, $3)`, [
+      orgId,
+      plan,
+      stripeSubscriptionId,
+    ]);
+  }
+  async clearOrgSubscription(stripeSubscriptionId: string): Promise<void> {
+    await this.dataSource.query(`SELECT clear_org_subscription($1)`, [
+      stripeSubscriptionId,
+    ]);
   }
   async findWarehouse(warehouseId: string): Promise<string> {
     const [row]: { name: string }[] = await this.dataSource.query(

@@ -66,7 +66,7 @@ test.describe('Warehouse Flow', () => {
     await expect(userTableRow).toBeVisible();
   });
   test('search user', async () => {
-    // Because we use the shared 'page' instance, localStorage values remain intact!
+    // Because we use the shared 'page' instance, localStorage values remain intact
     await page.goto('/warehouses');
     await page.getByRole('group', { name: 'Active Warehouse:' }).getByRole('combobox').selectOption({ label: 'Test Warehouse' });
     await expect(page.getByText('Add user', { exact: true })).toBeVisible();

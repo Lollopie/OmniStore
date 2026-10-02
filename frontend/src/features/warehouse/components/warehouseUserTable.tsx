@@ -1,6 +1,7 @@
 import TableHead from '../../../components/TableHead.tsx';
 import type { Warehouse, WarehouseUser } from '../pages/warehouseUsers.tsx';
 import Button from '../../../components/Button.tsx';
+import { useSubscription } from '../../payment/subscriptionContext';
 import { copyToClipboard } from '../../../utils/copyToClipboard.ts';
 import TableDataCell from '../../../components/TableDataCell.tsx';
 import { changeUserRole } from '../hooks/changeUserRole.ts';
@@ -13,6 +14,7 @@ interface WarehouseUserTableProps {
   addToast: (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 }
 export function WarehouseUserTable({ users, activeWarehouse, setUsers, setActiveWarehouse, addToast }: WarehouseUserTableProps) {
+  const { isReadOnly } = useSubscription();
   return (
     <table className="table mt-8 border border-base-300 rounded-md">
       <thead>
@@ -56,6 +58,7 @@ export function WarehouseUserTable({ users, activeWarehouse, setUsers, setActive
                 <select
                   className="select select-sm focus:outline-none focus:ring-none focus:border-none"
                   value={user.role}
+                  disabled={isReadOnly}
                   onChange={async (e) => {
                     await changeUserRole({
                       user,

@@ -1,3 +1,5 @@
+import { SubscriptionService } from '../../src/payment/subscription.service';
+import { SubscriptionGuard } from '../../src/payment/subscription.guard';
 import { OrganizationController } from '../../src/organization/organization.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '../../src/auth/auth.guard';
@@ -65,9 +67,12 @@ describe('OrganizationController', () => {
           provide: UserOrganizationRoleService,
           useValue: mockUserOrganizationRoleService,
         },
+        { provide: SubscriptionService, useValue: {} },
       ],
     })
       .overrideGuard(AuthGuard)
+      .useClass(MockGuard)
+      .overrideGuard(SubscriptionGuard)
       .useClass(MockGuard)
       .overrideGuard(OrganizationRolesGuard)
       .useClass(MockGuard)

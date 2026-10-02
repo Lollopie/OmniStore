@@ -5,7 +5,9 @@ import { join } from 'path';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.useGlobalPipes(new ValidationPipe());
   app.use(cookieParser());

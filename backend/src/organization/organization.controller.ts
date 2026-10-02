@@ -16,6 +16,7 @@ import { OrganizationService } from './organization.service';
 import { UserEntity } from '../user/user.entity';
 import { OrganizationEntity } from './organization.entity';
 import express from 'express';
+import * as userDecorator from '../user/user.decorator';
 import { Cookie } from '../user/user.decorator';
 import { AuthService } from '../auth/auth.service';
 import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.decorator';
@@ -23,6 +24,8 @@ import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { AuthGuard } from '../auth/auth.guard';
 import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationRoles.guard';
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
+import { SubscriptionGuard } from '../payment/subscription.guard';
+import { SubscriptionService } from '../payment/subscription.service';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -30,7 +33,35 @@ export class OrganizationController {
     private readonly organizationService: OrganizationService,
     private readonly authService: AuthService,
     private readonly userOrganizationRoleService: UserOrganizationRoleService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
+  /**
+   * Returns the org's plan. When the user returns from Stripe Checkout, the
+   * sessionId lets us confirm the purchase without waiting for the webhook.
+   */
+  @Get('/subscription')
+  @UseGuards(AuthGuard)
+  async getSubscription(
+    @userDecorator.User() user: Cookie,
+    @Query('sessionId') sessionId?: string,
+  ) {
+    let subscription = await this.subscriptionService.getSubscription(
+      user.orgId,
+    );
+    if (!subscription && sessionId) {
+      if (
+        await this.subscriptionService.confirmCheckoutSession(
+          sessionId,
+          user.orgId,
+        )
+      ) {
+        subscription = await this.subscriptionService.getSubscription(
+          user.orgId,
+        );
+      }
+    }
+    return { subscription };
+  }
   @Post('/register')
   async register(
     @Query('token') token: string,
@@ -61,7 +92,7 @@ export class OrganizationController {
     return this.organizationService.getUsers(search, pageNumber);
   }
   @Patch('/users')
-  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @UseGuards(AuthGuard, SubscriptionGuard, OrganizationRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   async updateUserRole(
     @Body() organizationUpdateRoleData: OrganizationUpdateRoleDto,

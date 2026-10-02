@@ -10,6 +10,7 @@ import { changeUserRole } from './hooks/changeUserRole.ts';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { copyToClipboard } from '../../utils/copyToClipboard.ts';
 import { readStoredValue } from '../../hooks/readStoredValue.ts';
+import { useSubscription } from '../payment/subscriptionContext';
 import { generatePagination } from '../../hooks/generatePagination.ts';
 import { useDebounce } from '../../hooks/useDebounce.ts';
 import { SearchField } from '../../components/SearchField.tsx';
@@ -30,6 +31,7 @@ const Organization = () => {
   const page: number = Number(searchParams.get('page')) || 1;
 
   const { addToast } = useToast();
+  const { isReadOnly } = useSubscription();
   const usersPerPage = 10;
   useEffect(() => {
     const controller = new AbortController();
@@ -92,6 +94,7 @@ const Organization = () => {
                       <select
                         className="select select-sm focus:outline-none focus:ring-none focus:border-none"
                         value={user.role}
+                        disabled={isReadOnly}
                         onChange={async (e) => {
                           await changeUserRole({
                             user,

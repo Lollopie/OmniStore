@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 
 interface PricingCardProps {
@@ -5,9 +6,10 @@ interface PricingCardProps {
   subTitle: string;
   price: number;
   features: string[];
+  action?: ReactNode;
 }
 
-export default function PricingCard({ title, subTitle, price, features }: PricingCardProps) {
+export default function PricingCard({ title, subTitle, price, features, action }: PricingCardProps) {
   return (
     <section className="card w-96 bg-base-100 shadow-sm">
       <div className="card-body">
@@ -35,7 +37,7 @@ export default function PricingCard({ title, subTitle, price, features }: Pricin
             </li>
           ))}
         </ul>
-        <Link to="/register" className="btn btn-primary mt-5">Get Started</Link>
+        {action ?? <Link to="/register" className="btn btn-primary mt-5">Get Started</Link>}
       </div>
     </section>
   );

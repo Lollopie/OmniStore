@@ -20,5 +20,13 @@ lerna-debug.log*
 .tmp
 Idea.txt
 TODO.txt
+/backend/test/e2e/coverage/
 /backend/coverage/
 /playwright/
+
+# Compiler output accidentally emitted next to shared sources (real output goes to shared/dist)
+/shared/src/**/*.js
+/shared/src/**/*.js.map
+/shared/src/**/*.d.ts
+
+.idea

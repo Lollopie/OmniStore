@@ -9,6 +9,8 @@ import { OrganizationDto } from '@shared/dto/organization.dto.ts';
 import { useForm } from 'react-hook-form';
 import { HomeNavBar } from '../homepage/components/HomeNavBar.tsx';
 import { HomepageFooter } from '../homepage/components/HomepageFooter.tsx';
+import { useNavigate } from 'react-router';
+import { useAuth } from '../auth/authContext';
 
 export function InvalidToken() {
   return (
@@ -22,6 +24,8 @@ const CreateOrganization = () => {
   const [tokenValid, setTokenValid] = useState(false);
   const [email, setEmail] = useState('');
   const { addToast } = useToast();
+  const { setIsAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -67,6 +71,7 @@ const CreateOrganization = () => {
       const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/register?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ownerEmail: email,
           ownerUsername: trimmedUsername,
@@ -84,68 +89,68 @@ const CreateOrganization = () => {
           addToast('Error creating organization', 'error', 5000);
         }
       } else {
-        setSuccess(data.message || 'Organization created successfully.');
+        addToast(data.message || 'Organization created successfully.', 'success');
+        // Navigate in the same batch as the auth update so GuestRoute doesn't bounce to /organizations
+        navigate('/subscribe', { replace: true });
+        setIsAuthenticated(true);
       }
     } catch {
       addToast('Something went wrong. Please try again.', 'error', 5000);
     }
   };
-  return (
+  return verifying ? <p>Verifying token...</p> : !tokenValid ? <InvalidToken /> :
     <div className="min-h-screen flex flex-col pt-5 gap-10">
       <header>
         <HomeNavBar />
       </header>
       <main className="grow">
         <section className="mx-auto max-w-md">
-          {verifying ? <p>Verifying token...</p> : tokenValid ?
-            <form onSubmit={handleSubmit((data) => submit(data))}>
-              <h2 className="mb-6 text-2xl font-bold">Create Organization</h2>
 
-              {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
-              {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
-              <div className="flex flex-col gap-2">
-                <InputField
-                  label="Email"
-                  value={email}
-                  disabled
-                  inputClassName="bg-base-100"
-                  type="email"
-                  {...register('ownerEmail')}
-                />
-                <InputField
-                  label="Username"
-                  type="text"
-                  {...register('ownerUsername')}
-                />
-                {errors.ownerUsername &&
-                  <p className="text-sm text-error font-medium">{errors.ownerUsername.message}</p>}
-                <PasswordInput
-                  label="Password"
-                  type="password"
-                  {...register('ownerPassword')}
-                />
-                {errors.ownerPassword &&
-                  <p className="text-sm text-error font-medium">{errors.ownerPassword.message}</p>}
-                <InputField
-                  label="Organization Name"
-                  type="text"
-                  {...register('name')}
-                />
-                {errors.name && <p className="text-sm text-error font-medium">{errors.name.message}</p>}
-                <Button type="submit" className="mt-4 self-start">
-                  Create
-                </Button>
-              </div>
-            </form>
-            :
-            <InvalidToken />}
+          <form onSubmit={handleSubmit((data) => submit(data))}>
+            <h2 className="mb-6 text-2xl font-bold">Create Organization</h2>
+
+            {error && <p className="mb-4 text-sm text-error font-medium">{error}</p>}
+            {success && <p className="mb-4 text-sm text-success font-medium">{success}</p>}
+            <div className="flex flex-col gap-2">
+              <InputField
+                label="Email"
+                value={email}
+                disabled
+                inputClassName="bg-base-100"
+                type="email"
+                {...register('ownerEmail')}
+              />
+              <InputField
+                label="Username"
+                type="text"
+                {...register('ownerUsername')}
+              />
+              {errors.ownerUsername &&
+                <p className="text-sm text-error font-medium">{errors.ownerUsername.message}</p>}
+              <PasswordInput
+                label="Password"
+                type="password"
+                {...register('ownerPassword')}
+              />
+              {errors.ownerPassword &&
+                <p className="text-sm text-error font-medium">{errors.ownerPassword.message}</p>}
+              <InputField
+                label="Organization Name"
+                type="text"
+                {...register('name')}
+              />
+              {errors.name && <p className="text-sm text-error font-medium">{errors.name.message}</p>}
+              <Button type="submit" className="mt-4 self-start">
+                Create
+              </Button>
+            </div>
+          </form>
         </section>
       </main>
       <footer className="justify-self-end">
         <HomepageFooter />
       </footer>
-    </div>
-  );
+    </div>;
 };
 
 export default CreateOrganization;
