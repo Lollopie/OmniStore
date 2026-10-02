@@ -60,3 +60,46 @@ test.describe('Organization members', () => {
     await expect(page).toHaveURL('/organizations');
   });
 });
+
+test.describe('Organization settings', () => {
+  test('owner can rename the organization', async ({ page }) => {
+    const account = await loginAsOwner(page);
+    await page.locator('a[href="/organizations/settings"]').click();
+    const nameInput = page.getByLabel('Organization Name');
+    await expect(nameInput).toHaveValue(account.orgName);
+
+    const newName = `${account.orgName}_renamed`;
+    await nameInput.fill(newName);
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Organization renamed')).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel('Organization Name')).toHaveValue(newName);
+  });
+
+  test('owner can delete the organization after typing its name', async ({ page }) => {
+    const account = await loginAsOwner(page);
+    await page.goto('/organizations/settings');
+    await page.getByRole('button', { name: 'Delete Organization' }).click();
+
+    const confirmButton = page.getByRole('button', { name: 'Confirm organization deletion' });
+    await page.getByPlaceholder('Organization name').fill('wrong name');
+    await expect(confirmButton).toBeDisabled();
+
+    await page.getByPlaceholder('Organization name').fill(account.orgName);
+    const deleteResponse = page.waitForResponse(
+      (res) => res.url().endsWith('/organizations') && res.request().method() === 'DELETE',
+    );
+    await confirmButton.click();
+    expect((await deleteResponse).status()).toBe(200);
+    await expect(page).toHaveURL('/login');
+
+    // The owner's account was deleted with the organization
+    await page.getByLabel('Username').fill(account.username);
+    await page.getByRole('textbox', { name: 'Password' }).fill(account.password);
+    const loginResponse = page.waitForResponse(
+      (res) => res.url().endsWith('/login') && res.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Login' }).click();
+    expect((await loginResponse).ok()).toBe(false);
+  });
+});

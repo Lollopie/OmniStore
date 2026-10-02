@@ -38,6 +38,18 @@ describe('OrganizationController', () => {
       orgId: 'org-1',
       name: 'organization',
     }),
+    getCurrentOrganization: jest.fn().mockResolvedValue({
+      orgId: 'org-1',
+      name: 'organization',
+      createdAt: new Date('2026-01-01'),
+      subscription: 'starter',
+      stripeSubscriptionId: 'sub_1',
+    }),
+    renameOrganization: jest.fn().mockResolvedValue({
+      orgId: 'org-1',
+      name: 'New Name',
+    }),
+    deleteOrganization: jest.fn().mockResolvedValue('sub_1'),
     getUsers: jest.fn().mockResolvedValue({
       data: {
         userId: 'user-1',
@@ -78,6 +90,7 @@ describe('OrganizationController', () => {
     ),
   };
   const mockSubscriptionService = {
+    cancelSubscription: jest.fn(),
     getSubscription: jest.fn(),
     confirmCheckoutSession: jest.fn(),
   };
@@ -389,6 +402,65 @@ describe('OrganizationController', () => {
         mockResponse,
       );
       expect(mockAuthService.clearCookie).toHaveBeenCalledWith(mockResponse);
+    });
+  });
+  describe('getOrganization', () => {
+    it('should return the organization without stripe details', async () => {
+      const response = await organizationController.getOrganization();
+      expect(response).toEqual({
+        orgId: 'org-1',
+        name: 'organization',
+        createdAt: new Date('2026-01-01'),
+        subscription: 'starter',
+      });
+    });
+  });
+  describe('renameOrganization', () => {
+    it('should call organizationService renameOrganization', async () => {
+      const response = await organizationController.renameOrganization({
+        name: 'New Name',
+      });
+      expect(mockOrganizationService.renameOrganization).toHaveBeenCalledWith(
+        'New Name',
+      );
+      expect(response).toEqual({ orgId: 'org-1', name: 'New Name' });
+    });
+  });
+  describe('deleteOrganization', () => {
+    const mockResponse = {} as unknown as Response;
+    it('should delete the organization and cancel its subscription', async () => {
+      const response = await organizationController.deleteOrganization(
+        { confirmName: 'organization' },
+        mockResponse,
+      );
+      expect(mockOrganizationService.deleteOrganization).toHaveBeenCalledWith(
+        'organization',
+      );
+      expect(mockSubscriptionService.cancelSubscription).toHaveBeenCalledWith(
+        'sub_1',
+      );
+      expect(mockAuthService.clearCookie).toHaveBeenCalledWith(mockResponse);
+      expect(response).toEqual({ message: 'Organization deleted.' });
+    });
+    it('should not call Stripe without a subscription', async () => {
+      mockOrganizationService.deleteOrganization.mockResolvedValueOnce(null);
+      await organizationController.deleteOrganization(
+        { confirmName: 'organization' },
+        mockResponse,
+      );
+      expect(mockSubscriptionService.cancelSubscription).not.toHaveBeenCalled();
+    });
+    it('should fail if the subscription cannot be cancelled', async () => {
+      mockSubscriptionService.cancelSubscription.mockRejectedValueOnce(
+        new Error('Stripe unavailable'),
+      );
+      await expect(
+        organizationController.deleteOrganization(
+          { confirmName: 'organization' },
+          mockResponse,
+        ),
+      ).rejects.toThrow('Stripe unavailable');
+      expect(mockAuthService.clearCookie).not.toHaveBeenCalled();
     });
   });
 });

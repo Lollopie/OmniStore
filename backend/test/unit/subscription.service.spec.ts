@@ -13,6 +13,7 @@ describe('SubscriptionService', () => {
     },
     subscriptions: {
       retrieve: jest.fn(),
+      cancel: jest.fn(),
     },
   };
   const mockGuardDB = {
@@ -227,5 +228,23 @@ describe('SubscriptionService', () => {
         expect(mockGuardDB.clearOrgSubscription).not.toHaveBeenCalled();
       },
     );
+  });
+  describe('cancelSubscription', () => {
+    it('should cancel an active subscription', async () => {
+      mockStripe.subscriptions.retrieve.mockResolvedValueOnce({
+        id: 'sub_1',
+        status: 'active',
+      });
+      await subscriptionService.cancelSubscription('sub_1');
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledWith('sub_1');
+    });
+    it('should not cancel a subscription that has already ended', async () => {
+      mockStripe.subscriptions.retrieve.mockResolvedValueOnce({
+        id: 'sub_1',
+        status: 'canceled',
+      });
+      await subscriptionService.cancelSubscription('sub_1');
+      expect(mockStripe.subscriptions.cancel).not.toHaveBeenCalled();
+    });
   });
 });

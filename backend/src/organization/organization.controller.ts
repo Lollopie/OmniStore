@@ -13,9 +13,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  DeleteOrganizationDto,
   OrganizationDto,
   OrganizationInviteDto,
   OrganizationUpdateRoleDto,
+  UpdateOrganizationDto,
 } from '@shared/dto/organization.dto';
 import { OrganizationService } from './organization.service';
 import { UserEntity } from '../user/user.entity';
@@ -78,6 +80,40 @@ export class OrganizationController {
       }
     }
     return { subscription };
+  }
+  @Get('/me')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  async getOrganization() {
+    const org = await this.organizationService.getCurrentOrganization();
+    return {
+      orgId: org.orgId,
+      name: org.name,
+      createdAt: org.createdAt,
+      subscription: org.subscription,
+    };
+  }
+  @Patch()
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async renameOrganization(@Body() data: UpdateOrganizationDto) {
+    const org = await this.organizationService.renameOrganization(data.name);
+    return { orgId: org.orgId, name: org.name };
+  }
+  @Delete()
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER)
+  async deleteOrganization(
+    @Body() data: DeleteOrganizationDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const stripeSubscriptionId =
+      await this.organizationService.deleteOrganization(data.confirmName);
+    // Runs inside the request transaction, so a Stripe failure rolls back the deletion
+    if (stripeSubscriptionId) {
+      await this.subscriptionService.cancelSubscription(stripeSubscriptionId);
+    }
+    this.authService.clearCookie(res);
+    return { message: 'Organization deleted.' };
   }
   @Post('/register')
   async register(

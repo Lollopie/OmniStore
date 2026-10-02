@@ -99,6 +99,15 @@ export class SubscriptionService {
     }
   }
 
+  /** Cancels the subscription immediately unless it has already ended. */
+  async cancelSubscription(stripeSubscriptionId: string): Promise<void> {
+    const subscription =
+      await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
+    if (!ENDED_SUBSCRIPTION_STATUSES.includes(subscription.status)) {
+      await this.stripe.subscriptions.cancel(stripeSubscriptionId);
+    }
+  }
+
   private getSessionOrgId(session: Stripe.Checkout.Session): string | null {
     return session.client_reference_id ?? session.metadata?.orgId ?? null;
   }

@@ -17,6 +17,7 @@ import CreateOrganization from './features/organization/Create Organization.tsx'
 import { OrganizationManager } from './features/organization/organization.tsx';
 import OrganizationMembers from './features/organization/pages/organizationMembers.tsx';
 import { OrganizationInvites } from './features/organization/pages/organizationInvites.tsx';
+import { OrganizationSettings } from './features/organization/pages/organizationSettings.tsx';
 import WarehouseUsers from './features/warehouse/pages/warehouseUsers.tsx';
 import { WarehouseInvites } from './features/warehouse/pages/warehouseInvites.tsx';
 import Pricing from './features/homepage/pages/Pricing.tsx';
@@ -104,6 +105,7 @@ function AppContent() {
             <Route path="/organizations" element={<OrganizationManager />}>
               <Route index element={<OrganizationMembers />} />
               <Route path="invites" element={<OrganizationInvites />} />
+              <Route path="settings" element={<OrganizationSettings />} />
             </Route>
             <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />

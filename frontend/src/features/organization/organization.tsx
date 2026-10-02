@@ -4,6 +4,7 @@ import { readStoredValue } from '../../hooks/readStoredValue.ts';
 const MENU_ITEMS = [
   { path: "", label: "Members", roles: ["owner", "admin", "member"] },
   { path: "invites", label: "Invites", roles: ["owner", "admin"] },
+  { path: "settings", label: "Settings", roles: ["owner", "admin"] },
 ];
 
 export const OrganizationManager = () => {
