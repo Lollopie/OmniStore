@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { useToast } from '../toast';
 import Register from '../auth/authForm/Register.tsx';
 import InputField from '../../components/InputField.tsx';
@@ -90,9 +90,12 @@ const CreateOrganization = () => {
         }
       } else {
         addToast(data.message || 'Organization created successfully.', 'success');
-        // Navigate in the same batch as the auth update so GuestRoute doesn't bounce to /organizations
-        navigate('/subscribe', { replace: true });
-        setIsAuthenticated(true);
+        // React Router applies navigations as transitions; updating auth in the same transition
+        // renders both together, so GuestRoute doesn't first bounce the new user to /organizations
+        startTransition(() => {
+          navigate('/subscribe', { replace: true });
+          setIsAuthenticated(true);
+        });
       }
     } catch {
       addToast('Something went wrong. Please try again.', 'error', 5000);

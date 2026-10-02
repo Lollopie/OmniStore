@@ -26,6 +26,7 @@ import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationR
 import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
 import { SubscriptionGuard } from '../payment/subscription.guard';
 import { SubscriptionService } from '../payment/subscription.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -41,6 +42,9 @@ export class OrganizationController {
    */
   @Get('/subscription')
   @UseGuards(AuthGuard)
+  // Requested on every page load and polled after checkout, so the global limit
+  // is too low; still limited because a sessionId triggers a Stripe API call
+  @Throttle({ default: { limit: 120, ttl: 60_000 } })
   async getSubscription(
     @userDecorator.User() user: Cookie,
     @Query('sessionId') sessionId?: string,

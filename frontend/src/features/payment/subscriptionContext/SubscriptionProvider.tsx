@@ -9,26 +9,34 @@ type Subscription = SubscriptionContextType['subscription'];
 // take a moment to become active, so retry for up to ~30s before giving up
 const CHECKOUT_POLL_INTERVAL_MS = 2000;
 const CHECKOUT_POLL_ATTEMPTS = 15;
+// A failed request (network error, 429, 5xx) says nothing about the subscription
+const ERROR_RETRY_ATTEMPTS = 3;
 
-const fetchSubscription = async (sessionId: string | null): Promise<Subscription> => {
+type FetchResult = { ok: true; subscription: Subscription } | { ok: false };
+
+const fetchSubscription = async (sessionId: string | null): Promise<FetchResult> => {
   try {
     const query = sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : '';
     const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/subscription${query}`, {
       method: 'GET',
       credentials: 'include',
     });
+    if (!response.ok) {
+      return { ok: false };
+    }
     const data: { subscription?: Subscription } = await response.json();
-    return response.ok ? data.subscription ?? null : null;
+    return { ok: true, subscription: data.subscription ?? null };
   } catch {
-    return null;
+    return { ok: false };
   }
 };
 
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  const [state, setState] = useState<{ subscription: Subscription; loaded: boolean }>({
+  const [state, setState] = useState<{ subscription: Subscription; loaded: boolean; failed: boolean }>({
     subscription: null,
     loaded: false,
+    failed: false,
   });
   // Bumped by checkAgain to rerun the confirmation
   const [attempt, setAttempt] = useState(0);
@@ -44,11 +52,14 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     const load = async (poll: number) => {
       const sessionId = getPendingCheckoutSessionId() ?? lastSessionIdRef.current;
       lastSessionIdRef.current = sessionId;
-      const subscription = await fetchSubscription(sessionId);
+      const result = await fetchSubscription(sessionId);
       if (cancelled) {
         return;
       }
-      if (!subscription && sessionId && poll < CHECKOUT_POLL_ATTEMPTS) {
+      const subscription = result.ok ? result.subscription : null;
+      const maxAttempts = sessionId ? CHECKOUT_POLL_ATTEMPTS : ERROR_RETRY_ATTEMPTS;
+      const shouldRetry = !subscription && (sessionId !== null || !result.ok);
+      if (shouldRetry && poll < maxAttempts) {
         timer = setTimeout(() => load(poll + 1), CHECKOUT_POLL_INTERVAL_MS);
         return;
       }
@@ -57,7 +68,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       if (subscription) {
         lastSessionIdRef.current = null;
       }
-      setState({ subscription, loaded: true });
+      setState({ subscription, loaded: true, failed: !result.ok });
     };
     load(1);
     return () => {
@@ -79,7 +90,8 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       value={{
         subscription,
         loading,
-        isReadOnly: isAuthenticated && !loading && subscription === null,
+        // Unknown after repeated failures: don't lock the UI, the backend still enforces it
+        isReadOnly: isAuthenticated && !loading && !state.failed && subscription === null,
         checkAgain,
       }}>
       {children}

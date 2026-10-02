@@ -91,6 +91,9 @@ test('guest can create organization with payload monitoring', async ({ page }) =
     name: credentials.orgName,
   });
   await expect(page.getByText('Organization created successfully.')).toBeVisible();
+  // A new organization starts without a subscription, so the plan choice comes next
+  await expect(page).toHaveURL('/subscribe');
+  await expect(page.getByRole('heading', { name: 'Choose your subscription' })).toBeVisible();
 });
 test('guest can sign in with payload monitoring', async ({ page }) => {
   let capturedPayload: { username?: string; password?: string } | undefined;

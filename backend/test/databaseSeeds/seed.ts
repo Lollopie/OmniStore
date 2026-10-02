@@ -60,9 +60,9 @@ export async function seedInventories(
 export async function seedUser(
   dataSource: DataSource,
   username: string,
+  password = 'password1',
 ): Promise<UserEntity> {
   const userRepository = dataSource.getRepository(UserEntity);
-  const password = 'password1';
   const saltRounds = process.env.NODE_ENV === 'test' ? 1 : 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
   return await userRepository.save(
