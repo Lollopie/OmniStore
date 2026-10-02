@@ -119,6 +119,20 @@ export class OrganizationController {
       organizationUpdateRoleData.role,
     );
   }
+  @Delete('/users/:userId')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async removeUser(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @userDecorator.User() user: Cookie,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    await this.userOrganizationRoleService.removeMember(userId);
+    if (userId === user.userId) {
+      this.authService.clearCookie(res);
+    }
+    return { message: 'User removed from organization.' };
+  }
   @Get('/invites')
   @UseGuards(AuthGuard, OrganizationRolesGuard)
   @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)

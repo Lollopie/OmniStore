@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useToast } from '../../toast';
 import { getUsers } from '../hooks/getUsers.ts';
 import Pagination from '../../../components/Pagination.tsx';
@@ -7,13 +7,16 @@ import TableHead from '../../../components/TableHead.tsx';
 import TableDataCell from '../../../components/TableDataCell.tsx';
 import Button from '../../../components/Button.tsx';
 import { changeUserRole } from '../hooks/changeUserRole.ts';
-import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
+import { ORG_INVITATION_PERMISSIONS, OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { copyToClipboard } from '../../../utils/copyToClipboard.ts';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 import { useSubscription } from '../../payment/subscriptionContext';
 import { generatePagination } from '../../../hooks/generatePagination.ts';
 import { useDebounce } from '../../../hooks/useDebounce.ts';
 import { SearchField } from '../../../components/SearchField.tsx';
+import { Modal } from '../../../components/Modal.tsx';
+import { useAuth } from '../../auth/authContext';
+import { removeOrganizationUser } from '../hooks/removeOrganizationUser.ts';
 
 export interface OrganizationUser {
   userId: string;
@@ -32,7 +35,36 @@ const OrganizationMembers = () => {
 
   const { addToast } = useToast();
   const { isReadOnly } = useSubscription();
+  const { logout } = useAuth();
   const usersPerPage = 10;
+  const orgRole = readStoredValue<OrganizationRole>('orgRole') as OrganizationRole;
+  const currentUserId = readStoredValue<string>('userId');
+  const manageableRoles: string[] = ORG_INVITATION_PERMISSIONS[orgRole] ?? [];
+  const canManageUsers = manageableRoles.length > 0;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [userToRemove, setUserToRemove] = useState<OrganizationUser | null>(null);
+  const openRemoveDialog = (user: OrganizationUser) => {
+    setUserToRemove(user);
+    dialogRef.current?.showModal();
+  };
+  const closeRemoveDialog = () => {
+    dialogRef.current?.close();
+    setUserToRemove(null);
+  };
+  const confirmRemove = async () => {
+    if (!userToRemove) return;
+    const removed = await removeOrganizationUser(userToRemove.userId, addToast);
+    if (removed) {
+      if (userToRemove.userId === currentUserId) {
+        closeRemoveDialog();
+        logout();
+        return;
+      }
+      setUsers((prev) => prev.filter((user) => user.userId !== userToRemove.userId));
+      setTotalUsers((prev) => prev - 1);
+    }
+    closeRemoveDialog();
+  };
   useEffect(() => {
     const controller = new AbortController();
     getUsers({ searchTerm: debouncedSearchTerm, setUsers, setTotalUsers, controller, addToast });
@@ -52,12 +84,13 @@ const OrganizationMembers = () => {
               <TableHead children="Id" variant="first" />
               <TableHead children="Name" />
               <TableHead children="Role" />
+              {canManageUsers && <TableHead children="" />}
             </tr>
             </thead>
             <tbody>
             {users.length === 0 ? (
               <tr className="hover:bg-base-300/50 transition-colors">
-                <td colSpan={3} className="text-center p-3 text-base-300">
+                <td colSpan={canManageUsers ? 4 : 3} className="text-center p-3 text-base-300">
                   No users in organization.
                 </td>
               </tr>
@@ -90,8 +123,9 @@ const OrganizationMembers = () => {
                                                        } />
                   <TableDataCell children={user.username} />
                   <TableDataCell>
-                    {readStoredValue('orgRole') === 'owner' || readStoredValue('orgRole') === 'admin' ? (
+                    {manageableRoles.includes(user.role) ? (
                       <select
+                        aria-label={`Role of ${user.username}`}
                         className="select select-sm focus:outline-none focus:ring-none focus:border-none"
                         value={user.role}
                         disabled={isReadOnly}
@@ -104,7 +138,7 @@ const OrganizationMembers = () => {
                           });
                         }}
                       >
-                        {Object.values(OrganizationRole).map((role) => (
+                        {manageableRoles.map((role) => (
                           <option key={role} value={role}>
                             {role}
                           </option>
@@ -114,6 +148,19 @@ const OrganizationMembers = () => {
                       user.role
                     )}
                   </TableDataCell>
+                  {canManageUsers && (
+                    <TableDataCell>
+                      {manageableRoles.includes(user.role) && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          aria-label={`Remove ${user.username}`}
+                          onClick={() => openRemoveDialog(user)}>
+                          Remove
+                        </Button>
+                      )}
+                    </TableDataCell>
+                  )}
                 </tr>
               ))
             )}
@@ -121,6 +168,23 @@ const OrganizationMembers = () => {
           </table>
         </div>
       </section>
+      <Modal dialogRef={dialogRef} title="Remove user" onClose={closeRemoveDialog}>
+        <div className="space-y-4 p-4">
+          <p>
+            {userToRemove?.userId === currentUserId
+              ? 'Leave the organization? Your account will be deleted and you will be logged out.'
+              : `Remove ${userToRemove?.username} from the organization? Their account will be deleted.`}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={closeRemoveDialog}>
+              Cancel
+            </Button>
+            <Button variant="danger" aria-label="Confirm removal" onClick={confirmRemove}>
+              Remove
+            </Button>
+          </div>
+        </div>
+      </Modal>
       <section className="mt-5">
         <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / 10)} searchParams={searchParams}
                     setSearchParams={setSearchParams} />

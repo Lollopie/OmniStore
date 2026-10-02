@@ -42,3 +42,21 @@ test.describe('Organization invites', () => {
     await expect(page.getByLabel('Organization role').locator('option')).toHaveText(['owner', 'admin', 'member']);
   });
 });
+
+test.describe('Organization members', () => {
+  test('the only owner cannot remove themselves', async ({ page }) => {
+    const account = await loginAsOwner(page);
+    const row = page.getByRole('row', { name: new RegExp(account.username) });
+    await expect(row.getByLabel(`Role of ${account.username}`).locator('option')).toHaveText(['owner', 'admin', 'member']);
+
+    await row.getByRole('button', { name: `Remove ${account.username}` }).click();
+    await expect(page.getByText('Leave the organization?')).toBeVisible();
+    const removeResponse = page.waitForResponse(
+      (res) => res.url().includes('/organizations/users/') && res.request().method() === 'DELETE',
+    );
+    await page.getByRole('button', { name: 'Confirm removal' }).click();
+    expect((await removeResponse).status()).toBe(400);
+    await expect(page.getByText('An organization must have at least one owner')).toBeVisible();
+    await expect(page).toHaveURL('/organizations');
+  });
+});

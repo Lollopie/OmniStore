@@ -31,6 +31,7 @@ import { OrganizationService } from '../../src/organization/organization.service
 import { Cookie } from '../../src/user/user.decorator';
 import { Response } from 'express';
 import { UsersService } from '../../src/user/users.service';
+import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
 import { JwtModule } from '@nestjs/jwt';
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import { ContactEntity } from '../../src/contact/contact.entity';
@@ -76,6 +77,7 @@ describe('Warehouse (Int)', () => {
         UserWarehouseRoleService,
         AuthService,
         UsersService,
+        UserOrganizationRoleService,
         { provide: OrganizationService, useValue: mockOrganizationService },
         { provide: InviteService, useValue: mockInviteService },
         { provide: MailService, useValue: mockMailService },

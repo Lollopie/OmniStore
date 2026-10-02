@@ -21,6 +21,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ScenarioBuilder } from '../e2e/utils/scenarioBuilder';
 import { Cookie } from '../../src/user/user.decorator';
 import { UsersService } from '../../src/user/users.service';
+import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
+import { GuardDBService } from '../../src/utils/guardDB.service';
 import { Response } from 'express';
 import { ContactEntity } from '../../src/contact/contact.entity';
 describe('Users (Int)', () => {
@@ -43,6 +45,8 @@ describe('Users (Int)', () => {
       controllers: [UsersController],
       providers: [
         UsersService,
+        UserOrganizationRoleService,
+        GuardDBService,
         TxRepoProvider,
         AuthService,
         { provide: ClsService, useValue: mockClsService },
@@ -136,12 +140,14 @@ describe('Users (Int)', () => {
     it('should delete the account', async () => {
       const scenarioBuilder = await ScenarioBuilder.create(dataSource)
         .withOrganization('Org1')
-        .then((b) => b.withUser('User1', 'owner', undefined, undefined));
+        .then((b) => b.withUser('Owner1', 'owner', undefined, undefined))
+        .then((b) => b.withUser('User1', 'member', undefined, undefined));
       const user = scenarioBuilder['users']['User1'];
       const response = await usersController.deleteAccount(
         { password: 'password1' },
         {
           userId: user.userId,
+          orgId: scenarioBuilder['org'].orgId,
         } as unknown as Cookie,
         {
           clearCookie: jest.fn(),

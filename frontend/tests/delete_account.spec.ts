@@ -16,7 +16,8 @@ async function createAccount(page: Page): Promise<SeededAccount> {
   return account;
 }
 test.describe('Delete Account', () => {
-  test('user can delete their account', async ({ page }) => {
+  // Seeded accounts are the only owner of their organization
+  test('last owner cannot delete their account', async ({ page }) => {
     const credentials = await createAccount(page);
 
     await page.goto('/settings/account');
@@ -28,8 +29,8 @@ test.describe('Delete Account', () => {
       (res) => res.url().includes('/users') && res.request().method() === 'DELETE'
     );
     await page.getByRole('button', { name: 'Delete' }).filter({ hasText: 'Confirm Deletion' }).click();
-    await deleteResponsePromise;
-    await expect(page.getByText('Account successfully deleted.')).toBeVisible();
+    expect((await deleteResponsePromise).status()).toBe(400);
+    await expect(page.getByText('An organization must have at least one owner')).toBeVisible();
   });
 
   test('user cannot delete account with incorrect password', async ({ page }) => {

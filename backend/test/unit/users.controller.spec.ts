@@ -85,6 +85,7 @@ describe('UsersController', () => {
       expect(mockUsersService.deleteUser).toHaveBeenCalledWith(
         'user-1',
         'password1',
+        'org-1',
       );
     });
     it('should clear cookie', async () => {

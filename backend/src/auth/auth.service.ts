@@ -22,6 +22,13 @@ export class AuthService {
       maxAge: this.configService.get<number>('auth.jwtExpiresIn')! * 1000,
     });
   }
+  clearCookie(response: Response) {
+    response.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    });
+  }
   async hashPassword(password: string): Promise<string> {
     const saltRounds = this.configService.get<number>('auth.saltRounds');
     return await bcrypt.hash(password, saltRounds!);

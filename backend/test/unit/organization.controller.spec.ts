@@ -49,6 +49,7 @@ describe('OrganizationController', () => {
   };
   const mockAuthService = {
     createAndSendCookie: jest.fn(),
+    clearCookie: jest.fn(),
   };
   const mockUserOrganizationRoleService = {
     updateUserRole: jest.fn().mockResolvedValue({
@@ -56,6 +57,7 @@ describe('OrganizationController', () => {
       organizationId: 'org-1',
       role: 'admin',
     }),
+    removeMember: jest.fn(),
   };
   const mockInvite = {
     invite: { inviteId: 'invite-1', email: 'new@example.org' },
@@ -357,6 +359,36 @@ describe('OrganizationController', () => {
       const response = await organizationController.revokeInvite('invite-1');
       expect(mockInviteService.revokeInvite).toHaveBeenCalledWith('invite-1');
       expect(response).toEqual({ message: 'Invite revoked.' });
+    });
+  });
+  describe('removeUser', () => {
+    const mockResponse = {} as unknown as Response;
+    it('should call userOrganizationRoleService removeMember', async () => {
+      const response = await organizationController.removeUser(
+        'user-2',
+        userToken,
+        mockResponse,
+      );
+      expect(mockUserOrganizationRoleService.removeMember).toHaveBeenCalledWith(
+        'user-2',
+      );
+      expect(response).toEqual({ message: 'User removed from organization.' });
+    });
+    it('should keep the cookie when removing someone else', async () => {
+      await organizationController.removeUser(
+        'user-2',
+        userToken,
+        mockResponse,
+      );
+      expect(mockAuthService.clearCookie).not.toHaveBeenCalled();
+    });
+    it('should clear the cookie when removing yourself', async () => {
+      await organizationController.removeUser(
+        'user-1',
+        userToken,
+        mockResponse,
+      );
+      expect(mockAuthService.clearCookie).toHaveBeenCalledWith(mockResponse);
     });
   });
 });

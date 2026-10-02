@@ -36,7 +36,11 @@ export class UsersController {
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const { password } = body;
-    await this.usersService.deleteUser(userToken.userId, password);
+    await this.usersService.deleteUser(
+      userToken.userId,
+      password,
+      userToken.orgId,
+    );
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

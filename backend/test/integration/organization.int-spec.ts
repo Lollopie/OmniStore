@@ -49,6 +49,9 @@ describe('Organization (Int)', () => {
       if (key === 'orgId') {
         return orgId;
       }
+      if (key === 'orgRole') {
+        return 'owner';
+      }
       throw new Error(`Unexpected key: ${key}`);
     }),
   };
