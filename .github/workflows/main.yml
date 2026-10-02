@@ -219,6 +219,8 @@ jobs:
           CI: true
           MAIL_HOST: localhost
           MAIL_PORT: 1025
+          # Placeholder so the Stripe client can be constructed; no test calls Stripe
+          STRIPE_SECRET_KEY: sk_test_placeholder
 
       # Upload trace reports on test failure for debugging
       - name: Upload Playwright Report
