@@ -31,4 +31,7 @@ RUN npm ci --only=production
 
 RUN apk add shadow && usermod -a -G 1000 node
 
-CMD ["node", "dist/main.js"]
+# Render's free plan has no pre-deploy step, so migrations run on startup. A
+# failed migration stops the container before the app starts; exec hands
+# signals straight to node.
+CMD ["sh", "-c", "npm run migration:run:prod && exec node dist/main.js"]

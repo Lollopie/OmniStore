@@ -13,6 +13,7 @@ export class AddOrganizationSubscription1791000000000 implements MigrationInterf
       RETURNS TEXT
       LANGUAGE sql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       STABLE
       AS $$
         SELECT subscription FROM organization
@@ -27,6 +28,7 @@ export class AddOrganizationSubscription1791000000000 implements MigrationInterf
       RETURNS VOID
       LANGUAGE sql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       AS $$
         UPDATE organization SET subscription = plan
         WHERE org_id = target_org_id;

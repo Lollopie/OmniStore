@@ -11,6 +11,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
       APP_PASSWORD: ${APP_PASSWORD}
       MIGRATOR_PASSWORD: ${MIGRATOR_PASSWORD}
+      MCP_READONLY_PASSWORD: ${MCP_READONLY_PASSWORD}
     ports:
       - "5432:5432"
     volumes:

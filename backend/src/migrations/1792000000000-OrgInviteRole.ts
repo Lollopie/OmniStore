@@ -11,6 +11,7 @@ export class OrgInviteRole1792000000000 implements MigrationInterface {
         RETURNS user_org_role
         LANGUAGE plpgsql
         SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
         AS $$
         DECLARE
           new_user_org_role user_org_role;
@@ -43,6 +44,7 @@ export class OrgInviteRole1792000000000 implements MigrationInterface {
         RETURNS user_org_role
         LANGUAGE plpgsql
         SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
         AS $$
         DECLARE
           new_user_org_role user_org_role;

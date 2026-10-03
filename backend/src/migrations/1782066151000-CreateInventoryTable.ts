@@ -18,7 +18,7 @@ export class CreateInventoryTable1782066151000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE POLICY "warehouse_isolation_policy" ON "inventory"
       FOR ALL
-      USING (warehouse_id = current_setting('app.current_warehouse_id')::uuid);
+      USING (warehouse_id = (NULLIF(current_setting('app.current_warehouse_id', true), ''))::uuid);
     `);
   }
 

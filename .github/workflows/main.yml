@@ -64,7 +64,7 @@ jobs:
         working-directory: backend
 
       - name: Initialize test database
-        run: psql -v ON_ERROR_STOP=1 -h localhost -U test_user -d test -f backend/init-test-db.sql --set MIGRATOR_ROLE=nestjs_migrator --set MIGRATOR_PASSWORD=migratorpassword --set APP_ROLE=nestjs_app_user --set APP_PASSWORD=apppassword --set DATABASE_NAME=test
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U test_user -d test -f backend/init-test-db.sql --set MIGRATOR_ROLE=nestjs_migrator --set MIGRATOR_PASSWORD=migratorpassword --set APP_ROLE=nestjs_app_user --set APP_PASSWORD=apppassword --set READONLY_PASSWORD=mcppassword --set DATABASE_NAME=test
         env:
           PGPASSWORD: test_password
 
@@ -169,7 +169,7 @@ jobs:
         working-directory: backend
 
       - name: Initialize test database
-        run: psql -v ON_ERROR_STOP=1 -h localhost -U test_user -d test -f backend/init-test-db.sql --set MIGRATOR_ROLE=nestjs_migrator --set MIGRATOR_PASSWORD=migratorpassword --set APP_ROLE=nestjs_app_user --set APP_PASSWORD=apppassword --set DATABASE_NAME=test
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U test_user -d test -f backend/init-test-db.sql --set MIGRATOR_ROLE=nestjs_migrator --set MIGRATOR_PASSWORD=migratorpassword --set APP_ROLE=nestjs_app_user --set APP_PASSWORD=apppassword --set READONLY_PASSWORD=mcppassword --set DATABASE_NAME=test
         env:
           PGPASSWORD: test_password
 

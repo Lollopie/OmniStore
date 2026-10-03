@@ -13,6 +13,7 @@ export class AddOrganizationStripeSubscriptionId1791000001000 implements Migrati
       RETURNS VOID
       LANGUAGE sql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       AS $$
         UPDATE organization
         SET subscription = plan, stripe_subscription_id = stripe_sub_id
@@ -27,6 +28,7 @@ export class AddOrganizationStripeSubscriptionId1791000001000 implements Migrati
       RETURNS VOID
       LANGUAGE sql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       AS $$
         UPDATE organization
         SET subscription = NULL, stripe_subscription_id = NULL
@@ -48,6 +50,7 @@ export class AddOrganizationStripeSubscriptionId1791000001000 implements Migrati
       RETURNS VOID
       LANGUAGE sql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       AS $$
         UPDATE organization SET subscription = plan
         WHERE org_id = target_org_id;

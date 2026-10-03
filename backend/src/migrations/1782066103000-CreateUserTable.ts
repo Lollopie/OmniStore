@@ -25,6 +25,7 @@ export class CreateUserTable1782066103000 implements MigrationInterface {
       )
       LANGUAGE plpgsql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       STABLE
       AS $$
       BEGIN

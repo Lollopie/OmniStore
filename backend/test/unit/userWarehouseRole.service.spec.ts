@@ -4,7 +4,6 @@ import { ClsService } from 'nestjs-cls';
 import { UsersService } from '../../src/user/users.service';
 import { UserWarehouseRoleEntity } from '../../src/userWarehouseRole/userWarehouseRole.entity';
 import { TxRepoProvider } from '../../src/rls/txrepo.service';
-import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
 
 describe('UserWarehouseRoleService', () => {
   let userWarehouseRoleService: UserWarehouseRoleService;
@@ -33,6 +32,7 @@ describe('UserWarehouseRoleService', () => {
       warehouseId: 'warehouse-1',
       role: 'manager',
     }),
+    query: jest.fn().mockResolvedValue([{ member: true }]),
     save: jest.fn().mockResolvedValue({
       userId: 'user-1',
       warehouseId: 'warehouse-1',
@@ -56,21 +56,11 @@ describe('UserWarehouseRoleService', () => {
       ]),
     }),
   };
-  const mockUserOrganizationRoleRepository = {
-    findOneBy: jest.fn().mockResolvedValue({
-      userId: 'user-1',
-      orgId: 'org-1',
-      role: 'admin',
-    }),
-  };
   const mockTxRepoProvider = {
     query: jest.fn().mockResolvedValue([{}]),
     getRepo: jest.fn().mockImplementation((entity) => {
       if (entity === UserWarehouseRoleEntity) {
         return mockUserWarehouseRoleRepository;
-      }
-      if (entity === UserOrganizationRoleEntity) {
-        return mockUserOrganizationRoleRepository;
       }
       throw new Error('Unexpected entity type');
     }),
@@ -136,18 +126,18 @@ describe('UserWarehouseRoleService', () => {
     it('should check that user belongs to org', async () => {
       mockUserWarehouseRoleRepository.findOneBy.mockResolvedValueOnce(null);
       await userWarehouseRoleService.addUserToWarehouse('testuser', 'admin');
-      expect(mockUserOrganizationRoleRepository.findOneBy).toHaveBeenCalledWith(
-        {
-          userId: 'user-1',
-          orgId: 'org-1',
-        },
+      expect(mockUserWarehouseRoleRepository.query).toHaveBeenCalledWith(
+        'SELECT is_warehouse_org_member($1, $2) AS member',
+        ['user-1', 'warehouse-1'],
       );
     });
     it("should throw if user doesn't belong to org", async () => {
-      mockUserOrganizationRoleRepository.findOneBy.mockResolvedValueOnce(null);
+      mockUserWarehouseRoleRepository.query.mockResolvedValueOnce([
+        { member: false },
+      ]);
       await expect(
         userWarehouseRoleService.addUserToWarehouse('testuser', 'admin'),
-      ).rejects.toThrow();
+      ).rejects.toThrow('User does not belong to the same organization');
     });
     it('should check if the user already belongs to warehouse', async () => {
       mockUserWarehouseRoleRepository.findOneBy.mockResolvedValueOnce(null);

@@ -18,6 +18,7 @@ export class CreateOrganizationTable1782066150000 implements MigrationInterface 
       RETURNS TEXT
       LANGUAGE sql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       STABLE
       AS $$
         SELECT name FROM organization
@@ -32,6 +33,7 @@ export class CreateOrganizationTable1782066150000 implements MigrationInterface 
       RETURNS organization
       LANGUAGE plpgsql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       AS $$
       DECLARE
         new_org organization;
@@ -53,17 +55,17 @@ export class CreateOrganizationTable1782066150000 implements MigrationInterface 
     await queryRunner.query(`
       CREATE POLICY "organization_select_policy" ON "organization"
         FOR SELECT
-        USING (org_id = current_setting('app.current_org_id', true)::uuid);
+        USING (org_id = (NULLIF(current_setting('app.current_org_id', true), ''))::uuid);
     `);
     await queryRunner.query(`
       CREATE POLICY "organization_update_policy" ON "organization"
         FOR UPDATE
-        USING (org_id = current_setting('app.current_org_id', true)::uuid);
+        USING (org_id = (NULLIF(current_setting('app.current_org_id', true), ''))::uuid);
     `);
     await queryRunner.query(`
       CREATE POLICY "organization_delete_policy" ON "organization"
         FOR DELETE
-        USING (org_id = current_setting('app.current_org_id', true)::uuid);
+        USING (org_id = (NULLIF(current_setting('app.current_org_id', true), ''))::uuid);
     `);
   }
 
