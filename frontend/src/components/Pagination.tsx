@@ -1,15 +1,12 @@
-import type { SetURLSearchParams } from 'react-router';
-
 interface PaginationProps extends React.HTMLAttributes<HTMLDivElement> {
   page: number;
   pages: (string | number)[];
   numberOfPages: number;
-  searchParams: URLSearchParams;
-  setSearchParams: SetURLSearchParams;
+  onPageChange: (page: number) => void;
 }
 import React from 'react';
 import Button from './Button.tsx';
-export default function Pagination({ page, pages, numberOfPages, searchParams, setSearchParams }: PaginationProps) {
+export default function Pagination({ page, pages, numberOfPages, onPageChange }: PaginationProps) {
   return (
     <div className="flex justify-center gap-2 join">
       <Button id="prevButton"
@@ -17,10 +14,7 @@ export default function Pagination({ page, pages, numberOfPages, searchParams, s
               className="text-lg join-item"
               size={'sm'}
               disabled={Number(page) === 1}
-              onClick={() => {
-                searchParams.set("page", (Number(page) - 1).toString());
-                setSearchParams({ page: (Number(page) - 1).toString() })
-              }}
+              onClick={() => onPageChange(Number(page) - 1)}
       />
       {pages.map((pageNumber: number | string) => (
         <input
@@ -35,8 +29,7 @@ export default function Pagination({ page, pages, numberOfPages, searchParams, s
           onChange={() => {
             if(typeof pageNumber == "string")
               return;
-            searchParams.set("page", pageNumber.toString());
-            setSearchParams({ page: pageNumber.toString() })
+            onPageChange(pageNumber);
           }}
         />
       ))}
@@ -46,10 +39,7 @@ export default function Pagination({ page, pages, numberOfPages, searchParams, s
         className="text-lg join-item"
         size={"sm"}
         disabled={Number(page) == Math.max(numberOfPages, 1)}
-        onClick={() => {
-          searchParams.set("page", (Number(page) + 1).toString());
-          setSearchParams({ page: (Number(page) + 1).toString() })
-        }}
+        onClick={() => onPageChange(Number(page) + 1)}
       />
     </div>
   );

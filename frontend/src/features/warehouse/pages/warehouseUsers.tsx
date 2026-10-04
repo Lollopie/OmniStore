@@ -174,7 +174,7 @@ const WarehouseUsers = () => {
 
       <section className="mt-4">
         <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / usersPerPage)}
-                    searchParams={searchParams} setSearchParams={setSearchParams} />
+                    onPageChange={(nextPage) => setSearchParams({ page: nextPage.toString() })} />
       </section>
     </section>
   );

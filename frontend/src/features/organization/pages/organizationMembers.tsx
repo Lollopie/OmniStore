@@ -168,8 +168,8 @@ const OrganizationMembers = () => {
             </tbody>
           </table>
         </div>
-        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / 10)} searchParams={searchParams}
-                    setSearchParams={setSearchParams} />
+        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / 10)}
+                    onPageChange={(nextPage) => setSearchParams({ page: nextPage.toString() })} />
       </SectionCard>
       <Modal dialogRef={dialogRef} title="Remove user" onClose={closeRemoveDialog}>
         <div className="space-y-4 p-4">

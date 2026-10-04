@@ -2,8 +2,13 @@ import FeatureBox from './components/FeatureBox.tsx';
 import { Link } from 'react-router';
 import { HomeNavBar } from './components/HomeNavBar.tsx';
 import { HomepageFooter } from './components/HomepageFooter.tsx';
+import { useState } from 'react';
+import InventoryManager from '../inventory/Inventory.tsx';
+import { createDemoInventorySource } from '../inventory/data/demoInventorySource.ts';
 
 const Homepage = () => {
+  // Created per visit, so every visitor starts from the same sample items
+  const [demoSource] = useState(() => createDemoInventorySource());
   const images: string[] = Object.values(import.meta.glob('../../assets/companies/*.{png,jpg,jpeg,svg,webp}', {
     eager: true,
     import: 'default',
@@ -27,19 +32,14 @@ const Homepage = () => {
               </p>
               <Link to="/register" className="btn btn-primary mr-5">Get Started</Link>
             </section>
-            <img
-              src="/images/inventory-light.png"
-              alt="Inventory Management Illustration"
-              width="600px"
-              className="block [html[data-theme='omnistore-dark']_&]:hidden rounded-lg"
-            />
-
-            <img
-              src="/images/inventory-dark.png"
-              alt="Inventory Management Illustration"
-              width="600px"
-              className="hidden [html[data-theme='omnistore-dark']_&]:block rounded-lg"
-            />
+            <section className="w-full lg:w-[600px] shrink-0 flex flex-col gap-3" aria-label="Interactive inventory demo">
+              <p className="text-sm text-center text-base-content/70">
+                <span className="badge badge-accent badge-sm mr-2">Live demo</span>
+                Try it out: add, edit, sort and search. Nothing is saved.
+              </p>
+              <InventoryManager source={demoSource} role="admin" readOnly={false} pageInUrl={false}
+                                className="w-full" />
+            </section>
           </section>
           <section className="max-w-5xl w-full p-8 flex flex-row gap-10 justify-around
                          text-center">
