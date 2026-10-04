@@ -3,6 +3,7 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { SubscriptionService } from '../../src/payment/subscription.service';
 import { GuardDBService } from '../../src/utils/guardDB.service';
+import { ConfigService } from '@nestjs/config';
 describe('SubscriptionService', () => {
   let subscriptionService: SubscriptionService;
   const mockStripe = {
@@ -15,11 +16,28 @@ describe('SubscriptionService', () => {
       retrieve: jest.fn(),
       cancel: jest.fn(),
     },
+    billingPortal: {
+      sessions: {
+        create: jest.fn().mockResolvedValue({ url: 'https://portal' }),
+      },
+    },
   };
   const mockGuardDB = {
     getOrgSubscription: jest.fn(),
     setOrgSubscription: jest.fn(),
     clearOrgSubscription: jest.fn(),
+    updateOrgSubscriptionPlan: jest.fn(),
+  };
+  const config: Record<string, unknown> = {
+    'payment.prices': {
+      starter: 'price_starter',
+      growth: 'price_growth',
+      enterprise: 'price_enterprise',
+    },
+    'payment.portalConfiguration': 'bpc_test',
+  };
+  const mockConfigService = {
+    get: jest.fn((key: string) => config[key]),
   };
   const buildSession = (
     overrides: Partial<Stripe.Checkout.Session> = {},
@@ -41,6 +59,7 @@ describe('SubscriptionService', () => {
         SubscriptionService,
         { provide: Stripe, useValue: mockStripe },
         { provide: GuardDBService, useValue: mockGuardDB },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -245,6 +264,108 @@ describe('SubscriptionService', () => {
       });
       await subscriptionService.cancelSubscription('sub_1');
       expect(mockStripe.subscriptions.cancel).not.toHaveBeenCalled();
+    });
+  });
+  describe('handleSubscriptionChange plan switches', () => {
+    const subscriptionWithPrice = (status: string, priceId: string) =>
+      ({
+        id: 'sub_1',
+        status,
+        items: { data: [{ price: { id: priceId } }] },
+      }) as unknown as Stripe.Subscription;
+    it('should update the plan when the price changes', async () => {
+      await subscriptionService.handleSubscriptionChange(
+        subscriptionWithPrice('active', 'price_enterprise'),
+      );
+      expect(mockGuardDB.updateOrgSubscriptionPlan).toHaveBeenCalledWith(
+        'sub_1',
+        'enterprise',
+      );
+      expect(mockGuardDB.clearOrgSubscription).not.toHaveBeenCalled();
+    });
+    it('should ignore unknown prices', async () => {
+      await subscriptionService.handleSubscriptionChange(
+        subscriptionWithPrice('active', 'price_unknown'),
+      );
+      expect(mockGuardDB.updateOrgSubscriptionPlan).not.toHaveBeenCalled();
+    });
+    it('should not change the plan of past due subscriptions', async () => {
+      await subscriptionService.handleSubscriptionChange(
+        subscriptionWithPrice('past_due', 'price_growth'),
+      );
+      expect(mockGuardDB.updateOrgSubscriptionPlan).not.toHaveBeenCalled();
+    });
+  });
+  describe('getBillingDetails', () => {
+    it('should return status and period end', async () => {
+      mockStripe.subscriptions.retrieve.mockResolvedValueOnce({
+        id: 'sub_1',
+        status: 'active',
+        cancel_at: null,
+        cancel_at_period_end: false,
+        items: { data: [{ current_period_end: 1800000000 }] },
+      });
+      const details = await subscriptionService.getBillingDetails('sub_1');
+      expect(details).toEqual({
+        status: 'active',
+        currentPeriodEnd: new Date(1800000000 * 1000),
+        cancelAt: null,
+      });
+    });
+    it('should report the period end as cancellation date', async () => {
+      mockStripe.subscriptions.retrieve.mockResolvedValueOnce({
+        id: 'sub_1',
+        status: 'active',
+        cancel_at: null,
+        cancel_at_period_end: true,
+        items: { data: [{ current_period_end: 1800000000 }] },
+      });
+      const details = await subscriptionService.getBillingDetails('sub_1');
+      expect(details.cancelAt).toEqual(new Date(1800000000 * 1000));
+    });
+    it('should prefer an explicit cancel_at date', async () => {
+      mockStripe.subscriptions.retrieve.mockResolvedValueOnce({
+        id: 'sub_1',
+        status: 'active',
+        cancel_at: 1790000000,
+        cancel_at_period_end: false,
+        items: { data: [{ current_period_end: 1800000000 }] },
+      });
+      const details = await subscriptionService.getBillingDetails('sub_1');
+      expect(details.cancelAt).toEqual(new Date(1790000000 * 1000));
+    });
+  });
+  describe('createPortalSession', () => {
+    it('should create a portal session for the subscription customer', async () => {
+      mockStripe.subscriptions.retrieve.mockResolvedValueOnce({
+        id: 'sub_1',
+        customer: 'cus_1',
+      });
+      const url = await subscriptionService.createPortalSession(
+        'sub_1',
+        'http://frontend/organizations/billing',
+      );
+      expect(mockStripe.billingPortal.sessions.create).toHaveBeenCalledWith({
+        customer: 'cus_1',
+        return_url: 'http://frontend/organizations/billing',
+        configuration: 'bpc_test',
+      });
+      expect(url).toBe('https://portal');
+    });
+    it('should use the default portal configuration if none is set', async () => {
+      mockStripe.subscriptions.retrieve.mockResolvedValueOnce({
+        id: 'sub_1',
+        customer: { id: 'cus_1' },
+      });
+      mockConfigService.get.mockImplementation((key: string) =>
+        key === 'payment.portalConfiguration' ? undefined : config[key],
+      );
+      await subscriptionService.createPortalSession('sub_1', 'http://return');
+      expect(mockStripe.billingPortal.sessions.create).toHaveBeenCalledWith({
+        customer: 'cus_1',
+        return_url: 'http://return',
+      });
+      mockConfigService.get.mockImplementation((key: string) => config[key]);
     });
   });
 });

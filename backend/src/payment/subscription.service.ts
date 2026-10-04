@@ -4,6 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import Stripe from 'stripe';
+import { ConfigService } from '@nestjs/config';
 import { GuardDBService } from '../utils/guardDB.service';
 import {
   SUBSCRIPTION_PLANS,
@@ -27,6 +28,7 @@ export class SubscriptionService {
   constructor(
     private readonly stripe: Stripe,
     private readonly guardDBService: GuardDBService,
+    private readonly configService: ConfigService,
   ) {}
 
   async getSubscription(orgId: string): Promise<SubscriptionPlan | null> {
@@ -96,7 +98,65 @@ export class SubscriptionService {
   ): Promise<void> {
     if (ENDED_SUBSCRIPTION_STATUSES.includes(subscription.status)) {
       await this.guardDBService.clearOrgSubscription(subscription.id);
+      return;
     }
+    // Plan switches in the Customer Portal change the subscription's price
+    if (ACTIVE_SUBSCRIPTION_STATUSES.includes(subscription.status)) {
+      const plan = this.getPlanForPrice(subscription.items?.data[0]?.price.id);
+      if (plan) {
+        await this.guardDBService.updateOrgSubscriptionPlan(
+          subscription.id,
+          plan,
+        );
+      }
+    }
+  }
+
+  async getBillingDetails(stripeSubscriptionId: string) {
+    const subscription =
+      await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
+    const periodEnd = subscription.items.data[0]?.current_period_end ?? null;
+    const cancelAt =
+      subscription.cancel_at ??
+      (subscription.cancel_at_period_end ? periodEnd : null);
+    return {
+      status: subscription.status,
+      currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+      cancelAt: cancelAt ? new Date(cancelAt * 1000) : null,
+    };
+  }
+
+  async createPortalSession(
+    stripeSubscriptionId: string,
+    returnUrl: string,
+  ): Promise<string> {
+    const subscription =
+      await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
+    const customer =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+    const configuration = this.configService.get<string>(
+      'payment.portalConfiguration',
+    );
+    const session = await this.stripe.billingPortal.sessions.create({
+      customer,
+      return_url: returnUrl,
+      ...(configuration ? { configuration } : {}),
+    });
+    return session.url;
+  }
+
+  private getPlanForPrice(priceId?: string): SubscriptionPlan | null {
+    if (!priceId) {
+      return null;
+    }
+    const prices =
+      this.configService.get<Record<string, string | undefined>>(
+        'payment.prices',
+      ) ?? {};
+    const plan = SUBSCRIPTION_PLANS.find((p) => prices[p] === priceId);
+    return plan ?? null;
   }
 
   /** Cancels the subscription immediately unless it has already ended. */

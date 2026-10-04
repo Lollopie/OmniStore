@@ -43,6 +43,15 @@ export class GuardDBService {
       stripeSubscriptionId,
     ]);
   }
+  async updateOrgSubscriptionPlan(
+    stripeSubscriptionId: string,
+    plan: SubscriptionPlan,
+  ): Promise<void> {
+    await this.dataSource.query(`SELECT update_org_subscription_plan($1, $2)`, [
+      stripeSubscriptionId,
+      plan,
+    ]);
+  }
   async clearOrgSubscription(stripeSubscriptionId: string): Promise<void> {
     await this.dataSource.query(`SELECT clear_org_subscription($1)`, [
       stripeSubscriptionId,

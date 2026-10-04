@@ -3,7 +3,11 @@ import { SubscriptionGuard } from '../../src/payment/subscription.guard';
 import { OrganizationController } from '../../src/organization/organization.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '../../src/auth/auth.guard';
-import { CanActivate, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  CanActivate,
+  NotFoundException,
+} from '@nestjs/common';
 import { OrganizationRolesGuard } from '../../src/roles/organizationRoles/organizationRoles.guard';
 import { OrganizationService } from '../../src/organization/organization.service';
 import { AuthService } from '../../src/auth/auth.service';
@@ -91,6 +95,12 @@ describe('OrganizationController', () => {
   };
   const mockSubscriptionService = {
     cancelSubscription: jest.fn(),
+    getBillingDetails: jest.fn().mockResolvedValue({
+      status: 'active',
+      currentPeriodEnd: new Date('2026-11-01'),
+      cancelAt: null,
+    }),
+    createPortalSession: jest.fn().mockResolvedValue('https://portal'),
     getSubscription: jest.fn(),
     confirmCheckoutSession: jest.fn(),
   };
@@ -461,6 +471,62 @@ describe('OrganizationController', () => {
         ),
       ).rejects.toThrow('Stripe unavailable');
       expect(mockAuthService.clearCookie).not.toHaveBeenCalled();
+    });
+  });
+  describe('getBilling', () => {
+    it('should combine the plan with the Stripe details', async () => {
+      const response = await organizationController.getBilling();
+      expect(mockSubscriptionService.getBillingDetails).toHaveBeenCalledWith(
+        'sub_1',
+      );
+      expect(response).toEqual({
+        plan: 'starter',
+        manageable: true,
+        status: 'active',
+        currentPeriodEnd: new Date('2026-11-01'),
+        cancelAt: null,
+      });
+    });
+    it('should not call Stripe for plans without a Stripe subscription', async () => {
+      mockOrganizationService.getCurrentOrganization.mockResolvedValueOnce({
+        orgId: 'org-1',
+        subscription: 'starter',
+        stripeSubscriptionId: null,
+      });
+      const response = await organizationController.getBilling();
+      expect(mockSubscriptionService.getBillingDetails).not.toHaveBeenCalled();
+      expect(response).toEqual({
+        plan: 'starter',
+        manageable: false,
+        status: null,
+        currentPeriodEnd: null,
+        cancelAt: null,
+      });
+    });
+  });
+  describe('createBillingPortalSession', () => {
+    it('should return the portal url and return to the billing tab', async () => {
+      const response =
+        await organizationController.createBillingPortalSession();
+      expect(mockSubscriptionService.createPortalSession).toHaveBeenCalledWith(
+        'sub_1',
+        'http://frontend/organizations/billing',
+      );
+      expect(response).toEqual({ url: 'https://portal' });
+    });
+    it('should throw without a Stripe subscription', async () => {
+      mockOrganizationService.getCurrentOrganization.mockResolvedValueOnce({
+        orgId: 'org-1',
+        subscription: null,
+        stripeSubscriptionId: null,
+      });
+      await expect(
+        organizationController.createBillingPortalSession(),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Your organization has no subscription to manage',
+        ),
+      );
     });
   });
 });

@@ -103,3 +103,49 @@ test.describe('Organization settings', () => {
     expect((await loginResponse).ok()).toBe(false);
   });
 });
+
+test.describe('Organization billing', () => {
+  test('shows plans that are not billed through Stripe', async ({ page }) => {
+    await loginAsOwner(page);
+    await page.locator('a[href="/organizations/billing"]').click();
+    await expect(page.getByRole('heading', { name: 'Starter plan' })).toBeVisible();
+    await expect(page.getByText('This plan is not billed through Stripe.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Manage billing' })).toBeHidden();
+  });
+
+  test('owner can open the Stripe Customer Portal', async ({ page }) => {
+    await loginAsOwner(page);
+    const api = process.env.VITE_NESTJS_HOST_URL!;
+    const portalUrl = 'https://billing.stripe.com/p/session/test_portal';
+    const cors = {
+      'Access-Control-Allow-Origin': 'http://localhost:5173',
+      'Access-Control-Allow-Credentials': 'true',
+    };
+    // Only the billing calls are mocked, everything else hits the real backend
+    await page.route(`${api}/organizations/billing`, (route) =>
+      route.fulfill({
+        headers: cors,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          plan: 'growth',
+          manageable: true,
+          status: 'active',
+          currentPeriodEnd: '2026-11-01T00:00:00.000Z',
+          cancelAt: null,
+        }),
+      }),
+    );
+    await page.route(`${api}/organizations/billing/portal`, (route) =>
+      route.request().method() === 'OPTIONS'
+        ? route.fulfill({ status: 204, headers: { ...cors, 'Access-Control-Allow-Methods': 'POST' } })
+        : route.fulfill({ status: 201, headers: cors, contentType: 'application/json', body: JSON.stringify({ url: portalUrl }) }),
+    );
+    await page.route(portalUrl, (route) => route.fulfill({ contentType: 'text/html', body: '<h1>Stripe portal</h1>' }));
+
+    await page.goto('/organizations/billing');
+    await expect(page.getByRole('heading', { name: 'Growth plan' })).toBeVisible();
+    await expect(page.getByText(`Renews on ${new Date('2026-11-01T00:00:00.000Z').toLocaleDateString('en-US')}`)).toBeVisible();
+    await page.getByRole('button', { name: 'Manage billing' }).click();
+    await expect(page).toHaveURL(portalUrl);
+  });
+});

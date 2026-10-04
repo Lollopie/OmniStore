@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -114,6 +115,45 @@ export class OrganizationController {
     }
     this.authService.clearCookie(res);
     return { message: 'Organization deleted.' };
+  }
+  @Get('/billing')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async getBilling() {
+    const org = await this.organizationService.getCurrentOrganization();
+    // Plans granted without Stripe (e.g. seeded orgs) have nothing to manage
+    if (!org.stripeSubscriptionId) {
+      return {
+        plan: org.subscription,
+        manageable: false,
+        status: null,
+        currentPeriodEnd: null,
+        cancelAt: null,
+      };
+    }
+    return {
+      plan: org.subscription,
+      manageable: true,
+      ...(await this.subscriptionService.getBillingDetails(
+        org.stripeSubscriptionId,
+      )),
+    };
+  }
+  @Post('/billing/portal')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER)
+  async createBillingPortalSession() {
+    const org = await this.organizationService.getCurrentOrganization();
+    if (!org.stripeSubscriptionId) {
+      throw new BadRequestException(
+        'Your organization has no subscription to manage',
+      );
+    }
+    const url = await this.subscriptionService.createPortalSession(
+      org.stripeSubscriptionId,
+      `${this.configService.get<string>('app.frontendUrl')}/organizations/billing`,
+    );
+    return { url };
   }
   @Post('/register')
   async register(

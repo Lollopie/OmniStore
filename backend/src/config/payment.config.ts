@@ -8,4 +8,6 @@ export default registerAs('payment', () => ({
     enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
   } as Record<string, string | undefined>,
   webhookKey: process.env.STRIPE_WEBHOOK_SECRET,
+  // Optional; Stripe falls back to the default portal configuration
+  portalConfiguration: process.env.STRIPE_PORTAL_CONFIGURATION,
 }));
