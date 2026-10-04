@@ -109,6 +109,16 @@ describe('GuardDBService', () => {
       );
     });
   });
+  describe('updateOrgSubscriptionPlan', () => {
+    it('should call update_org_subscription_plan with correct parameters', async () => {
+      mockDataSource.query.mockReturnValueOnce([]);
+      await guardDBService.updateOrgSubscriptionPlan('sub_1', 'enterprise');
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT update_org_subscription_plan($1, $2)`,
+        ['sub_1', 'enterprise'],
+      );
+    });
+  });
   describe('clearOrgSubscription', () => {
     it('should call clear_org_subscription with correct parameters', async () => {
       mockDataSource.query.mockReturnValueOnce([]);

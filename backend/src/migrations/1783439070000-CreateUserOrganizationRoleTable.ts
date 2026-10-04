@@ -20,6 +20,7 @@ export class CreateUserOrganizationRoleTable1783439070000 implements MigrationIn
         RETURNS TEXT
         LANGUAGE sql
         SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
         STABLE
         AS $$
           SELECT role FROM user_org_role
@@ -34,6 +35,7 @@ export class CreateUserOrganizationRoleTable1783439070000 implements MigrationIn
         RETURNS BOOLEAN
         LANGUAGE sql
         SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
         STABLE
         AS $$
           SELECT EXISTS (
@@ -47,13 +49,65 @@ export class CreateUserOrganizationRoleTable1783439070000 implements MigrationIn
         REVOKE ALL ON FUNCTION is_org_admin FROM PUBLIC;
         GRANT EXECUTE ON FUNCTION is_org_admin TO nestjs_app_user;
     `);
+    // Mirrors ORG_INVITATION_PERMISSIONS: owners manage every role, admins
+    // only admins and members
     await queryRunner.query(`
-        CREATE POLICY uor_self_or_org_admin ON user_org_role
+        CREATE OR REPLACE FUNCTION can_manage_org_role(actor_id UUID, check_org_id UUID, target_role TEXT)
+        RETURNS BOOLEAN
+        LANGUAGE sql
+        SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
+        STABLE
+        AS $$
+          SELECT EXISTS (
+            SELECT 1 FROM user_org_role
+            WHERE user_id = actor_id
+              AND org_id = check_org_id
+              AND (
+                (role = 'owner' AND target_role IN ('owner', 'admin', 'member'))
+                OR (role = 'admin' AND target_role IN ('admin', 'member'))
+              )
+          );
+        $$;
+
+        REVOKE ALL ON FUNCTION can_manage_org_role FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION can_manage_org_role TO nestjs_app_user;
+    `);
+    // Rows are inserted only through SECURITY DEFINER functions and deleted via
+    // FK cascades, so there are no INSERT or DELETE policies.
+    await queryRunner.query(`
+        CREATE POLICY uor_select ON user_org_role
+            FOR SELECT
             USING (
-                user_id = current_setting('app.current_user_id', true)::uuid
-                OR is_org_admin(
-                     current_setting('app.current_user_id', true)::uuid,
-                     current_setting('app.current_org_id', true)::uuid
+                user_id = (NULLIF(current_setting('app.current_user_id', true), ''))::uuid
+                OR (
+                    org_id = (NULLIF(current_setting('app.current_org_id', true), ''))::uuid
+                    AND is_org_admin(
+                         (NULLIF(current_setting('app.current_user_id', true), ''))::uuid,
+                         org_id
+                       )
+                )
+            );
+    `);
+    // USING checks the old role and WITH CHECK the new one, so the actor must
+    // be allowed to manage both
+    await queryRunner.query(`
+        CREATE POLICY uor_update_org_admin ON user_org_role
+            FOR UPDATE
+            USING (
+                org_id = (NULLIF(current_setting('app.current_org_id', true), ''))::uuid
+                AND can_manage_org_role(
+                     (NULLIF(current_setting('app.current_user_id', true), ''))::uuid,
+                     org_id,
+                     role
+                   )
+            )
+            WITH CHECK (
+                org_id = (NULLIF(current_setting('app.current_org_id', true), ''))::uuid
+                AND can_manage_org_role(
+                     (NULLIF(current_setting('app.current_user_id', true), ''))::uuid,
+                     org_id,
+                     role
                    )
             );
     `);
@@ -61,7 +115,9 @@ export class CreateUserOrganizationRoleTable1783439070000 implements MigrationIn
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      DROP POLICY "uor_self_or_org_admin" ON "user_org_role";
+      DROP POLICY "uor_update_org_admin" ON "user_org_role";
+      DROP POLICY "uor_select" ON "user_org_role";
+      DROP FUNCTION can_manage_org_role;
     `);
     await queryRunner.query(`DROP TABLE "user_org_role"`);
   }

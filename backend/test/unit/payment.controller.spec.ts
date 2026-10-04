@@ -6,6 +6,7 @@ import { PaymentController } from '../../src/payment/payment.controller';
 import { AuthGuard } from '../../src/auth/auth.guard';
 import { Cookie } from '../../src/user/user.decorator';
 import { SubscriptionPlan } from '../../src/organization/organization.entity';
+import { GuardDBService } from '../../src/utils/guardDB.service';
 describe('PaymentController', () => {
   let paymentController: PaymentController;
   class MockGuard implements CanActivate {
@@ -20,6 +21,9 @@ describe('PaymentController', () => {
       enterprise: undefined,
     },
     'app.frontendUrl': 'http://frontend',
+  };
+  const mockGuardDB = {
+    getOrgSubscription: jest.fn().mockResolvedValue(null),
   };
   const mockConfigService = {
     get: jest.fn((key: string) => config[key]),
@@ -47,6 +51,7 @@ describe('PaymentController', () => {
       providers: [
         { provide: ConfigService, useValue: mockConfigService },
         { provide: Stripe, useValue: mockStripe },
+        { provide: GuardDBService, useValue: mockGuardDB },
       ],
     })
       .overrideGuard(AuthGuard)
@@ -113,6 +118,32 @@ describe('PaymentController', () => {
       await expect(
         paymentController.createPaymentSession(userToken, { plan: 'starter' }),
       ).rejects.toThrow(new BadRequestException('Unknown subscription plan'));
+    });
+  });
+  describe('createPaymentSession for subscribed organizations', () => {
+    it('should refuse a second checkout', async () => {
+      mockGuardDB.getOrgSubscription.mockResolvedValueOnce('starter');
+      await expect(
+        paymentController.createPaymentSession(userToken, { plan: 'growth' }),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Your organization already has a subscription. Change it in the billing settings.',
+        ),
+      );
+      expect(mockGuardDB.getOrgSubscription).toHaveBeenCalledWith('org-1');
+      expect(mockStripe.checkout.sessions.create).not.toHaveBeenCalled();
+    });
+    it('should store org and plan on the subscription', async () => {
+      await paymentController.createPaymentSession(userToken, {
+        plan: 'growth',
+      });
+      expect(mockStripe.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subscription_data: {
+            metadata: { orgId: 'org-1', plan: 'growth' },
+          },
+        }),
+      );
     });
   });
 });

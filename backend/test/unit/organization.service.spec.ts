@@ -7,9 +7,9 @@ import { InviteEntity } from '../../src/invite/invite.entity';
 import { OrganizationEntity } from '../../src/organization/organization.entity';
 import { UserEntity } from '../../src/user/user.entity';
 import * as helper from '../../src/utils/helper';
-import { FindOneOptions } from 'typeorm';
+import { FindOneOptions, In } from 'typeorm';
 import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userOrganizationRole.entity';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 jest.mock('../../src/utils/helper', () => ({
   mapRow: jest.fn(),
 }));
@@ -67,13 +67,21 @@ describe('OrganizationService', () => {
         created_at: new Date(),
       },
     ]),
-    findOne: jest.fn().mockResolvedValue({
-      orgId: 'org-1',
-      name: 'organization',
-      createdAt: new Date(),
-    }),
+    findOne: jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        orgId: 'org-1',
+        name: 'organization',
+        createdAt: new Date(),
+      }),
+    ),
+    save: jest.fn().mockImplementation((org: OrganizationEntity) => org),
+    delete: jest.fn(),
   };
   const mockUserOrganizationRoleRepository = {
+    find: jest.fn().mockResolvedValue([
+      { userId: 'user-1', orgId: 'org-1', role: 'owner' },
+      { userId: 'user-2', orgId: 'org-1', role: 'member' },
+    ]),
     createQueryBuilder: jest.fn().mockReturnValue({
       innerJoin: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
@@ -100,6 +108,7 @@ describe('OrganizationService', () => {
       };
     }),
     save: jest.fn().mockImplementation((user: UserEntity) => user),
+    delete: jest.fn(),
   };
   (helper.mapRow as jest.Mock).mockReturnValue({
     orgId: 'org-1',
@@ -387,6 +396,66 @@ describe('OrganizationService', () => {
         ],
         total: 1,
       });
+    });
+  });
+  describe('getCurrentOrganization', () => {
+    it('should look up the organization from the token', async () => {
+      const org = await organizationService.getCurrentOrganization();
+      expect(mockOrganizationRepository.findOne).toHaveBeenCalledWith({
+        where: { orgId: 'org-1' },
+      });
+      expect(org.name).toBe('organization');
+    });
+    it('should throw if the organization does not exist', async () => {
+      mockOrganizationRepository.findOne.mockResolvedValueOnce(null);
+      await expect(
+        organizationService.getCurrentOrganization(),
+      ).rejects.toThrow(new NotFoundException('Organization not found'));
+    });
+  });
+  describe('renameOrganization', () => {
+    it('should save the trimmed new name', async () => {
+      const org = await organizationService.renameOrganization('  New Name ');
+      expect(mockOrganizationRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ orgId: 'org-1', name: 'New Name' }),
+      );
+      expect(org.name).toBe('New Name');
+    });
+  });
+  describe('deleteOrganization', () => {
+    it('should throw if the confirmation does not match the name', async () => {
+      await expect(
+        organizationService.deleteOrganization('other'),
+      ).rejects.toThrow(
+        new BadRequestException('Organization name does not match'),
+      );
+      expect(mockUserRepository.delete).not.toHaveBeenCalled();
+      expect(mockOrganizationRepository.delete).not.toHaveBeenCalled();
+    });
+    it('should delete all member accounts', async () => {
+      await organizationService.deleteOrganization('organization');
+      expect(mockUserOrganizationRoleRepository.find).toHaveBeenCalledWith({
+        where: { orgId: 'org-1' },
+      });
+      expect(mockUserRepository.delete).toHaveBeenCalledWith({
+        userId: In(['user-1', 'user-2']),
+      });
+    });
+    it('should delete the organization', async () => {
+      await organizationService.deleteOrganization('organization');
+      expect(mockOrganizationRepository.delete).toHaveBeenCalledWith({
+        orgId: 'org-1',
+      });
+    });
+    it('should return the stripe subscription id', async () => {
+      mockOrganizationRepository.findOne.mockResolvedValueOnce({
+        orgId: 'org-1',
+        name: 'organization',
+        stripeSubscriptionId: 'sub_1',
+      });
+      await expect(
+        organizationService.deleteOrganization('organization'),
+      ).resolves.toBe('sub_1');
     });
   });
 });

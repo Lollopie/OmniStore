@@ -5,6 +5,13 @@ CREATE ROLE :APP_ROLE WITH LOGIN PASSWORD :'APP_PASSWORD';
 GRANT USAGE ON SCHEMA public TO :APP_ROLE;
 GRANT CONNECT ON DATABASE :DATABASE_NAME TO :APP_ROLE;
 
+-- The McpReadonlyGrants migration grants to mcp_readonly by name
+CREATE ROLE mcp_readonly WITH LOGIN PASSWORD :'READONLY_PASSWORD';
+ALTER ROLE mcp_readonly SET statement_timeout = '5s';
+ALTER ROLE mcp_readonly SET default_transaction_read_only = on;
+GRANT USAGE ON SCHEMA public TO mcp_readonly;
+GRANT CONNECT ON DATABASE :DATABASE_NAME TO mcp_readonly;
+
 \c :DATABASE_NAME
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO :APP_ROLE;

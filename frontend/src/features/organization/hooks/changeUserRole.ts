@@ -1,5 +1,5 @@
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
-import type { OrganizationUser } from '../organization.tsx';
+import type { OrganizationUser } from '../pages/organizationMembers.tsx';
 
 interface Props {
   user: OrganizationUser;

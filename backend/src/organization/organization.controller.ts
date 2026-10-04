@@ -1,7 +1,12 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -9,8 +14,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  DeleteOrganizationDto,
   OrganizationDto,
+  OrganizationInviteDto,
   OrganizationUpdateRoleDto,
+  UpdateOrganizationDto,
 } from '@shared/dto/organization.dto';
 import { OrganizationService } from './organization.service';
 import { UserEntity } from '../user/user.entity';
@@ -27,6 +35,11 @@ import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganiz
 import { SubscriptionGuard } from '../payment/subscription.guard';
 import { SubscriptionService } from '../payment/subscription.service';
 import { Throttle } from '@nestjs/throttler';
+import { ConfigService } from '@nestjs/config';
+import { InviteService } from '../invite/invite.service';
+import { InviteEntity } from '../invite/invite.entity';
+import { MailService } from '../mail/mail.service';
+import { InviteContext } from '../mail/interfaces/mail-contexts.interface';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -35,6 +48,9 @@ export class OrganizationController {
     private readonly authService: AuthService,
     private readonly userOrganizationRoleService: UserOrganizationRoleService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly inviteService: InviteService,
+    private readonly mailService: MailService,
+    private readonly configService: ConfigService,
   ) {}
   /**
    * Returns the org's plan. When the user returns from Stripe Checkout, the
@@ -65,6 +81,79 @@ export class OrganizationController {
       }
     }
     return { subscription };
+  }
+  @Get('/me')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  async getOrganization() {
+    const org = await this.organizationService.getCurrentOrganization();
+    return {
+      orgId: org.orgId,
+      name: org.name,
+      createdAt: org.createdAt,
+      subscription: org.subscription,
+    };
+  }
+  @Patch()
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async renameOrganization(@Body() data: UpdateOrganizationDto) {
+    const org = await this.organizationService.renameOrganization(data.name);
+    return { orgId: org.orgId, name: org.name };
+  }
+  @Delete()
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER)
+  async deleteOrganization(
+    @Body() data: DeleteOrganizationDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const stripeSubscriptionId =
+      await this.organizationService.deleteOrganization(data.confirmName);
+    // Runs inside the request transaction, so a Stripe failure rolls back the deletion
+    if (stripeSubscriptionId) {
+      await this.subscriptionService.cancelSubscription(stripeSubscriptionId);
+    }
+    this.authService.clearCookie(res);
+    return { message: 'Organization deleted.' };
+  }
+  @Get('/billing')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async getBilling() {
+    const org = await this.organizationService.getCurrentOrganization();
+    // Plans granted without Stripe (e.g. seeded orgs) have nothing to manage
+    if (!org.stripeSubscriptionId) {
+      return {
+        plan: org.subscription,
+        manageable: false,
+        status: null,
+        currentPeriodEnd: null,
+        cancelAt: null,
+      };
+    }
+    return {
+      plan: org.subscription,
+      manageable: true,
+      ...(await this.subscriptionService.getBillingDetails(
+        org.stripeSubscriptionId,
+      )),
+    };
+  }
+  @Post('/billing/portal')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER)
+  async createBillingPortalSession() {
+    const org = await this.organizationService.getCurrentOrganization();
+    if (!org.stripeSubscriptionId) {
+      throw new BadRequestException(
+        'Your organization has no subscription to manage',
+      );
+    }
+    const url = await this.subscriptionService.createPortalSession(
+      org.stripeSubscriptionId,
+      `${this.configService.get<string>('app.frontendUrl')}/organizations/billing`,
+    );
+    return { url };
   }
   @Post('/register')
   async register(
@@ -105,5 +194,76 @@ export class OrganizationController {
       organizationUpdateRoleData.username,
       organizationUpdateRoleData.role,
     );
+  }
+  @Delete('/users/:userId')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async removeUser(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @userDecorator.User() user: Cookie,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    await this.userOrganizationRoleService.removeMember(userId);
+    if (userId === user.userId) {
+      this.authService.clearCookie(res);
+    }
+    return { message: 'User removed from organization.' };
+  }
+  @Get('/invites')
+  @UseGuards(AuthGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async getInvites() {
+    return await this.inviteService.getPendingInvites();
+  }
+  @Post('/invites')
+  @UseGuards(AuthGuard, SubscriptionGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async inviteUser(
+    @Body() organizationInviteData: OrganizationInviteDto,
+    @userDecorator.User() user: Cookie,
+  ) {
+    const { invite, rawToken } =
+      await this.inviteService.inviteOrganizationUser(
+        organizationInviteData.email,
+        organizationInviteData.role,
+      );
+    await this.sendInviteEmail(invite, rawToken, user.orgId);
+    return { message: 'Invite sent successfully.' };
+  }
+  @Post('/invites/:inviteId/resend')
+  @UseGuards(AuthGuard, SubscriptionGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async resendInvite(
+    @Param('inviteId', ParseUUIDPipe) inviteId: string,
+    @userDecorator.User() user: Cookie,
+  ) {
+    const { invite, rawToken } =
+      await this.inviteService.resendInvite(inviteId);
+    await this.sendInviteEmail(invite, rawToken, user.orgId);
+    return { message: 'Invite sent successfully.' };
+  }
+  @Delete('/invites/:inviteId')
+  @UseGuards(AuthGuard, SubscriptionGuard, OrganizationRolesGuard)
+  @OrganizationRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
+  async revokeInvite(@Param('inviteId', ParseUUIDPipe) inviteId: string) {
+    await this.inviteService.revokeInvite(inviteId);
+    return { message: 'Invite revoked.' };
+  }
+  private async sendInviteEmail(
+    invite: InviteEntity,
+    rawToken: string,
+    orgId: string,
+  ) {
+    const org = await this.organizationService.findByOrgId(orgId);
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+    const context: InviteContext = {
+      organizationName: org.name,
+      verificationUrl: `${this.configService.get('app.frontendUrl')}/invites/accept?token=${rawToken}`,
+      expiresInHours:
+        this.configService.get('email.inviteTokenExpiresHours') || 24,
+    };
+    await this.mailService.sendInviteEmail(invite.email, context);
   }
 }

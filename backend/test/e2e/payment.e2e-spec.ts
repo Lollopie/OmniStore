@@ -65,6 +65,9 @@ describe('Payment (e2e)', () => {
   };
   beforeAll(async () => {
     process.env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
+    process.env.STRIPE_PRICE_STARTER = 'price_starter_e2e';
+    process.env.STRIPE_PRICE_GROWTH = 'price_growth_e2e';
+    process.env.STRIPE_PRICE_ENTERPRISE = 'price_enterprise_e2e';
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -255,6 +258,101 @@ describe('Payment (e2e)', () => {
       expect(await getSubscription(orgId)).toEqual('growth');
     });
   });
+  describe('billing', () => {
+    it('should switch the plan when the subscription price changes', async () => {
+      const scenarioBuilder = await ScenarioBuilder.create(
+        dataSource,
+      ).withOrganization('Org1', null);
+      const orgId = scenarioBuilder['org'].orgId;
+      await sendWebhook(checkoutCompletedEvent(orgId, 'sub_e2e')).expect(201);
+
+      await sendWebhook({
+        id: 'evt_plan_switch',
+        object: 'event',
+        type: 'customer.subscription.updated',
+        data: {
+          object: {
+            id: 'sub_e2e',
+            object: 'subscription',
+            status: 'active',
+            items: { data: [{ price: { id: 'price_enterprise_e2e' } }] },
+          },
+        },
+      }).expect(201);
+      expect(await getSubscription(orgId)).toEqual('enterprise');
+    });
+    it('should not touch other organizations on a plan switch', async () => {
+      const other = await ScenarioBuilder.create(dataSource).withOrganization(
+        'Org2',
+        'starter',
+      );
+      await sendWebhook({
+        id: 'evt_plan_switch',
+        object: 'event',
+        type: 'customer.subscription.updated',
+        data: {
+          object: {
+            id: 'sub_unknown',
+            object: 'subscription',
+            status: 'active',
+            items: { data: [{ price: { id: 'price_enterprise_e2e' } }] },
+          },
+        },
+      }).expect(201);
+      expect(await getSubscription(other['org'].orgId)).toEqual('starter');
+    });
+    it('should report plans without a Stripe subscription as not manageable', async () => {
+      await ScenarioBuilder.create(dataSource)
+        .withOrganization('Org1', 'growth')
+        .then((b) => b.withUser('user1', 'owner'));
+      const agent = await login(app, 'user1', 'password1');
+      const response = await agent.get('/organizations/billing').expect(200);
+      expect(response.body).toEqual({
+        plan: 'growth',
+        manageable: false,
+        status: null,
+        currentPeriodEnd: null,
+        cancelAt: null,
+      });
+    });
+    it('should not open the portal without a Stripe subscription', async () => {
+      await ScenarioBuilder.create(dataSource)
+        .withOrganization('Org1', 'growth')
+        .then((b) => b.withUser('user1', 'owner'));
+      const agent = await login(app, 'user1', 'password1');
+      const response = await agent
+        .post('/organizations/billing/portal')
+        .expect(400);
+      expect(response.body.message).toBe(
+        'Your organization has no subscription to manage',
+      );
+    });
+    it('should only let owners open the portal', async () => {
+      await ScenarioBuilder.create(dataSource)
+        .withOrganization('Org1', 'growth')
+        .then((b) => b.withUser('admin1', 'admin'));
+      const agent = await login(app, 'admin1', 'password1');
+      const response = await agent
+        .post('/organizations/billing/portal')
+        .expect(403);
+      expect(response.body.message).toBe(
+        'You do not have the required role to access this resource',
+      );
+    });
+    it('should refuse a second checkout for subscribed organizations', async () => {
+      await ScenarioBuilder.create(dataSource)
+        .withOrganization('Org1', 'starter')
+        .then((b) => b.withUser('user1', 'owner'));
+      const agent = await login(app, 'user1', 'password1');
+      const response = await agent
+        .post('/checkout/create-session')
+        .send({ plan: 'growth' })
+        .expect(400);
+      expect(response.body.message).toBe(
+        'Your organization already has a subscription. Change it in the billing settings.',
+      );
+    });
+  });
   afterEach(async () => {
     const entities = dataSource.entityMetadatas;
     const tableNames = entities
@@ -270,6 +368,9 @@ describe('Payment (e2e)', () => {
   });
   afterAll(async () => {
     delete process.env.STRIPE_WEBHOOK_SECRET;
+    delete process.env.STRIPE_PRICE_STARTER;
+    delete process.env.STRIPE_PRICE_GROWTH;
+    delete process.env.STRIPE_PRICE_ENTERPRISE;
     await dataSource.destroy();
     await app.close();
   });

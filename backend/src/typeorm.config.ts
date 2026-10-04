@@ -13,6 +13,9 @@ for (const v of [
 ]) {
   if (!process.env[v]) throw new Error(`Missing required env var: ${v}`);
 }
+// Runs from src/ through ts-node and from dist/ in the production image, where
+// only the compiled .js files may be loaded (not the emitted .d.ts files)
+const ext = __filename.endsWith('.ts') ? 'ts' : 'js';
 export const MigrationDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DATABASE_HOST,
@@ -20,6 +23,6 @@ export const MigrationDataSource = new DataSource({
   username: process.env.MIGRATOR_USER,
   password: process.env.MIGRATOR_PASSWORD,
   database: process.env.DATABASE_NAME,
-  migrations: ['src/migrations/*.ts'],
-  entities: ['src/**/*.entity.ts'],
+  migrations: [`${__dirname}/migrations/*.${ext}`],
+  entities: [`${__dirname}/**/*.entity.${ext}`],
 });

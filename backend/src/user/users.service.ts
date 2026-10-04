@@ -4,18 +4,20 @@ import { UnauthorizedException } from '@nestjs/common';
 import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
 import { TxRepoProvider } from '../rls/txrepo.service';
 import { AuthService } from '../auth/auth.service';
+import { UserOrganizationRoleService } from '../userOrganizationRole/userOrganizationRole.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly txRepoProvider: TxRepoProvider,
     private readonly authService: AuthService,
+    private readonly userOrganizationRoleService: UserOrganizationRoleService,
   ) {}
   findByUsername(userName: string): Promise<UserEntity | null> {
     const repo = this.txRepoProvider.getRepo(UserEntity);
     return repo.findOneBy({ username: userName });
   }
-  async deleteUser(userId: string, password: string) {
+  async deleteUser(userId: string, password: string, orgId: string) {
     const repo = this.txRepoProvider.getRepo(UserEntity);
     const user = await repo.findOneBy({ userId: userId });
     if (!user) {
@@ -29,6 +31,7 @@ export class UsersService {
     if (!isPasswordCorrect) {
       throw new UnauthorizedException('Invalid password');
     }
+    await this.userOrganizationRoleService.assertNotLastOwner(userId, orgId);
 
     return await repo.delete(userId);
   }

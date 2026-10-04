@@ -14,7 +14,6 @@ import { ScenarioBuilder } from './utils/scenarioBuilder';
 import { DataSource } from 'typeorm';
 import { SeedingDataSource } from '../databaseSeeds/typeorm.config';
 import { getLatestEmailFor, login } from './utils/helper';
-import fetch from 'nodemailer/lib/fetch';
 import request from 'supertest';
 @Injectable()
 class MockThrottlerGuard implements CanActivate {
@@ -113,7 +112,7 @@ describe('Invite (e2e)', () => {
         `TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE;`,
       );
     }
-    fetch('http://localhost:8025/api/v1/messages', {
+    await fetch('http://localhost:8025/api/v1/messages', {
       method: 'DELETE',
     });
   });

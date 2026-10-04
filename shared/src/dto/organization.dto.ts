@@ -36,3 +36,32 @@ export class OrganizationUpdateRoleDto {
   @IsEnum(OrganizationRole, { message: 'Invalid role' })
   role: OrganizationRole;
 }
+export class OrganizationInviteDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail({}, { message: 'Invalid email address' })
+  email: string;
+
+  @IsNotEmpty()
+  @IsEnum(OrganizationRole, { message: 'Invalid role' })
+  role: OrganizationRole;
+}
+export class UpdateOrganizationDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(1, {
+    message: 'Organization name is too short (minimum 1 character)',
+  })
+  @MaxLength(64, {
+    message: 'Organization name is too long (maximum 64 characters)',
+  })
+  @Matches(/^[A-Za-z\d\s!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]+$/, {
+    message: 'Illegal Organization name',
+  })
+  name: string;
+}
+export class DeleteOrganizationDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Please type the organization name to confirm' })
+  confirmName: string;
+}

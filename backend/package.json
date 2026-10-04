@@ -22,6 +22,7 @@
     "typeorm": "typeorm-ts-node-commonjs",
     "seed:playwright": "ts-node -r tsconfig-paths/register test/playwright/seedAccount.ts",
     "migration:run": "npm run typeorm migration:run -- -d src/typeorm.config.ts",
+    "migration:run:prod": "cross-env NODE_ENV=prod typeorm migration:run -d dist/typeorm.config.js",
     "test:migration": "cross-env NODE_ENV=test npm run typeorm migration:run -- -d src/typeorm.config.ts"
   },
   "dependencies": {
@@ -38,6 +39,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
     "express-rate-limit": "^8.5.2",
     "handlebars": "^4.7.9",
     "hbs": "^4.2.1",
@@ -50,6 +52,7 @@
     "resend": "^6.18.1",
     "rxjs": "^7.8.1",
     "stripe": "^22.6.2",
+    "typeorm": "^1.1.1",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
@@ -80,7 +83,6 @@
     "ts-loader": "^9.6.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typeorm": "^1.1.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "webpack": "^5.109.0"

@@ -20,6 +20,7 @@ import { InviteEntity } from '../../src/invite/invite.entity';
 import { AuthService } from '../../src/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersService } from '../../src/user/users.service';
+import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
 import { ScenarioBuilder } from '../e2e/utils/scenarioBuilder';
 import { Response } from 'express';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
@@ -46,6 +47,7 @@ describe('Login (Int)', () => {
         TxRepoProvider,
         AuthService,
         UsersService,
+        UserOrganizationRoleService,
         { provide: ClsService, useValue: mockClsService },
       ],
       imports: [

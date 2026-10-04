@@ -47,10 +47,31 @@ describe('UsersController (e2e)', () => {
     dataSource = await SeedingDataSource.initialize();
     authService = moduleFixture.get(AuthService);
   });
-  it('/users (DELETE) - should delete user account with correct password', async () => {
+  it('/users (DELETE) - should not delete the last owner of an organization', async () => {
     const scenarioBuilder = await ScenarioBuilder.create(dataSource)
       .withOrganization('Org1')
       .then((b) => b.withUser('user1', 'owner', undefined, undefined));
+    const user = scenarioBuilder['users']['user1'];
+    const agent = await login(app, user.username, 'password1');
+    const response = await agent.delete('/users').send({
+      password: 'password1',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      'An organization must have at least one owner',
+    );
+    const existingUser = await dataSource
+      .getRepository(UserEntity)
+      .findOneBy({ username: user.username });
+    expect(existingUser).not.toBeNull();
+  });
+
+  it('/users (DELETE) - should delete user account with correct password', async () => {
+    const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+      .withOrganization('Org1')
+      .then((b) => b.withUser('owner1', 'owner', undefined, undefined))
+      .then((b) => b.withUser('user1', 'member', undefined, undefined));
     const user = scenarioBuilder['users']['user1'];
     const agent = await login(app, user.username, 'password1');
     const response = await agent.delete('/users').send({

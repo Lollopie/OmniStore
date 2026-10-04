@@ -21,6 +21,7 @@ export class CreateWarehouseTable1782066150500 implements MigrationInterface {
       RETURNS TEXT
       LANGUAGE sql
       SECURITY DEFINER
+      SET search_path = pg_catalog, public, pg_temp
       STABLE
       AS $$
         SELECT name FROM warehouse
@@ -33,7 +34,7 @@ export class CreateWarehouseTable1782066150500 implements MigrationInterface {
     await queryRunner.query(`
       CREATE POLICY "warehouse_isolation_policy" ON "warehouse"
       FOR ALL
-      USING (org_id = current_setting('app.current_org_id', true)::uuid);
+      USING (org_id = (NULLIF(current_setting('app.current_org_id', true), ''))::uuid);
     `);
   }
 

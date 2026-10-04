@@ -197,11 +197,38 @@ describe('Invite (Int)', () => {
         },
       );
       expect(userOrgRole).toBeDefined();
-      expect([
-        OrganizationRole.OWNER,
-        OrganizationRole.ADMIN,
-        OrganizationRole.MEMBER,
-      ]).toContain(userOrgRole.role);
+      // For warehouse invites the role is the warehouse role, the org role defaults to member
+      expect(userOrgRole.role).toBe(OrganizationRole.MEMBER);
+    });
+    it('should grant the invited org role for org-only invites', async () => {
+      const scenarioBuilder = await ScenarioBuilder.create(dataSource)
+        .withOrganization('Org1')
+        .then((b) => b.withUser('User1', 'owner'));
+      orgId = scenarioBuilder['org'].orgId;
+      const { invite, rawToken } = await testingModule
+        .get<InviteService>(InviteService)
+        .inviteOrganizationUser('test@example.org', OrganizationRole.ADMIN);
+      expect(invite.warehouseId).toBeUndefined();
+
+      const response = await inviteController.acceptInvite(rawToken, {
+        username: 'newuser',
+        password: 'password123',
+      });
+      expect(response.message).toBe('Invite accepted successfully');
+      const user = await entityManager.findOne(UserEntity, {
+        where: { username: 'newuser' },
+      });
+      const userOrgRole = await entityManager.findOne(
+        UserOrganizationRoleEntity,
+        { where: { userId: user.userId } },
+      );
+      expect(userOrgRole.orgId).toBe(orgId);
+      expect(userOrgRole.role).toBe(OrganizationRole.ADMIN);
+      const userWarehouseRole = await entityManager.findOne(
+        UserWarehouseRoleEntity,
+        { where: { userId: user.userId } },
+      );
+      expect(userWarehouseRole).toBeNull();
     });
   });
   afterEach(async () => {

@@ -3,6 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TxRepoProvider } from '../../src/rls/txrepo.service';
 import { AuthService } from '../../src/auth/auth.service';
 import { UserEntity } from '../../src/user/user.entity';
+import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
+import { BadRequestException } from '@nestjs/common';
 describe('UsersService', () => {
   let usersService: UsersService;
   const mockTxRepoProvider = {
@@ -12,6 +14,9 @@ describe('UsersService', () => {
       }
       throw new Error(`Unexpected Entity ${entity}`);
     }),
+  };
+  const mockUserOrganizationRoleService = {
+    assertNotLastOwner: jest.fn(),
   };
   const mockAuthService = {
     verifyPassword: jest.fn().mockResolvedValue(true),
@@ -48,6 +53,10 @@ describe('UsersService', () => {
         UsersService,
         { provide: TxRepoProvider, useValue: mockTxRepoProvider },
         { provide: AuthService, useValue: mockAuthService },
+        {
+          provide: UserOrganizationRoleService,
+          useValue: mockUserOrganizationRoleService,
+        },
       ],
     }).compile();
 
@@ -75,7 +84,7 @@ describe('UsersService', () => {
   });
   describe('deleteUser', () => {
     it('should look up that user exists', async () => {
-      await usersService.deleteUser('user-1', 'password1');
+      await usersService.deleteUser('user-1', 'password1', 'org-1');
       expect(mockUsersRepository.findOneBy).toHaveBeenCalledWith({
         userId: 'user-1',
       });
@@ -83,11 +92,11 @@ describe('UsersService', () => {
     it("should throw if user doesn't exist", async () => {
       mockUsersRepository.findOneBy.mockResolvedValueOnce(null);
       await expect(
-        usersService.deleteUser('user-1', 'password1'),
+        usersService.deleteUser('user-1', 'password1', 'org-1'),
       ).rejects.toThrow('User not found');
     });
     it('should call authService verifyPassword', async () => {
-      await usersService.deleteUser('user-1', 'password1');
+      await usersService.deleteUser('user-1', 'password1', 'org-1');
       expect(mockAuthService.verifyPassword).toHaveBeenCalledWith(
         'password1',
         'mocked-hashed-password',
@@ -96,16 +105,39 @@ describe('UsersService', () => {
     it('should throw if password is incorrect', async () => {
       mockAuthService.verifyPassword.mockResolvedValueOnce(false);
       await expect(
-        usersService.deleteUser('user-1', 'password1'),
+        usersService.deleteUser('user-1', 'password1', 'org-1'),
       ).rejects.toThrow('Invalid password');
     });
     it('should call userRepository delete', async () => {
-      await usersService.deleteUser('user-1', 'password1');
+      await usersService.deleteUser('user-1', 'password1', 'org-1');
       expect(mockUsersRepository.delete).toHaveBeenCalledWith('user-1');
     });
     it('should return userRepository delete return value', async () => {
-      const result = await usersService.deleteUser('user-1', 'password1');
+      const result = await usersService.deleteUser(
+        'user-1',
+        'password1',
+        'org-1',
+      );
       expect(result).toEqual('Delete successful');
+    });
+  });
+  describe('deleteUser last owner', () => {
+    it('should check that the user is not the last owner', async () => {
+      await usersService.deleteUser('user-1', 'password1', 'org-1');
+      expect(
+        mockUserOrganizationRoleService.assertNotLastOwner,
+      ).toHaveBeenCalledWith('user-1', 'org-1');
+    });
+    it('should not delete the last owner', async () => {
+      mockUserOrganizationRoleService.assertNotLastOwner.mockRejectedValueOnce(
+        new BadRequestException('An organization must have at least one owner'),
+      );
+      await expect(
+        usersService.deleteUser('user-1', 'password1', 'org-1'),
+      ).rejects.toThrow(
+        new BadRequestException('An organization must have at least one owner'),
+      );
+      expect(mockUsersRepository.delete).not.toHaveBeenCalled();
     });
   });
   describe('getCookieInfo', () => {

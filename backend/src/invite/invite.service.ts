@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,6 +13,21 @@ import { AuthService } from '../auth/auth.service';
 import { mapRow } from '../utils/helper';
 import { WarehouseEntity } from '../warehouse/warehouse.entity';
 import { ConfigService } from '@nestjs/config';
+import { IsNull } from 'typeorm';
+import {
+  ORG_INVITATION_PERMISSIONS,
+  OrganizationRole,
+} from '@shared/enum/organizationRoles.enum';
+
+export interface PendingInvite {
+  inviteId: string;
+  email: string;
+  role: string;
+  warehouseId: string | null;
+  warehouseName: string | null;
+  expiresAt: Date;
+  createdAt: Date;
+}
 
 @Injectable()
 export class InviteService {
@@ -48,6 +64,105 @@ export class InviteService {
       tokenHash: token,
     });
     return { invite: await inviteRepo.save(invite), rawToken: rawToken };
+  }
+  /**
+   * Invites a new user to the organization only. For org-only invites the
+   * invite role is the org role (warehouse invites store the warehouse role).
+   */
+  async inviteOrganizationUser(email: string, role: OrganizationRole) {
+    this.assertCanGrantOrgRole(role);
+    const userRepo = this.txRepoProvider.getRepo(UserEntity);
+    if (await userRepo.findOne({ where: { email } })) {
+      throw new BadRequestException('User already exists');
+    }
+    const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
+    const orgId: string = this.clsService.get('orgId');
+    // Only one invite per email can ever be accepted, so older ones are dropped
+    await inviteRepo.delete({ email, orgId, consumedAt: IsNull() });
+    const { rawToken, tokenHash, expiresAt } = this.createInviteToken();
+    const invite = inviteRepo.create({
+      email,
+      orgId,
+      role,
+      expiresAt,
+      tokenHash,
+    });
+    return { invite: await inviteRepo.save(invite), rawToken };
+  }
+  /** Lists the org's unconsumed invites, including expired ones. */
+  async getPendingInvites(): Promise<PendingInvite[]> {
+    const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);
+    const orgId: string = this.clsService.get('orgId');
+    return await inviteRepo
+      .createQueryBuilder('invite')
+      .leftJoin('invite.warehouse', 'warehouse')
+      .select([
+        'invite.inviteId AS "inviteId"',
+        'invite.email AS email',
+        'invite.role AS role',
+        'invite.warehouseId AS "warehouseId"',
+        'warehouse.name AS "warehouseName"',
+        'invite.expiresAt AS "expiresAt"',
+        'invite.createdAt AS "createdAt"',
+      ])
+      .where('invite.orgId = :orgId', { orgId })
+      .andWhere('invite.consumedAt IS NULL')
+      .orderBy('invite.createdAt', 'DESC')
+      .getRawMany<PendingInvite>();
+  }
+  async revokeInvite(inviteId: string): Promise<void> {
+    const invite = await this.findManageableInvite(inviteId);
+    await this.txRepoProvider
+      .getRepo(InviteEntity)
+      .delete({ inviteId: invite.inviteId });
+  }
+  /** Issues a new token and expiry, invalidating the previously sent link. */
+  async resendInvite(inviteId: string) {
+    const invite = await this.findManageableInvite(inviteId);
+    const { rawToken, tokenHash, expiresAt } = this.createInviteToken();
+    invite.tokenHash = tokenHash;
+    invite.expiresAt = expiresAt;
+    return {
+      invite: await this.txRepoProvider.getRepo(InviteEntity).save(invite),
+      rawToken,
+    };
+  }
+  private async findManageableInvite(inviteId: string) {
+    const invite = await this.txRepoProvider.getRepo(InviteEntity).findOne({
+      where: {
+        inviteId,
+        orgId: this.clsService.get<string>('orgId'),
+        consumedAt: IsNull(),
+      },
+    });
+    if (!invite) {
+      throw new NotFoundException('Invite not found');
+    }
+    // Warehouse invites always grant the member org role
+    if (!invite.warehouseId) {
+      this.assertCanGrantOrgRole(invite.role as OrganizationRole);
+    }
+    return invite;
+  }
+  private assertCanGrantOrgRole(role: OrganizationRole) {
+    const actorRole = this.clsService.get<OrganizationRole>('orgRole');
+    if (!(ORG_INVITATION_PERMISSIONS[actorRole] ?? []).includes(role)) {
+      throw new ForbiddenException(
+        'You do not have permission to invite users with this role',
+      );
+    }
+  }
+  private createInviteToken() {
+    const rawToken = this.authService.generateRandomToken();
+    const invitationDurationHours =
+      this.configService.get<number>('email.inviteTokenExpiresHours') || 24;
+    return {
+      rawToken,
+      tokenHash: this.authService.hashToken(rawToken),
+      expiresAt: new Date(
+        Date.now() + invitationDurationHours * 60 * 60 * 1000,
+      ),
+    };
   }
   async acceptInvite(rawToken: string, registerDto: RegisterDto) {
     const inviteRepo = this.txRepoProvider.getRepo(InviteEntity);

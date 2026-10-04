@@ -3,6 +3,7 @@ import { useToast } from '../../toast';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 import { useAuth } from '../../auth/authContext/';
 import { Modal } from '../../../components/Modal.tsx';
+import { PageCard, SectionCard } from '../../../components/PageCard.tsx';
 import Button from '../../../components/Button.tsx';
 import InputField from '../../../components/InputField.tsx';
 import { PasswordInput } from '../../../components/PasswordInput.tsx';
@@ -116,16 +117,8 @@ export const AccountSettings = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Account Settings</h1>
-      <p className="text-base-content/70">Manage your profile and authentication settings.</p>
-
-      <section className="card border border-primary/30 bg-primary/5">
-        <div className="card-body gap-4">
-          <h3 className="card-title text-primary">Change Password</h3>
-          <p className="text-sm text-base-content/80">
-            Update your current password to keep your account secure.
-          </p>
+    <PageCard title="Account Settings" description="Manage your profile and authentication settings.">
+      <SectionCard title="Change Password" description="Update your current password to keep your account secure.">
           <form onSubmit={handleSubmit((data) => {handleUpdatePassword(data)})} className="space-y-4">
             <PasswordInput
               className="input input-bordered w-full focus:input-primary"
@@ -164,22 +157,18 @@ export const AccountSettings = () => {
               </Button>
             </div>
           </form>
-        </div>
-      </section>
+      </SectionCard>
 
-      <section className="card border border-error/30 bg-error/5">
-        <div className="card-body gap-4">
-          <h3 className="card-title text-error">Danger Zone</h3>
-          <p className="text-sm text-base-content/80">
-            Deleting your account is permanent. All associated data will be permanently removed.
-          </p>
-          <div className="card-actions justify-end">
-            <Button variant={"danger"} onClick={handleOpenModal}>
-              Delete Account
-            </Button>
-          </div>
-        </div>
-      </section>
+      <SectionCard
+        tone="error"
+        title="Danger Zone"
+        description="Deleting your account is permanent. All associated data will be permanently removed."
+        actions={
+          <Button variant={"danger"} onClick={handleOpenModal}>
+            Delete Account
+          </Button>
+        }
+      />
 
       <Modal dialogRef={dialogRef} title="Delete Account" onClose={handleCloseModal}>
         <form onSubmit={handleDeleteAccount} className="space-y-4 p-4">
@@ -217,6 +206,6 @@ export const AccountSettings = () => {
           </div>
         </form>
       </Modal>
-    </div>
+    </PageCard>
   );
 };

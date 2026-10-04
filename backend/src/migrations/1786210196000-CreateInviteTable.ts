@@ -31,6 +31,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
         RETURNS invite
         LANGUAGE plpgsql
         SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
         AS $$
         DECLARE
           found_invite invite;
@@ -66,6 +67,7 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
         RETURNS user_org_role
         LANGUAGE plpgsql
         SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
         AS $$
         DECLARE
           new_user_org_role user_org_role;
@@ -86,29 +88,11 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
         GRANT EXECUTE ON FUNCTION grant_invite_role TO nestjs_app_user;
     `);
     await queryRunner.query(`
-        CREATE OR REPLACE FUNCTION is_org_admin(check_user_id UUID, check_org_id UUID)
-        RETURNS BOOLEAN
-        LANGUAGE sql
-        SECURITY DEFINER
-        STABLE
-        AS $$
-          SELECT EXISTS (
-            SELECT 1 FROM user_org_role
-            WHERE user_id = check_user_id
-              AND org_id = check_org_id
-              AND role IN ('owner', 'admin')
-          );
-        $$;
-        
-        -- lock the function down so it can't be called arbitrarily to probe other users
-        REVOKE ALL ON FUNCTION is_org_admin FROM PUBLIC;
-        GRANT EXECUTE ON FUNCTION is_org_admin TO nestjs_app_user;
-    `);
-    await queryRunner.query(`
         CREATE OR REPLACE FUNCTION create_org_registration(reg_email TEXT, reg_token_hash TEXT, reg_expires_at TIMESTAMPTZ)
         RETURNS invite
         LANGUAGE plpgsql
         SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
         AS $$
         DECLARE
           new_invite invite;
@@ -120,12 +104,16 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
           RETURN new_invite;
         END;
         $$;
+
+        REVOKE ALL ON FUNCTION create_org_registration FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION create_org_registration TO nestjs_app_user;
     `);
     await queryRunner.query(`
         CREATE OR REPLACE FUNCTION validate_invite(invite_token_hash TEXT)
         RETURNS invite
         LANGUAGE plpgsql
         SECURITY DEFINER
+        SET search_path = pg_catalog, public, pg_temp
         AS $$
         DECLARE
           found_invite invite;
@@ -135,14 +123,17 @@ export class CreateInviteTable1786210196000 implements MigrationInterface {
           RETURN found_invite;
         END;
         $$;
+
+        REVOKE ALL ON FUNCTION validate_invite FROM PUBLIC;
+        GRANT EXECUTE ON FUNCTION validate_invite TO nestjs_app_user;
     `);
     await queryRunner.query(`
         CREATE POLICY invite_org_and_org_admin ON "invite"
             USING (
-                org_id = current_setting('app.current_org_id', true)::uuid
+                org_id = (NULLIF(current_setting('app.current_org_id', true), ''))::uuid
                 AND is_org_admin(
-                     current_setting('app.current_user_id', true)::uuid,
-                     current_setting('app.current_org_id', true)::uuid
+                     (NULLIF(current_setting('app.current_user_id', true), ''))::uuid,
+                     (NULLIF(current_setting('app.current_org_id', true), ''))::uuid
                    )
             );
     `);

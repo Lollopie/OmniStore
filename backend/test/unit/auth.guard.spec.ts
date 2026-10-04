@@ -5,9 +5,13 @@ import { ClsService } from 'nestjs-cls';
 import { AuthenticatedRequest, Cookie } from '../../src/user/user.decorator';
 import { Request } from 'express';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { GuardDBService } from '../../src/utils/guardDB.service';
 describe('AuthGuard', () => {
   const mockClsService = {
     set: jest.fn(),
+  };
+  const mockGuardDBService = {
+    getUserOrgRole: jest.fn().mockResolvedValue('member'),
   };
   let service: AuthGuard;
   function makeMockRequest<T extends Request = Request>(
@@ -45,6 +49,7 @@ describe('AuthGuard', () => {
           useValue: mockClsService,
         },
         AuthGuard,
+        { provide: GuardDBService, useValue: mockGuardDBService },
         {
           provide: JwtService,
           useValue: mockJwtService,
@@ -122,6 +127,33 @@ describe('AuthGuard', () => {
         new UnauthorizedException('Invalid token'),
       );
       jest.useRealTimers();
+    });
+  });
+  describe('membership check', () => {
+    it('should look up the org role of the token user', async () => {
+      await service.validateToken(mockRequest);
+      expect(mockGuardDBService.getUserOrgRole).toHaveBeenCalledWith(
+        'user-1',
+        'org-1',
+      );
+    });
+    it('should reject tokens of users that are no longer in the organization', async () => {
+      mockGuardDBService.getUserOrgRole.mockResolvedValueOnce(null);
+      const request = makeMockRequest<AuthenticatedRequest>({ token });
+      await expect(service.validateToken(request)).rejects.toThrow(
+        new UnauthorizedException('Invalid token'),
+      );
+      expect(request.user).toBeUndefined();
+      expect(mockClsService.set).not.toHaveBeenCalled();
+    });
+    it('should skip the check for tokens without organization', async () => {
+      mockJwtService.verifyAsync.mockResolvedValueOnce({
+        ...validCookie,
+        orgId: '',
+      });
+      const request = makeMockRequest<AuthenticatedRequest>({ token });
+      await service.validateToken(request);
+      expect(mockGuardDBService.getUserOrgRole).not.toHaveBeenCalled();
     });
   });
   describe('canActivate', () => {

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { In } from 'typeorm';
 import { OrganizationDto } from '@shared/dto/organization.dto';
 import { TxRepoProvider } from '../rls/txrepo.service';
 import { OrganizationEntity } from './organization.entity';
@@ -57,6 +62,42 @@ export class OrganizationService {
   async findByOrgId(id: string): Promise<OrganizationEntity | null> {
     const organizationRepo = this.txRepoProvider.getRepo(OrganizationEntity);
     return await organizationRepo.findOne({ where: { orgId: id } });
+  }
+  async getCurrentOrganization(): Promise<OrganizationEntity> {
+    const org = await this.findByOrgId(this.clsService.get<string>('orgId'));
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+    return org;
+  }
+  async renameOrganization(name: string): Promise<OrganizationEntity> {
+    const org = await this.getCurrentOrganization();
+    org.name = name.trim();
+    return await this.txRepoProvider.getRepo(OrganizationEntity).save(org);
+  }
+  /**
+   * Deletes the organization with all its data. Users belong to exactly one
+   * organization, so their accounts are deleted too. Returns the Stripe
+   * subscription that still has to be cancelled.
+   */
+  async deleteOrganization(confirmName: string): Promise<string | null> {
+    const org = await this.getCurrentOrganization();
+    if (confirmName.trim() !== org.name) {
+      throw new BadRequestException('Organization name does not match');
+    }
+    const members = await this.txRepoProvider
+      .getRepo(UserOrganizationRoleEntity)
+      .find({ where: { orgId: org.orgId } });
+    if (members.length > 0) {
+      await this.txRepoProvider
+        .getRepo(UserEntity)
+        .delete({ userId: In(members.map((member) => member.userId)) });
+    }
+    // Warehouses, inventory, roles and invites cascade
+    await this.txRepoProvider
+      .getRepo(OrganizationEntity)
+      .delete({ orgId: org.orgId });
+    return org.stripeSubscriptionId;
   }
   async getUsers(searchTerm: string, page: number) {
     const userOrganizationRoleRepo = this.txRepoProvider.getRepo(
