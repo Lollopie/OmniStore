@@ -149,3 +149,20 @@ test.describe('Organization billing', () => {
     await expect(page).toHaveURL(portalUrl);
   });
 });
+
+test.describe('Navigation', () => {
+  test('highlights only the matching navbar link on nested pages', async ({ page }) => {
+    await loginAsOwner(page);
+    const navbar = page.locator('header');
+    const organizationLink = navbar.getByRole('link', { name: 'Organization', exact: true });
+    const settingsLink = navbar.getByRole('link', { name: 'Settings', exact: true });
+
+    await page.goto('/organizations/settings');
+    await expect(organizationLink).toHaveAttribute('aria-current', 'page');
+    await expect(settingsLink).not.toHaveAttribute('aria-current', 'page');
+
+    await page.goto('/settings/account');
+    await expect(settingsLink).toHaveAttribute('aria-current', 'page');
+    await expect(organizationLink).not.toHaveAttribute('aria-current', 'page');
+  });
+});

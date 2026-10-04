@@ -5,6 +5,7 @@ import { UpdateOrganizationDto } from '@shared/dto/organization.dto';
 import InputField from '../../../components/InputField.tsx';
 import Button from '../../../components/Button.tsx';
 import { Modal } from '../../../components/Modal.tsx';
+import { PageCard, SectionCard } from '../../../components/PageCard.tsx';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 import { useToast } from '../../toast';
 import { useAuth } from '../../auth/authContext';
@@ -61,17 +62,13 @@ export function OrganizationSettings() {
   };
 
   return (
-    <div className="card bg-base-100 p-10 flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Organization Settings</h1>
-      {organization && (
-        <p className="text-base-content/70">
-          {organization.name} · created {new Date(organization.createdAt).toLocaleDateString()}
-        </p>
-      )}
-
-      <section className="card border border-primary/30 bg-primary/5">
-        <div className="card-body gap-4">
-          <h3 className="card-title text-primary">Organization name</h3>
+    <PageCard
+      title="Organization Settings"
+      description={organization
+        ? `${organization.name} · created ${new Date(organization.createdAt).toLocaleDateString()}`
+        : 'Manage your organization.'}
+    >
+      <SectionCard title="Organization name" description="Shown to all members and in invite emails.">
           <form
             onSubmit={handleSubmit(async (data) => {
               const name = await renameOrganization(data.name, addToast);
@@ -93,24 +90,19 @@ export function OrganizationSettings() {
               </Button>
             </div>
           </form>
-        </div>
-      </section>
+      </SectionCard>
 
       {isOwner && (
-        <section className="card border border-error/30 bg-error/5">
-          <div className="card-body gap-4">
-            <h3 className="card-title text-error">Danger Zone</h3>
-            <p className="text-sm text-base-content/80">
-              Deleting the organization permanently removes all warehouses, inventory and invites, and deletes the
-              accounts of all members. An active subscription is cancelled immediately.
-            </p>
-            <div className="card-actions justify-end">
-              <Button variant="danger" aria-label="Delete Organization" onClick={() => dialogRef.current?.showModal()}>
-                Delete Organization
-              </Button>
-            </div>
-          </div>
-        </section>
+        <SectionCard
+          tone="error"
+          title="Danger Zone"
+          description="Deleting the organization permanently removes all warehouses, inventory and invites, and deletes the accounts of all members. An active subscription is cancelled immediately."
+          actions={
+            <Button variant="danger" aria-label="Delete Organization" onClick={() => dialogRef.current?.showModal()}>
+              Delete Organization
+            </Button>
+          }
+        />
       )}
 
       <Modal dialogRef={dialogRef} title="Delete Organization" onClose={closeDeleteDialog}>
@@ -139,6 +131,6 @@ export function OrganizationSettings() {
           </div>
         </form>
       </Modal>
-    </div>
+    </PageCard>
   );
 }

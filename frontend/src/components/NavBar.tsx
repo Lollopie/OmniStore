@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import React, { useEffect, useRef } from 'react';
 import Logo from './Logo.tsx';
 import { useAuth } from '../features/auth/authContext/';
@@ -13,6 +13,9 @@ const PrimaryLinks = [
   { name: 'Settings', href: '/settings' },
 ];
 
+// '/settings' must not match '/organizations/settings', but should match '/settings/account'
+const isActive = (href: string, pathname: string) => pathname === href || pathname.startsWith(`${href}/`);
+
 const activeLinkClass = 'btn btn-ghost font-bold text-primary font-semibold';
 const inactiveLinkClass = 'btn btn-ghost';
 
@@ -23,7 +26,7 @@ export default function NavBar() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const { isAuthenticated, logout } = useAuth();
-  const currentSite = window.location.pathname;
+  const { pathname } = useLocation();
   const handleLogout = async () => {
     console.log(isAuthenticated);
     if (isAuthenticated) {
@@ -68,7 +71,8 @@ export default function NavBar() {
               {PrimaryLinks.map((link) => (
                 <li key={link.name}>
                   <Link to={link.href}
-                        className={currentSite.includes(link.href) ? activeLinkClass : inactiveLinkClass}
+                        className={isActive(link.href, pathname) ? activeLinkClass : inactiveLinkClass}
+                        aria-current={isActive(link.href, pathname) ? 'page' : undefined}
                   >
                     {link.name}
                   </Link>
@@ -102,11 +106,11 @@ export default function NavBar() {
               ) : (
                 <>
                   {PrimaryLinks.map((link) => (
-                    <li>
+                    <li key={link.name}>
                       <Link to={link.href}
                             onClick={() => setIsOpen(false)}
-                            className={link.href === currentSite ? activeLinkClassMobile : inactiveLinkClassMobile}
-                            aria-current={link.href === currentSite ? 'page' : undefined}>{
+                            className={isActive(link.href, pathname) ? activeLinkClassMobile : inactiveLinkClassMobile}
+                            aria-current={isActive(link.href, pathname) ? 'page' : undefined}>{
                         link.name}
                       </Link>
                     </li>

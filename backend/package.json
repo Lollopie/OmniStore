@@ -22,7 +22,7 @@
     "typeorm": "typeorm-ts-node-commonjs",
     "seed:playwright": "ts-node -r tsconfig-paths/register test/playwright/seedAccount.ts",
     "migration:run": "npm run typeorm migration:run -- -d src/typeorm.config.ts",
-    "migration:run:prod": "typeorm migration:run -d dist/typeorm.config.js",
+    "migration:run:prod": "cross-env NODE_ENV=prod typeorm migration:run -d dist/typeorm.config.js",
     "test:migration": "cross-env NODE_ENV=test npm run typeorm migration:run -- -d src/typeorm.config.ts"
   },
   "dependencies": {

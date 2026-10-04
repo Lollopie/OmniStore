@@ -30,7 +30,7 @@ export const SettingsLayout = () => {
           </ul>
         </nav>
       </section>
-      <aside className="flex-4 card bg-base-100 p-10">
+      <aside className="flex-4">
         <Outlet />
       </aside>
     </section>

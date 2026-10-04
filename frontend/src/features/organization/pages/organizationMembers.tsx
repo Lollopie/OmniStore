@@ -15,6 +15,7 @@ import { generatePagination } from '../../../hooks/generatePagination.ts';
 import { useDebounce } from '../../../hooks/useDebounce.ts';
 import { SearchField } from '../../../components/SearchField.tsx';
 import { Modal } from '../../../components/Modal.tsx';
+import { PageCard, SectionCard } from '../../../components/PageCard.tsx';
 import { useAuth } from '../../auth/authContext';
 import { removeOrganizationUser } from '../hooks/removeOrganizationUser.ts';
 
@@ -74,11 +75,11 @@ const OrganizationMembers = () => {
     generatePagination(Number(page), Math.max(Math.ceil(totalUsers / usersPerPage), 1), setPages);
   }, [page, totalUsers]);
   return (
-    <div>
-      <section className="card max-w-2xl mx-auto bg-base-100 border-primary border">
-        <div className="card-body">
-          <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          <table className="table mt-8 border border-base-300 rounded-md">
+    <PageCard title="Members" description="Everyone in your organization and their organization role.">
+      <SectionCard title={`${totalUsers} ${totalUsers === 1 ? 'member' : 'members'}`}>
+        <SearchField className="sm:max-w-xs w-full" searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <div className="overflow-x-auto">
+          <table className="table bg-base-100 border border-base-300 rounded-md">
             <thead>
             <tr>
               <TableHead children="Id" variant="first" />
@@ -167,7 +168,9 @@ const OrganizationMembers = () => {
             </tbody>
           </table>
         </div>
-      </section>
+        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / 10)} searchParams={searchParams}
+                    setSearchParams={setSearchParams} />
+      </SectionCard>
       <Modal dialogRef={dialogRef} title="Remove user" onClose={closeRemoveDialog}>
         <div className="space-y-4 p-4">
           <p>
@@ -185,11 +188,7 @@ const OrganizationMembers = () => {
           </div>
         </div>
       </Modal>
-      <section className="mt-5">
-        <Pagination page={page} pages={pages} numberOfPages={Math.ceil(totalUsers / 10)} searchParams={searchParams}
-                    setSearchParams={setSearchParams} />
-      </section>
-    </div>
+    </PageCard>
   );
 };
 export default OrganizationMembers;

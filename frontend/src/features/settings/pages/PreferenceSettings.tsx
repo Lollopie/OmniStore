@@ -1,24 +1,25 @@
 import { ThemeToggle } from '../../theme/components/ThemeToggle.tsx';
 import { useTheme } from '../../theme/hooks/useTheme.tsx';
+import { PageCard, SectionCard } from '../../../components/PageCard.tsx';
 
 export default function PreferenceSettings() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Preferences</h1>
-
-      <h2 className="text-xl font-semibold">Appearance</h2>
-      <div className="mt-4 ml-2">
+    <PageCard title="Preferences" description="Personalize how the app looks for you.">
+      <SectionCard title="Appearance" description="Switch between light and dark mode.">
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
-      </div>
+      </SectionCard>
 
-      <h2 className="text-xl font-semibold mt-8">Language</h2>
-      <select className="select focus:outline-none focus:ring-2 focus:border-none focus:ring-accent mt-4 ml-2">
-        <option value="en">English</option>
-        <option value="de">German</option>
-        <option value="fr">French</option>
-      </select>
-    </div>
+      <SectionCard title="Language" description="Choose the language of the interface.">
+        <select
+          aria-label="Language"
+          className="select focus:outline-none focus:ring-2 focus:border-none focus:ring-accent">
+          <option value="en">English</option>
+          <option value="de">German</option>
+          <option value="fr">French</option>
+        </select>
+      </SectionCard>
+    </PageCard>
   );
 }

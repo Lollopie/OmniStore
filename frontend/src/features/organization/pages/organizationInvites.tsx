@@ -7,6 +7,7 @@ import InputField from '../../../components/InputField.tsx';
 import Button from '../../../components/Button.tsx';
 import TableHead from '../../../components/TableHead.tsx';
 import TableDataCell from '../../../components/TableDataCell.tsx';
+import { PageCard, SectionCard } from '../../../components/PageCard.tsx';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 import { useToast } from '../../toast';
 import { useSubscription } from '../../payment/subscriptionContext';
@@ -48,10 +49,9 @@ export function OrganizationInvites() {
     invite.warehouseId !== null || allowedRoles.includes(invite.role as OrganizationRole);
 
   return (
-    <section className="card bg-base-100 rounded-xl border border-base-300 p-4 max-w-2xl mx-auto">
-      <div className="card-body">
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Invite to organization</h2>
+    <PageCard title="Invites" description="Invite new users to the organization and manage pending invites.">
+      <SectionCard title="Invite to organization"
+                   description="The invited user creates their account from the link in the email.">
           <form
             onSubmit={handleSubmit(async (data) => {
               if (await createOrganizationInvite(data, addToast)) {
@@ -83,10 +83,10 @@ export function OrganizationInvites() {
               Invite
             </Button>
           </form>
-        </section>
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold mb-2">Pending invites</h2>
-          <table className="table border border-base-300 rounded-md">
+      </SectionCard>
+      <SectionCard title="Pending invites">
+        <div className="overflow-x-auto">
+          <table className="table bg-base-100 border border-base-300 rounded-md">
             <thead>
             <tr>
               <TableHead children="Email" variant="first" />
@@ -143,8 +143,8 @@ export function OrganizationInvites() {
             )}
             </tbody>
           </table>
-        </section>
-      </div>
-    </section>
+        </div>
+      </SectionCard>
+    </PageCard>
   );
 }
