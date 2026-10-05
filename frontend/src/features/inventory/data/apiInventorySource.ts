@@ -24,7 +24,10 @@ export const apiInventorySource: InventorySource = {
     params.append('search', searchTerm || '');
     const response = await fetch(`${inventoryUrl}?${params}`, { method: 'GET', credentials: 'include', signal });
     if (!response.ok) throw new Error('Failed to fetch inventory.');
-    return await response.json();
+    const [items, total]: [(Omit<InventoryItem, 'amount'> & { amount: number | string })[], number] =
+      await response.json();
+    // The numeric column arrives as a number, but the API expects amounts back as number strings
+    return [items.map((item) => ({ ...item, amount: String(item.amount) })), total];
   },
   add: (item) => send('POST', item),
   update: (item) => send('PATCH', item),
