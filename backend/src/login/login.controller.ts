@@ -10,13 +10,13 @@ import express from 'express';
 import { LoginService } from './login.service';
 import { RegisterDto } from '@shared/dto/register.dto';
 import { Cookie } from '../user/user.decorator';
-import { AuthService } from '../auth/auth.service';
+import { SessionService } from '../auth/session.service';
 
 @Controller('login')
 export class LoginController {
   constructor(
     private readonly loginService: LoginService,
-    private readonly authService: AuthService,
+    private readonly sessionService: SessionService,
   ) {}
   @Post()
   @HttpCode(HttpStatus.OK)
@@ -54,7 +54,7 @@ export class LoginController {
       activeWarehouseId: activeWarehouseId ? activeWarehouseId : '',
       activeRole: activeRole ? activeRole : '',
     };
-    this.authService.createAndSendCookie(cookie, res);
+    await this.sessionService.issueSession(cookie, res);
 
     return {
       message: 'Authentication successful',

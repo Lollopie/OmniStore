@@ -13,10 +13,16 @@ import { AuthGuard } from '../auth/auth.guard';
 import express from 'express';
 import { ChangePasswordDto } from '@shared/dto/changePassword.dto';
 import * as userDecorator from './user.decorator';
+import { SessionService } from '../auth/session.service';
+import { RevocationService } from '../auth/revocation.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly sessionService: SessionService,
+    private readonly revocationService: RevocationService,
+  ) {}
   @UseGuards(AuthGuard)
   @Patch()
   @HttpCode(HttpStatus.OK)
@@ -41,11 +47,9 @@ export class UsersController {
       password,
       userToken.orgId,
     );
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    });
+    // Ends the account's sessions on other devices too
+    await this.revocationService.revokeUser(userToken.userId);
+    this.sessionService.clearSession(res);
 
     return { message: 'Account deleted successfully' };
   }

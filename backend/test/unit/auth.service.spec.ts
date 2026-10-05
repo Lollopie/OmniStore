@@ -1,14 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../../src/auth/auth.service';
-import { Response } from 'express';
-import { Cookie } from '../../src/user/user.decorator';
 
 describe('AuthService', () => {
-  const mockJwtService = {
-    sign: jest.fn(),
-  };
   const mockConfigService = {
     get: jest.fn((key: string) => {
       if (key === 'auth.jwtExpiresIn') {
@@ -27,10 +21,6 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         {
-          provide: JwtService,
-          useValue: mockJwtService,
-        },
-        {
           provide: ConfigService,
           useValue: mockConfigService,
         },
@@ -40,30 +30,6 @@ describe('AuthService', () => {
   });
   it('should be defined', () => {
     expect(service).toBeDefined();
-  });
-  describe('createAndSendCookie', () => {
-    it('should create a JWT token and send it as a cookie in the response', () => {
-      const mockResponse = {
-        cookie: jest.fn(),
-      } as unknown as Response;
-
-      const mockCookie = {} as unknown as Cookie;
-      mockJwtService.sign.mockReturnValue('mocked-jwt-token');
-      service.createAndSendCookie(mockCookie, mockResponse);
-      expect(mockJwtService.sign).toHaveBeenLastCalledWith(mockCookie);
-
-      expect(mockResponse.cookie).toHaveBeenLastCalledWith(
-        'token',
-        'mocked-jwt-token',
-        expect.objectContaining({
-          httpOnly: true,
-          secure: false,
-          sameSite: 'lax',
-
-          maxAge: expect.any(Number),
-        }),
-      );
-    });
   });
   describe('hashPassword', () => {
     it('should hash the password using bcrypt', async () => {

@@ -19,6 +19,9 @@ import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userO
 import { InviteEntity } from '../../src/invite/invite.entity';
 import { AuthService } from '../../src/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
+import { GuardDBService } from '../../src/utils/guardDB.service';
+import { SessionService } from '../../src/auth/session.service';
+import { RevocationService } from '../../src/auth/revocation.service';
 import { UsersService } from '../../src/user/users.service';
 import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
 import { ScenarioBuilder } from '../e2e/utils/scenarioBuilder';
@@ -43,6 +46,9 @@ describe('Login (Int)', () => {
     testingModule = await Test.createTestingModule({
       controllers: [LoginController],
       providers: [
+        SessionService,
+        RevocationService,
+        GuardDBService,
         LoginService,
         TxRepoProvider,
         AuthService,

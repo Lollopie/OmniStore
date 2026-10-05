@@ -26,7 +26,8 @@ import { OrganizationEntity } from './organization.entity';
 import express from 'express';
 import * as userDecorator from '../user/user.decorator';
 import { Cookie } from '../user/user.decorator';
-import { AuthService } from '../auth/auth.service';
+import { SessionService } from '../auth/session.service';
+import { RevocationService } from '../auth/revocation.service';
 import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.decorator';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { AuthGuard } from '../auth/auth.guard';
@@ -45,7 +46,8 @@ import { InviteContext } from '../mail/interfaces/mail-contexts.interface';
 export class OrganizationController {
   constructor(
     private readonly organizationService: OrganizationService,
-    private readonly authService: AuthService,
+    private readonly sessionService: SessionService,
+    private readonly revocationService: RevocationService,
     private readonly userOrganizationRoleService: UserOrganizationRoleService,
     private readonly subscriptionService: SubscriptionService,
     private readonly inviteService: InviteService,
@@ -107,13 +109,17 @@ export class OrganizationController {
     @Body() data: DeleteOrganizationDto,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const stripeSubscriptionId =
+    const { stripeSubscriptionId, memberIds } =
       await this.organizationService.deleteOrganization(data.confirmName);
     // Runs inside the request transaction, so a Stripe failure rolls back the deletion
     if (stripeSubscriptionId) {
       await this.subscriptionService.cancelSubscription(stripeSubscriptionId);
     }
-    this.authService.clearCookie(res);
+    // Members' access tokens would otherwise stay valid until they expire
+    await Promise.all(
+      memberIds.map((memberId) => this.revocationService.revokeUser(memberId)),
+    );
+    this.sessionService.clearSession(res);
     return { message: 'Organization deleted.' };
   }
   @Get('/billing')
@@ -173,7 +179,7 @@ export class OrganizationController {
       activeWarehouseId: '',
       activeRole: '',
     };
-    this.authService.createAndSendCookie(cookie, res);
+    await this.sessionService.issueSession(cookie, res);
     return { message: 'Organization created successfully.' };
   }
   @Get('/users')
@@ -204,8 +210,10 @@ export class OrganizationController {
     @Res({ passthrough: true }) res: express.Response,
   ) {
     await this.userOrganizationRoleService.removeMember(userId);
+    // Their refresh tokens cascade with the account; this ends their access tokens
+    await this.revocationService.revokeUser(userId);
     if (userId === user.userId) {
-      this.authService.clearCookie(res);
+      this.sessionService.clearSession(res);
     }
     return { message: 'User removed from organization.' };
   }

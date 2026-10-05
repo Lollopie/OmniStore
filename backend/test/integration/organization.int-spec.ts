@@ -23,6 +23,9 @@ import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userO
 import { InviteEntity } from '../../src/invite/invite.entity';
 import { AuthService } from '../../src/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
+import { GuardDBService } from '../../src/utils/guardDB.service';
+import { SessionService } from '../../src/auth/session.service';
+import { RevocationService } from '../../src/auth/revocation.service';
 import { OrganizationService } from '../../src/organization/organization.service';
 import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
 import { RegisterController } from '../../src/register/register.controller';
@@ -68,6 +71,9 @@ describe('Organization (Int)', () => {
     testingModule = await Test.createTestingModule({
       controllers: [OrganizationController, RegisterController],
       providers: [
+        SessionService,
+        RevocationService,
+        GuardDBService,
         { provide: SubscriptionService, useValue: {} },
         TxRepoProvider,
         AuthService,

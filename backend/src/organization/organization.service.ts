@@ -78,9 +78,11 @@ export class OrganizationService {
   /**
    * Deletes the organization with all its data. Users belong to exactly one
    * organization, so their accounts are deleted too. Returns the Stripe
-   * subscription that still has to be cancelled.
+   * subscription that still has to be cancelled and the deleted members.
    */
-  async deleteOrganization(confirmName: string): Promise<string | null> {
+  async deleteOrganization(
+    confirmName: string,
+  ): Promise<{ stripeSubscriptionId: string | null; memberIds: string[] }> {
     const org = await this.getCurrentOrganization();
     if (confirmName.trim() !== org.name) {
       throw new BadRequestException('Organization name does not match');
@@ -97,7 +99,10 @@ export class OrganizationService {
     await this.txRepoProvider
       .getRepo(OrganizationEntity)
       .delete({ orgId: org.orgId });
-    return org.stripeSubscriptionId;
+    return {
+      stripeSubscriptionId: org.stripeSubscriptionId,
+      memberIds: members.map((member) => member.userId),
+    };
   }
   async getUsers(searchTerm: string, page: number) {
     const userOrganizationRoleRepo = this.txRepoProvider.getRepo(

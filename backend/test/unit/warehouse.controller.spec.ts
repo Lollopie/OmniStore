@@ -6,7 +6,7 @@ import { MailService } from '../../src/mail/mail.service';
 import { UserWarehouseRoleService } from '../../src/userWarehouseRole/userWarehouseRole.service';
 import { InviteService } from '../../src/invite/invite.service';
 import { ClsService } from 'nestjs-cls';
-import { AuthService } from '../../src/auth/auth.service';
+import { SessionService } from '../../src/auth/session.service';
 import { OrganizationService } from '../../src/organization/organization.service';
 import { Response } from 'express';
 import {
@@ -96,8 +96,8 @@ describe('WarehouseController', () => {
       throw new Error(`Unexpected key: ${key}`);
     }),
   };
-  const mockAuthService = {
-    createAndSendCookie: jest.fn(),
+  const mockSessionService = {
+    sendAccessToken: jest.fn(),
   };
   const mockOrgService = {
     findByOrgId: jest.fn().mockResolvedValue({
@@ -130,7 +130,7 @@ describe('WarehouseController', () => {
         },
         { provide: InviteService, useValue: mockInviteService },
         { provide: ClsService, useValue: mockClsService },
-        { provide: AuthService, useValue: mockAuthService },
+        { provide: SessionService, useValue: mockSessionService },
         { provide: OrganizationService, useValue: mockOrgService },
         { provide: ConfigService, useValue: mockConfigService },
       ],
@@ -178,7 +178,7 @@ describe('WarehouseController', () => {
       );
       expect(result).toEqual({ error: 'Creation failed' });
     });
-    it('should call createAndSendCookie with expected parameters', async () => {
+    it('should reissue the access token for the warehouse', async () => {
       const mockResponse = {} as Response;
       await warehouseController.create(
         {
@@ -187,7 +187,7 @@ describe('WarehouseController', () => {
         mockUserToken,
         mockResponse,
       );
-      expect(mockAuthService.createAndSendCookie).toHaveBeenCalledWith(
+      expect(mockSessionService.sendAccessToken).toHaveBeenCalledWith(
         {
           userId: 'user-1',
           username: 'username',
@@ -239,7 +239,7 @@ describe('WarehouseController', () => {
       );
       expect(result).toEqual({ error: 'Selection failed' });
     });
-    it('should call createAndSendCookie with expected parameters', async () => {
+    it('should reissue the access token for the warehouse', async () => {
       const mockResponse = {} as Response;
       await warehouseController.select(
         {
@@ -248,7 +248,7 @@ describe('WarehouseController', () => {
         mockUserToken,
         mockResponse,
       );
-      expect(mockAuthService.createAndSendCookie).toHaveBeenCalledWith(
+      expect(mockSessionService.sendAccessToken).toHaveBeenCalledWith(
         {
           userId: 'user-1',
           username: 'username',

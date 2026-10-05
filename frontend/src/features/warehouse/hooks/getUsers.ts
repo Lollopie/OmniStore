@@ -1,3 +1,4 @@
+import { api } from '../../../api/client.ts';
 import type { WarehouseUser } from '../pages/warehouseUsers.tsx';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 
@@ -15,13 +16,10 @@ export const getUsers = async ({ searchTerm, setUsers, setTotalUsers, controller
     const params = new URLSearchParams();
     try {
       params.append('search', searchTerm || '');
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses/users?${params}`, {
-        method: 'GET',
-        credentials: 'include',
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error('Failed to get users.');
-      const data: { data: { userId: string, username: string, role: string }[], total: number } = await response.json();
+      const { data } = await api.get<{ data: { userId: string, username: string, role: string }[], total: number }>(
+        '/warehouses/users',
+        { params, signal: controller.signal },
+      );
       setUsers(data.data);
       setTotalUsers(data.total);
     } catch (err) {

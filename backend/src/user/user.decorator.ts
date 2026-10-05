@@ -7,6 +7,7 @@ export type Cookie = {
   activeWarehouseId: string;
   activeRole: string;
   exp?: number;
+  iat?: number;
 };
 
 export interface AuthenticatedRequest extends Request {

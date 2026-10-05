@@ -1,3 +1,4 @@
+import { api } from '../api/client.ts';
 import { Link, useLocation } from 'react-router';
 import React, { useEffect, useRef } from 'react';
 import Logo from './Logo.tsx';
@@ -31,13 +32,8 @@ export default function NavBar() {
     console.log(isAuthenticated);
     if (isAuthenticated) {
       try {
-        const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/logout`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          logout();
-        }
+        await api.post('/logout');
+        logout();
       } catch (err) {
         console.log(err);
       }

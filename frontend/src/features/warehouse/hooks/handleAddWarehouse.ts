@@ -1,3 +1,4 @@
+import { api } from '../../../api/client.ts';
 import React from 'react';
 import type { Warehouse } from '../pages/warehouseUsers.tsx';
 import { WarehouseDto } from '@shared/dto/warehouse.dto';
@@ -18,18 +19,10 @@ export const handleAddWarehouse = async ({warehouseDto, setActiveWarehouse, addT
   };
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newWarehouse),
-      credentials: 'include'
-    });
-
-    if (!response.ok) throw new Error('Failed to add warehouse.');
-
-    const addedItem: { name:string, warehouseId: string, role:string } = await response.json();
+    const { data: addedItem } = await api.post<{ name:string, warehouseId: string, role:string }>(
+      '/warehouses',
+      newWarehouse,
+    );
     const currentWarehouses = JSON.parse(localStorage.getItem('userWarehouses') || '[]');
     currentWarehouses.push(addedItem);
     localStorage.setItem('userWarehouses', JSON.stringify(currentWarehouses));

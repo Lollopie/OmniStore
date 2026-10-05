@@ -1,3 +1,4 @@
+import { api } from '../../api/client.ts';
 import { useEffect, useState } from 'react';
 import PricingCard from '../homepage/components/Pricing Card.tsx';
 import Button from '../../components/Button.tsx';
@@ -17,15 +18,9 @@ const Subscribe = () => {
   const subscribe = async (plan: PricingPlan['id']) => {
     setPendingPlan(plan);
     try {
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/checkout/create-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ plan }),
-      });
-      const data: { url?: string; sessionId?: string; message?: string } = await response.json();
-      if (!response.ok || !data.url || !data.sessionId) {
-        throw new Error(data.message || 'Could not start checkout');
+      const { data } = await api.post<{ url?: string; sessionId?: string }>('/checkout/create-session', { plan });
+      if (!data.url || !data.sessionId) {
+        throw new Error('Could not start checkout');
       }
       markCheckoutPending(data.sessionId);
       window.location.assign(data.url);

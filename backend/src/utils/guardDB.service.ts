@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import { SubscriptionPlan } from '../organization/organization.entity';
@@ -63,6 +63,58 @@ export class GuardDBService {
       [warehouseId],
     );
     return row.name;
+  }
+  /**
+   * Pass the request's transaction when the user may have been created in it,
+   * e.g. at registration; it is not visible to other connections yet.
+   */
+  async createRefreshToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+    manager?: EntityManager,
+  ): Promise<void> {
+    await (manager ?? this.dataSource).query(
+      `SELECT create_refresh_token($1, $2, $3)`,
+      [userId, tokenHash, expiresAt],
+    );
+  }
+  /** Returns null when the token is unknown or expired. */
+  async rotateRefreshToken(
+    oldHash: string,
+    newHash: string,
+    expiresAt: Date,
+  ): Promise<{ userId: string; reused: boolean } | null> {
+    const [row]: { token_user_id: string; reused: boolean }[] =
+      await this.dataSource.query(
+        `SELECT * FROM rotate_refresh_token($1, $2, $3)`,
+        [oldHash, newHash, expiresAt],
+      );
+    return row ? { userId: row.token_user_id, reused: row.reused } : null;
+  }
+  async deleteRefreshToken(tokenHash: string): Promise<void> {
+    await this.dataSource.query(`SELECT delete_refresh_token($1)`, [tokenHash]);
+  }
+  async revokeUserRefreshTokens(userId: string): Promise<void> {
+    await this.dataSource.query(`SELECT revoke_user_refresh_tokens($1)`, [
+      userId,
+    ]);
+  }
+  async getUserSession(userId: string): Promise<{
+    username: string;
+    orgId: string;
+    orgRole: OrganizationRole;
+  } | null> {
+    const [row]: {
+      username: string;
+      org_id: string;
+      org_role: OrganizationRole;
+    }[] = await this.dataSource.query(`SELECT * FROM get_user_session($1)`, [
+      userId,
+    ]);
+    return row
+      ? { username: row.username, orgId: row.org_id, orgRole: row.org_role }
+      : null;
   }
   async getUserWarehouseRole(
     userId: string,

@@ -18,6 +18,8 @@ import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userO
 import { InviteEntity } from '../../src/invite/invite.entity';
 import { AuthService } from '../../src/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
+import { SessionService } from '../../src/auth/session.service';
+import { RevocationService } from '../../src/auth/revocation.service';
 import { ScenarioBuilder } from '../e2e/utils/scenarioBuilder';
 import { Cookie } from '../../src/user/user.decorator';
 import { UsersService } from '../../src/user/users.service';
@@ -44,6 +46,8 @@ describe('Users (Int)', () => {
     testingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [
+        SessionService,
+        RevocationService,
         UsersService,
         UserOrganizationRoleService,
         GuardDBService,

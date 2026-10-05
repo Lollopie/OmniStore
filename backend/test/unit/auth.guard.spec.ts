@@ -6,12 +6,16 @@ import { AuthenticatedRequest, Cookie } from '../../src/user/user.decorator';
 import { Request } from 'express';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { GuardDBService } from '../../src/utils/guardDB.service';
+import { RevocationService } from '../../src/auth/revocation.service';
 describe('AuthGuard', () => {
   const mockClsService = {
     set: jest.fn(),
   };
   const mockGuardDBService = {
     getUserOrgRole: jest.fn().mockResolvedValue('member'),
+  };
+  const mockRevocationService = {
+    check: jest.fn().mockResolvedValue('ok'),
   };
   let service: AuthGuard;
   function makeMockRequest<T extends Request = Request>(
@@ -50,6 +54,7 @@ describe('AuthGuard', () => {
         },
         AuthGuard,
         { provide: GuardDBService, useValue: mockGuardDBService },
+        { provide: RevocationService, useValue: mockRevocationService },
         {
           provide: JwtService,
           useValue: mockJwtService,
@@ -129,16 +134,21 @@ describe('AuthGuard', () => {
       jest.useRealTimers();
     });
   });
-  describe('membership check', () => {
-    it('should look up the org role of the token user', async () => {
+  describe('revocation check', () => {
+    it('should check the token user against the revocation list', async () => {
+      mockJwtService.verifyAsync.mockResolvedValueOnce({
+        ...validCookie,
+        iat: 1000,
+      });
       await service.validateToken(mockRequest);
-      expect(mockGuardDBService.getUserOrgRole).toHaveBeenCalledWith(
-        'user-1',
-        'org-1',
-      );
+      expect(mockRevocationService.check).toHaveBeenCalledWith('user-1', 1000);
     });
-    it('should reject tokens of users that are no longer in the organization', async () => {
-      mockGuardDBService.getUserOrgRole.mockResolvedValueOnce(null);
+    it('should not query the database when Redis answers', async () => {
+      await service.validateToken(mockRequest);
+      expect(mockGuardDBService.getUserOrgRole).not.toHaveBeenCalled();
+    });
+    it('should reject tokens of revoked users', async () => {
+      mockRevocationService.check.mockResolvedValueOnce('revoked');
       const request = makeMockRequest<AuthenticatedRequest>({ token });
       await expect(service.validateToken(request)).rejects.toThrow(
         new UnauthorizedException('Invalid token'),
@@ -146,14 +156,35 @@ describe('AuthGuard', () => {
       expect(request.user).toBeUndefined();
       expect(mockClsService.set).not.toHaveBeenCalled();
     });
-    it('should skip the check for tokens without organization', async () => {
-      mockJwtService.verifyAsync.mockResolvedValueOnce({
-        ...validCookie,
-        orgId: '',
+    describe('when Redis is unavailable', () => {
+      beforeEach(() => {
+        mockRevocationService.check.mockResolvedValueOnce('unknown');
       });
-      const request = makeMockRequest<AuthenticatedRequest>({ token });
-      await service.validateToken(request);
-      expect(mockGuardDBService.getUserOrgRole).not.toHaveBeenCalled();
+      it('should fall back to the org role of the token user', async () => {
+        await service.validateToken(mockRequest);
+        expect(mockGuardDBService.getUserOrgRole).toHaveBeenCalledWith(
+          'user-1',
+          'org-1',
+        );
+      });
+      it('should reject tokens of users that are no longer in the organization', async () => {
+        mockGuardDBService.getUserOrgRole.mockResolvedValueOnce(null);
+        const request = makeMockRequest<AuthenticatedRequest>({ token });
+        await expect(service.validateToken(request)).rejects.toThrow(
+          new UnauthorizedException('Invalid token'),
+        );
+        expect(request.user).toBeUndefined();
+        expect(mockClsService.set).not.toHaveBeenCalled();
+      });
+      it('should skip the fallback for tokens without organization', async () => {
+        mockJwtService.verifyAsync.mockResolvedValueOnce({
+          ...validCookie,
+          orgId: '',
+        });
+        const request = makeMockRequest<AuthenticatedRequest>({ token });
+        await service.validateToken(request);
+        expect(mockGuardDBService.getUserOrgRole).not.toHaveBeenCalled();
+      });
     });
   });
   describe('canActivate', () => {

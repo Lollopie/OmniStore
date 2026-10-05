@@ -1,3 +1,5 @@
+import axios from 'axios';
+import { api, errorMessage } from '../../../api/client.ts';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
@@ -52,25 +54,19 @@ export default function AuthForm({
     const password = registerDto.password;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: trimmedUsername, password }),
-        credentials: 'include',
-      });
-
-      const data: LoginResponse = await response.json();
+      const { data } = await api.post<LoginResponse>(endpoint, { username: trimmedUsername, password });
       handleResponse(data);
-      if (!response.ok) {
-        if (data.message) {
-          setError(data.message);
+      setSuccess(successMessage);
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const message = errorMessage(err);
+        if (message) {
+          setError(message);
         }
       } else {
-        setSuccess(successMessage);
-        if (onSuccess) onSuccess();
+        setError('Something went wrong. Please try again.');
       }
-    } catch {
-      setError('Something went wrong. Please try again.');
     }
   };
 

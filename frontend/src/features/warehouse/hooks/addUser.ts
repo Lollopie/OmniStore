@@ -1,3 +1,4 @@
+import { api } from '../../../api/client.ts';
 import type { WarehouseUser } from '../pages/warehouseUsers.tsx';
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 
@@ -13,17 +14,7 @@ export const addUser = async ({newUsername, newRole, setUsers, setNewUsername, s
   const username = newUsername || '';
   if (!username) return alert('Enter a username');
   try {
-    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ username: username, role: newRole }),
-    });
-    if (!response.ok) {
-      const txt = await response.text();
-      throw new Error(txt || 'Failed to add user');
-    }
-    const newUser = await response.json();
+    const { data: newUser } = await api.post<WarehouseUser>('/warehouses/users', { username: username, role: newRole });
     newUser.username = username;
     setUsers((prev) => [...prev, newUser]);
     setNewUsername('');

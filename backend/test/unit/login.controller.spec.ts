@@ -1,7 +1,7 @@
 import { LoginController } from '../../src/login/login.controller';
 import { Test } from '@nestjs/testing';
 import { LoginService } from '../../src/login/login.service';
-import { AuthService } from '../../src/auth/auth.service';
+import { SessionService } from '../../src/auth/session.service';
 import { Response } from 'express';
 
 describe('LoginController', () => {
@@ -18,8 +18,8 @@ describe('LoginController', () => {
       },
     ]),
   };
-  const mockAuthService = {
-    createAndSendCookie: jest.fn().mockReturnValue({}),
+  const mockSessionService = {
+    issueSession: jest.fn(),
   };
   let loginController: LoginController;
   beforeEach(async () => {
@@ -28,7 +28,7 @@ describe('LoginController', () => {
       controllers: [LoginController],
       providers: [
         { provide: LoginService, useValue: mockLoginService },
-        { provide: AuthService, useValue: mockAuthService },
+        { provide: SessionService, useValue: mockSessionService },
       ],
     }).compile();
     loginController = moduleRef.get(LoginController);
@@ -63,7 +63,7 @@ describe('LoginController', () => {
         warehouses: [],
       });
     });
-    it('should call authService createAndSendCookie with correct parameters', async () => {
+    it('should start a session with correct parameters', async () => {
       const mockResponse = {} as unknown as Response;
       await loginController.login(
         {
@@ -72,7 +72,7 @@ describe('LoginController', () => {
         },
         mockResponse,
       );
-      expect(mockAuthService.createAndSendCookie).toHaveBeenCalledWith(
+      expect(mockSessionService.issueSession).toHaveBeenCalledWith(
         {
           userId: 'user-1',
           username: 'username',

@@ -4,11 +4,19 @@ import { CanActivate } from '@nestjs/common';
 import { AuthGuard } from '../../src/auth/auth.guard';
 import { UsersService } from '../../src/user/users.service';
 import { Response } from 'express';
+import { SessionService } from '../../src/auth/session.service';
+import { RevocationService } from '../../src/auth/revocation.service';
 describe('UsersController', () => {
   let usersController: UsersController;
   const mockUsersService = {
     updatePassword: jest.fn(),
     deleteUser: jest.fn(),
+  };
+  const mockSessionService = {
+    clearSession: jest.fn(),
+  };
+  const mockRevocationService = {
+    revokeUser: jest.fn(),
   };
   class MockGuard implements CanActivate {
     canActivate(): boolean {
@@ -31,6 +39,8 @@ describe('UsersController', () => {
           provide: UsersService,
           useValue: mockUsersService,
         },
+        { provide: SessionService, useValue: mockSessionService },
+        { provide: RevocationService, useValue: mockRevocationService },
       ],
     })
       .overrideGuard(AuthGuard)
@@ -97,11 +107,18 @@ describe('UsersController', () => {
         mockUserToken,
         mockResponse,
       );
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith('token', {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-      });
+      expect(mockSessionService.clearSession).toHaveBeenCalledWith(
+        mockResponse,
+      );
+    });
+    it('should revoke the sessions on other devices', async () => {
+      const mockResponse = {} as unknown as Response;
+      await usersController.deleteAccount(
+        { password: 'password1' },
+        mockUserToken,
+        mockResponse,
+      );
+      expect(mockRevocationService.revokeUser).toHaveBeenCalledWith('user-1');
     });
     it('should return success message', async () => {
       const mockResponse = {

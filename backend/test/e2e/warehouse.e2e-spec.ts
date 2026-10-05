@@ -57,8 +57,9 @@ describe('WarehouseController (e2e)', () => {
       warehouseId: expect.any(String),
       role: 'admin',
     });
+    // The access cookie lives as long as the refresh token (7 days), so refresh can read it
     expect(warehouseResponse.headers['set-cookie'][0]).toMatch(
-      /token=.+; Max-Age=3600; Path=\/; Expires=.+; HttpOnly; SameSite=(?:Lax|None)/,
+      /token=.+; Max-Age=604800; Path=\/; Expires=.+; HttpOnly; SameSite=(?:Lax|None)/,
     );
   });
   it('Warehouse Select', async () => {

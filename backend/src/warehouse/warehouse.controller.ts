@@ -34,7 +34,7 @@ import { OrganizationRoles } from '../roles/organizationRoles/organizationRoles.
 import { OrganizationRolesGuard } from '../roles/organizationRoles/organizationRoles.guard';
 import { InviteService } from '../invite/invite.service';
 import { ClsService } from 'nestjs-cls';
-import { AuthService } from '../auth/auth.service';
+import { SessionService } from '../auth/session.service';
 import { MailService } from '../mail/mail.service';
 import { InviteContext } from '../mail/interfaces/mail-contexts.interface';
 import { ConfigService } from '@nestjs/config';
@@ -51,7 +51,7 @@ export class WarehouseController {
     private readonly userWarehouseRoleService: UserWarehouseRoleService,
     private readonly inviteService: InviteService,
     private readonly clsService: ClsService,
-    private readonly authService: AuthService,
+    private readonly sessionService: SessionService,
     private readonly orgService: OrganizationService,
   ) {}
   @Post()
@@ -75,7 +75,7 @@ export class WarehouseController {
         activeWarehouseId: warehouse.warehouseId,
         activeRole: 'admin',
       };
-      this.authService.createAndSendCookie(cookie, res);
+      this.sessionService.sendAccessToken(cookie, res);
       return {
         name: warehouse.name,
         warehouseId: warehouse.warehouseId,
@@ -108,7 +108,7 @@ export class WarehouseController {
         activeWarehouseId: response.warehouseId,
         activeRole: response.role,
       };
-      this.authService.createAndSendCookie(cookie, res);
+      this.sessionService.sendAccessToken(cookie, res);
       return {
         activeRole: response.role,
       };

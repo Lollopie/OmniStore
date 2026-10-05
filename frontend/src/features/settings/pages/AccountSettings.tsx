@@ -1,3 +1,4 @@
+import { api, errorMessage } from '../../../api/client.ts';
 import { useState, useRef } from 'react';
 import { useToast } from '../../toast';
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
@@ -45,30 +46,18 @@ export const AccountSettings = () => {
 
     setIsDeleting(true);
     try {
-      const response = await fetch('http://localhost:3000/users', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
+      await api.delete('/users', {
+        data: {
           userId: readStoredValue('userId', ''),
           password: password,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to delete account.');
-      }
 
       addToast('Account successfully deleted.', 'success');
       handleCloseModal();
       logout();
     } catch (error) {
-      if (error instanceof Error) {
-        addToast(error.message || 'Failed to delete account.', 'error');
-      }
+      addToast(errorMessage(error) ?? 'Failed to delete account.', 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -88,29 +77,15 @@ export const AccountSettings = () => {
 
     setIsUpdating(true);
     try {
-      const response = await fetch('http://localhost:3000/users', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          password: changePasswordDto.password,
-          newPassword: changePasswordDto.newPassword,
-          confirmPassword: changePasswordDto.confirmPassword,
-        }),
+      await api.patch('/users', {
+        password: changePasswordDto.password,
+        newPassword: changePasswordDto.newPassword,
+        confirmPassword: changePasswordDto.confirmPassword,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to update password.');
-      }
 
       addToast('Password updated successfully.', 'success');
     } catch (error) {
-      if (error instanceof Error) {
-        addToast(error.message || 'Failed to update password.', 'error');
-      }
+      addToast(errorMessage(error) ?? 'Failed to update password.', 'error');
     } finally {
       setIsUpdating(false);
     }

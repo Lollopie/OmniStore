@@ -1,3 +1,5 @@
+import axios from 'axios';
+import { api, errorMessage } from '../../api/client.ts';
 import { startTransition, useEffect, useState } from 'react';
 import { useToast } from '../toast';
 import Register from '../auth/authForm/Register.tsx';
@@ -41,12 +43,10 @@ const CreateOrganization = () => {
         return;
       }
       try {
-        const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/register/verify?token=${token}`, {
-          method: 'GET',
-          credentials: 'include',
+        const { data } = await api.get<{ valid?: boolean, error?: string, email?: string }>('/register/verify', {
+          params: { token },
         });
-        const data: { valid?: boolean, error?: string, email?: string } = await response.json();
-        if (!response.ok || !data.valid) {
+        if (!data.valid) {
           throw new Error(data.error || 'Token verification failed');
         }
         setTokenValid(true);
@@ -68,37 +68,33 @@ const CreateOrganization = () => {
     const organizationName = organizationDto.name.trim();
     const token = new URLSearchParams(window.location.search).get('token');
     try {
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/register?token=${token}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
+      const { data } = await api.post<{ message?: string }>(
+        '/organizations/register',
+        {
           ownerEmail: email,
           ownerUsername: trimmedUsername,
           ownerPassword: password,
           name: organizationName,
-        }),
+        },
+        { params: { token } },
+      );
+      addToast(data.message || 'Organization created successfully.', 'success');
+      // React Router applies navigations as transitions; updating auth in the same transition
+      // renders both together, so GuestRoute doesn't first bounce the new user to /organizations
+      startTransition(() => {
+        navigate('/subscribe', { replace: true });
+        setIsAuthenticated(true);
       });
-
-      const data: {
-        message?: string;
-      } = await response.json();
-      if (!response.ok) {
-        if (data.message) {
-          console.log(data.message);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const message = errorMessage(err);
+        if (message) {
+          console.log(message);
           addToast('Error creating organization', 'error', 5000);
         }
       } else {
-        addToast(data.message || 'Organization created successfully.', 'success');
-        // React Router applies navigations as transitions; updating auth in the same transition
-        // renders both together, so GuestRoute doesn't first bounce the new user to /organizations
-        startTransition(() => {
-          navigate('/subscribe', { replace: true });
-          setIsAuthenticated(true);
-        });
+        addToast('Something went wrong. Please try again.', 'error', 5000);
       }
-    } catch {
-      addToast('Something went wrong. Please try again.', 'error', 5000);
     }
   };
   return verifying ? <p>Verifying token...</p> : !tokenValid ? <InvalidToken /> :

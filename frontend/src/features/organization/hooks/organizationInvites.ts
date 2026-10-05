@@ -1,4 +1,5 @@
 import type { OrganizationInviteDto } from '@shared/dto/organization.dto';
+import { api, errorMessage } from '../../../api/client.ts';
 
 type AddToast = (message: string, variant: 'success' | 'error' | 'info', duration: number) => void;
 
@@ -12,78 +13,48 @@ export interface PendingInvite {
   createdAt: string;
 }
 
-const invitesUrl = `${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/invites`;
-
-async function getErrorMessage(response: Response, fallback: string) {
-  try {
-    const data: { message?: string | string[] } = await response.json();
-    return (Array.isArray(data.message) ? data.message[0] : data.message) || fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export async function getOrganizationInvites(controller: AbortController, addToast: AddToast): Promise<PendingInvite[]> {
   try {
-    const response = await fetch(invitesUrl, {
-      method: 'GET',
-      credentials: 'include',
-      signal: controller.signal,
-    });
-    if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to get invites'));
-    return await response.json();
+    const { data } = await api.get<PendingInvite[]>('/organizations/invites', { signal: controller.signal });
+    return data;
   } catch (err) {
     if (!controller.signal.aborted) {
       addToast('Failed to get invites', 'error', 3000);
     }
-    if (err instanceof Error) console.error(err.message);
+    console.error(errorMessage(err) ?? 'Failed to get invites');
     return [];
   }
 }
 
 export async function createOrganizationInvite(data: OrganizationInviteDto, addToast: AddToast): Promise<boolean> {
   try {
-    const response = await fetch(invitesUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to create invite'));
+    await api.post('/organizations/invites', data);
     addToast('Invite sent successfully', 'success', 5000);
     return true;
   } catch (err) {
-    addToast(err instanceof Error ? err.message : 'Failed to create invite', 'error', 3000);
+    addToast(errorMessage(err) ?? 'Failed to create invite', 'error', 3000);
     return false;
   }
 }
 
 export async function resendOrganizationInvite(inviteId: string, addToast: AddToast): Promise<boolean> {
   try {
-    const response = await fetch(`${invitesUrl}/${inviteId}/resend`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to resend invite'));
+    await api.post(`/organizations/invites/${inviteId}/resend`);
     addToast('Invite resent', 'success', 3000);
     return true;
   } catch (err) {
-    addToast(err instanceof Error ? err.message : 'Failed to resend invite', 'error', 3000);
+    addToast(errorMessage(err) ?? 'Failed to resend invite', 'error', 3000);
     return false;
   }
 }
 
 export async function revokeOrganizationInvite(inviteId: string, addToast: AddToast): Promise<boolean> {
   try {
-    const response = await fetch(`${invitesUrl}/${inviteId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to revoke invite'));
+    await api.delete(`/organizations/invites/${inviteId}`);
     addToast('Invite revoked', 'success', 3000);
     return true;
   } catch (err) {
-    addToast(err instanceof Error ? err.message : 'Failed to revoke invite', 'error', 3000);
+    addToast(errorMessage(err) ?? 'Failed to revoke invite', 'error', 3000);
     return false;
   }
 }

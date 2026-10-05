@@ -1,5 +1,6 @@
 import { readStoredValue } from '../../../hooks/readStoredValue.ts';
 import type { OrganizationUser } from '../pages/organizationMembers.tsx';
+import { api } from '../../../api/client.ts';
 
 interface Props {
   user: OrganizationUser;
@@ -10,16 +11,7 @@ interface Props {
 
 export const changeUserRole = async ({ user, newRole, setUsers, addToast }: Props) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/users`, {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user.username, role: newRole }),
-    });
-    if (!response.ok) {
-      const txt = await response.text();
-      throw new Error(txt || 'Failed to update role');
-    }
+    await api.patch('/organizations/users', { username: user.username, role: newRole });
     const currentUsername = readStoredValue('username');
     if (user.username === currentUsername) {
       localStorage.setItem('orgRole', newRole);

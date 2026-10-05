@@ -1,6 +1,6 @@
 import { GuardDBService } from '../../src/utils/guardDB.service';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 describe('GuardDBService', () => {
   let guardDBService: GuardDBService;
   const mockDataSource = {
@@ -176,6 +176,85 @@ describe('GuardDBService', () => {
         'warehouse-1',
       );
       expect(result).toEqual('admin');
+    });
+  });
+  describe('refresh tokens', () => {
+    const expiresAt = new Date('2026-10-12T00:00:00Z');
+    it('should create a refresh token', async () => {
+      await guardDBService.createRefreshToken('user-1', 'hash', expiresAt);
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT create_refresh_token($1, $2, $3)`,
+        ['user-1', 'hash', expiresAt],
+      );
+    });
+    it('should create the refresh token in the given transaction', async () => {
+      const manager = { query: jest.fn() };
+      await guardDBService.createRefreshToken(
+        'user-1',
+        'hash',
+        expiresAt,
+        manager as unknown as EntityManager,
+      );
+      expect(manager.query).toHaveBeenCalledWith(
+        `SELECT create_refresh_token($1, $2, $3)`,
+        ['user-1', 'hash', expiresAt],
+      );
+      expect(mockDataSource.query).not.toHaveBeenCalled();
+    });
+    it('should rotate a refresh token', async () => {
+      mockDataSource.query.mockReturnValueOnce([
+        { token_user_id: 'user-1', reused: false },
+      ]);
+      const result = await guardDBService.rotateRefreshToken(
+        'old',
+        'new',
+        expiresAt,
+      );
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT * FROM rotate_refresh_token($1, $2, $3)`,
+        ['old', 'new', expiresAt],
+      );
+      expect(result).toEqual({ userId: 'user-1', reused: false });
+    });
+    it('should return null for unknown refresh tokens', async () => {
+      mockDataSource.query.mockReturnValueOnce([]);
+      await expect(
+        guardDBService.rotateRefreshToken('old', 'new', expiresAt),
+      ).resolves.toBeNull();
+    });
+    it('should delete a refresh token', async () => {
+      await guardDBService.deleteRefreshToken('hash');
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT delete_refresh_token($1)`,
+        ['hash'],
+      );
+    });
+    it('should revoke all refresh tokens of a user', async () => {
+      await guardDBService.revokeUserRefreshTokens('user-1');
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT revoke_user_refresh_tokens($1)`,
+        ['user-1'],
+      );
+    });
+  });
+  describe('getUserSession', () => {
+    it('should map the session of a member', async () => {
+      mockDataSource.query.mockReturnValueOnce([
+        { username: 'username', org_id: 'org-1', org_role: 'member' },
+      ]);
+      await expect(guardDBService.getUserSession('user-1')).resolves.toEqual({
+        username: 'username',
+        orgId: 'org-1',
+        orgRole: 'member',
+      });
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT * FROM get_user_session($1)`,
+        ['user-1'],
+      );
+    });
+    it('should return null for deleted users', async () => {
+      mockDataSource.query.mockReturnValueOnce([]);
+      await expect(guardDBService.getUserSession('user-1')).resolves.toBeNull();
     });
   });
 });

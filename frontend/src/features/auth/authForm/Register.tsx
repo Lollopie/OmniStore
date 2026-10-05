@@ -1,3 +1,5 @@
+import axios from 'axios';
+import { api, errorMessage } from '../../../api/client.ts';
 import InputField from '../../../components/InputField.tsx';
 import Button from '../../../components/Button.tsx';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
@@ -27,24 +29,17 @@ export default function Register({ message }: RegisterProps) {
     const trimmedEmail = registerEmailDto.email.trim();
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail }),
-      });
-
-      const data: {
-        message?: string;
-      } = await response.json();
-      if (!response.ok) {
-        if (data.message) {
-          setError(data.message);
+      const { data } = await api.post<{ message?: string }>('/register', { email: trimmedEmail });
+      setSuccess(data.message);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const message = errorMessage(err);
+        if (message) {
+          setError(message);
         }
       } else {
-        setSuccess(data.message);
+        setError('Something went wrong. Please try again.');
       }
-    } catch {
-      setError('Something went wrong. Please try again.');
     }
   };
   return (

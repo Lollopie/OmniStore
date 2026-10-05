@@ -1,17 +1,25 @@
-import { Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
+import {
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
 import express from 'express';
+import { SessionService } from '../auth/session.service';
 
 @Controller('logout')
 export class LogoutController {
-  constructor() {}
+  constructor(private readonly sessionService: SessionService) {}
   @Post()
   @HttpCode(HttpStatus.OK)
-  logout(@Res({ passthrough: true }) res: express.Response) {
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    });
+  async logout(
+    @Req() req: express.Request,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    // Only this device's session ends; other devices stay signed in
+    await this.sessionService.endSession(req, res);
 
     return { message: 'Logout successful' };
   }

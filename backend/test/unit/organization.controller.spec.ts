@@ -10,7 +10,8 @@ import {
 } from '@nestjs/common';
 import { OrganizationRolesGuard } from '../../src/roles/organizationRoles/organizationRoles.guard';
 import { OrganizationService } from '../../src/organization/organization.service';
-import { AuthService } from '../../src/auth/auth.service';
+import { SessionService } from '../../src/auth/session.service';
+import { RevocationService } from '../../src/auth/revocation.service';
 import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
 import { Response } from 'express';
 import { OrganizationRole } from '@shared/enum/organizationRoles.enum';
@@ -53,7 +54,10 @@ describe('OrganizationController', () => {
       orgId: 'org-1',
       name: 'New Name',
     }),
-    deleteOrganization: jest.fn().mockResolvedValue('sub_1'),
+    deleteOrganization: jest.fn().mockResolvedValue({
+      stripeSubscriptionId: 'sub_1',
+      memberIds: ['user-1', 'user-2'],
+    }),
     getUsers: jest.fn().mockResolvedValue({
       data: {
         userId: 'user-1',
@@ -63,9 +67,12 @@ describe('OrganizationController', () => {
       total: 1,
     }),
   };
-  const mockAuthService = {
-    createAndSendCookie: jest.fn(),
-    clearCookie: jest.fn(),
+  const mockSessionService = {
+    issueSession: jest.fn(),
+    clearSession: jest.fn(),
+  };
+  const mockRevocationService = {
+    revokeUser: jest.fn(),
   };
   const mockUserOrganizationRoleService = {
     updateUserRole: jest.fn().mockResolvedValue({
@@ -121,8 +128,12 @@ describe('OrganizationController', () => {
           useValue: mockOrganizationService,
         },
         {
-          provide: AuthService,
-          useValue: mockAuthService,
+          provide: SessionService,
+          useValue: mockSessionService,
+        },
+        {
+          provide: RevocationService,
+          useValue: mockRevocationService,
         },
         {
           provide: UserOrganizationRoleService,
@@ -225,7 +236,7 @@ describe('OrganizationController', () => {
         },
       );
     });
-    it('should call authService createAndSendCookie', async () => {
+    it('should start a session for the new owner', async () => {
       const mockResponse = {} as unknown as Response;
       await organizationController.register(
         'token',
@@ -237,7 +248,7 @@ describe('OrganizationController', () => {
         },
         mockResponse,
       );
-      expect(mockAuthService.createAndSendCookie).toHaveBeenCalledWith(
+      expect(mockSessionService.issueSession).toHaveBeenCalledWith(
         {
           username: 'username',
           userId: 'user-1',
@@ -397,13 +408,30 @@ describe('OrganizationController', () => {
       );
       expect(response).toEqual({ message: 'User removed from organization.' });
     });
+    it('should revoke the sessions of the removed user', async () => {
+      await organizationController.removeUser(
+        'user-2',
+        userToken,
+        mockResponse,
+      );
+      expect(mockRevocationService.revokeUser).toHaveBeenCalledWith('user-2');
+    });
+    it('should not revoke sessions if the removal fails', async () => {
+      mockUserOrganizationRoleService.removeMember.mockRejectedValueOnce(
+        new Error('Last owner'),
+      );
+      await expect(
+        organizationController.removeUser('user-2', userToken, mockResponse),
+      ).rejects.toThrow('Last owner');
+      expect(mockRevocationService.revokeUser).not.toHaveBeenCalled();
+    });
     it('should keep the cookie when removing someone else', async () => {
       await organizationController.removeUser(
         'user-2',
         userToken,
         mockResponse,
       );
-      expect(mockAuthService.clearCookie).not.toHaveBeenCalled();
+      expect(mockSessionService.clearSession).not.toHaveBeenCalled();
     });
     it('should clear the cookie when removing yourself', async () => {
       await organizationController.removeUser(
@@ -411,7 +439,9 @@ describe('OrganizationController', () => {
         userToken,
         mockResponse,
       );
-      expect(mockAuthService.clearCookie).toHaveBeenCalledWith(mockResponse);
+      expect(mockSessionService.clearSession).toHaveBeenCalledWith(
+        mockResponse,
+      );
     });
   });
   describe('getOrganization', () => {
@@ -449,11 +479,24 @@ describe('OrganizationController', () => {
       expect(mockSubscriptionService.cancelSubscription).toHaveBeenCalledWith(
         'sub_1',
       );
-      expect(mockAuthService.clearCookie).toHaveBeenCalledWith(mockResponse);
+      expect(mockSessionService.clearSession).toHaveBeenCalledWith(
+        mockResponse,
+      );
       expect(response).toEqual({ message: 'Organization deleted.' });
     });
+    it('should revoke the sessions of every member', async () => {
+      await organizationController.deleteOrganization(
+        { confirmName: 'organization' },
+        mockResponse,
+      );
+      expect(mockRevocationService.revokeUser).toHaveBeenCalledWith('user-1');
+      expect(mockRevocationService.revokeUser).toHaveBeenCalledWith('user-2');
+    });
     it('should not call Stripe without a subscription', async () => {
-      mockOrganizationService.deleteOrganization.mockResolvedValueOnce(null);
+      mockOrganizationService.deleteOrganization.mockResolvedValueOnce({
+        stripeSubscriptionId: null,
+        memberIds: ['user-1'],
+      });
       await organizationController.deleteOrganization(
         { confirmName: 'organization' },
         mockResponse,
@@ -470,7 +513,8 @@ describe('OrganizationController', () => {
           mockResponse,
         ),
       ).rejects.toThrow('Stripe unavailable');
-      expect(mockAuthService.clearCookie).not.toHaveBeenCalled();
+      expect(mockSessionService.clearSession).not.toHaveBeenCalled();
+      expect(mockRevocationService.revokeUser).not.toHaveBeenCalled();
     });
   });
   describe('getBilling', () => {

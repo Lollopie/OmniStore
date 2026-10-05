@@ -33,6 +33,9 @@ import { Response } from 'express';
 import { UsersService } from '../../src/user/users.service';
 import { UserOrganizationRoleService } from '../../src/userOrganizationRole/userOrganizationRole.service';
 import { JwtModule } from '@nestjs/jwt';
+import { GuardDBService } from '../../src/utils/guardDB.service';
+import { SessionService } from '../../src/auth/session.service';
+import { RevocationService } from '../../src/auth/revocation.service';
 import { WarehouseRole } from '@shared/enum/warehouseRoles.enum';
 import { ContactEntity } from '../../src/contact/contact.entity';
 describe('Warehouse (Int)', () => {
@@ -72,6 +75,9 @@ describe('Warehouse (Int)', () => {
     testingModule = await Test.createTestingModule({
       controllers: [WarehouseController],
       providers: [
+        SessionService,
+        RevocationService,
+        GuardDBService,
         WarehouseService,
         TxRepoProvider,
         UserWarehouseRoleService,

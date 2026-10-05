@@ -1,8 +1,9 @@
+import { api } from '../../../api/client.ts';
 import React from 'react';
 import { getWarehouseFromWarehouseId } from '../hooks/getWarehouseFromWarehouseId.ts';
 import type { Warehouse } from '../pages/warehouseUsers.tsx';
 
-export interface SelectResponse extends Response {
+export interface SelectResponse {
   activeRole: string;
 }
 
@@ -16,22 +17,14 @@ export const WarehouseSelector = ({ selectedWarehouse, setActiveWarehouse, addTo
   const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const warehouseId = event.target.value;
     const activeWarehouse = getWarehouseFromWarehouseId(warehouseId);
-    const response: SelectResponse = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/warehouses/select`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ warehouseId: warehouseId }),
-      credentials: 'include',
-    }) as SelectResponse;
-    if (response.ok) {
+    try {
+      const { data: { activeRole } } = await api.post<SelectResponse>('/warehouses/select', { warehouseId });
       localStorage.setItem('activeWarehouse', warehouseId);
-      const { activeRole } = await response.json();
       localStorage.setItem('activeRole', activeRole);
       activeWarehouse.role = activeRole;
       setActiveWarehouse(activeWarehouse);
       addToast(`Changed active warehouse to ${activeWarehouse.name || activeWarehouse.warehouseId}`, 'info', 5000);
-    } else {
+    } catch {
       addToast(`Failed to change active warehouse.`, 'error', 5000);
     }
   };

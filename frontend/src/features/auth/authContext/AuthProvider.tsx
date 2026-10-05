@@ -1,3 +1,4 @@
+import { api } from '../../../api/client.ts';
 import { useState, useEffect, type ReactNode } from 'react';
 import { AuthContext } from './useAuth.ts';
 import { clearUserSession } from '../../../utils/sessionStorage.ts';
@@ -8,12 +9,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/auth/status`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        setIsAuthenticated(response.ok);
+        // A returning user's access token has usually expired; the client renews it
+        await api.get('/auth/status');
+        setIsAuthenticated(true);
       } catch {
         setIsAuthenticated(false);
       } finally {

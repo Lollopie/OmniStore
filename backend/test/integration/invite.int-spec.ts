@@ -27,6 +27,9 @@ import { UserOrganizationRoleEntity } from '../../src/userOrganizationRole/userO
 import { InviteEntity } from '../../src/invite/invite.entity';
 import { AuthService } from '../../src/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
+import { GuardDBService } from '../../src/utils/guardDB.service';
+import { SessionService } from '../../src/auth/session.service';
+import { RevocationService } from '../../src/auth/revocation.service';
 import { MailService } from '../../src/mail/mail.service';
 import { UserWarehouseRoleService } from '../../src/userWarehouseRole/userWarehouseRole.service';
 import { OrganizationService } from '../../src/organization/organization.service';
@@ -76,6 +79,9 @@ describe('Invite (Int)', () => {
     testingModule = await Test.createTestingModule({
       controllers: [InviteController, WarehouseController],
       providers: [
+        SessionService,
+        RevocationService,
+        GuardDBService,
         InviteService,
         TxRepoProvider,
         AuthService,

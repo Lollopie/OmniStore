@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { SubscriptionContext, type SubscriptionContextType } from './useSubscription.ts';
 import { useAuth } from '../../auth/authContext';
 import { clearCheckoutPending, getPendingCheckoutSessionId } from './checkoutPending.ts';
+import { api } from '../../../api/client.ts';
 
 type Subscription = SubscriptionContextType['subscription'];
 
@@ -16,15 +17,9 @@ type FetchResult = { ok: true; subscription: Subscription } | { ok: false };
 
 const fetchSubscription = async (sessionId: string | null): Promise<FetchResult> => {
   try {
-    const query = sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : '';
-    const response = await fetch(`${import.meta.env.VITE_NESTJS_HOST_URL}/organizations/subscription${query}`, {
-      method: 'GET',
-      credentials: 'include',
+    const { data } = await api.get<{ subscription?: Subscription }>('/organizations/subscription', {
+      params: sessionId ? { sessionId } : undefined,
     });
-    if (!response.ok) {
-      return { ok: false };
-    }
-    const data: { subscription?: Subscription } = await response.json();
     return { ok: true, subscription: data.subscription ?? null };
   } catch {
     return { ok: false };

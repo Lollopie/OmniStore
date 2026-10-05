@@ -44,6 +44,7 @@ import { ContactService } from './contact/contact.service';
 import { ContactEntity } from './contact/contact.entity';
 import paymentConfig from './config/payment.config';
 import { PaymentModule } from './payment/payment.module';
+import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -148,6 +149,7 @@ import { PaymentModule } from './payment/payment.module';
       global: true,
       middleware: { mount: true },
     }),
+    AuthModule,
     UsersModule,
     LoginModule,
     InventoryModule,

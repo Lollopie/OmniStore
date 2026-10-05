@@ -447,7 +447,7 @@ describe('OrganizationService', () => {
         orgId: 'org-1',
       });
     });
-    it('should return the stripe subscription id', async () => {
+    it('should return the stripe subscription id and the deleted members', async () => {
       mockOrganizationRepository.findOne.mockResolvedValueOnce({
         orgId: 'org-1',
         name: 'organization',
@@ -455,7 +455,10 @@ describe('OrganizationService', () => {
       });
       await expect(
         organizationService.deleteOrganization('organization'),
-      ).resolves.toBe('sub_1');
+      ).resolves.toEqual({
+        stripeSubscriptionId: 'sub_1',
+        memberIds: ['user-1', 'user-2'],
+      });
     });
   });
 });
