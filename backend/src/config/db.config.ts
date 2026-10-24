@@ -7,6 +7,8 @@ export default registerAs('db', () => ({
   databaseUser: process.env.APP_USER || 'postgres',
   databasePassword: process.env.APP_PASSWORD || 'postgres',
   databaseSynchronize: (process.env.DATABASE_SYNCHRONIZE || 'false') === 'true',
+  // Hosted databases like Neon only accept TLS connections; the local and CI Postgres containers don't offer it
+  databaseSsl: (process.env.DATABASE_SSL || 'false') === 'true',
   redisUrl: process.env.REDIS_URL || 'localhost',
   rateLimit: parseInt(process.env.RATE_LIMIT!, 10) || 10,
   rateTimeout: parseInt(process.env.RATE_TIMEOUT!, 10) || 60000,

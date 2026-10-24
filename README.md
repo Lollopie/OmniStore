@@ -71,6 +71,7 @@ DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_NAME=dev
 DATABASE_SYNCHRONIZE=false
+DATABASE_SSL=false               # true for hosted databases that require TLS, like Neon
 APP_USER=nestjs_app_user
 APP_PASSWORD=apppassword
 MIGRATOR_USER=nestjs_migrator
@@ -169,6 +170,15 @@ npm run test:migration    # test_db, used by the integration and e2e tests
 ```
 
 The production image runs `migration:run:prod` on startup.
+
+### Production database (Neon)
+
+Production uses a Neon Postgres 18 database. Neon has no superuser, so the roles are created by the scripts in [`neon/`](neon) instead of `init-user.sh`:
+
+1. Create a Neon project on Postgres 18 in the same region as the backend.
+2. As the database owner (`neondb_owner`), run `neon/1-roles.sql` with `-v migrator_password=… -v app_password=… -v mcp_password=…`. Use the direct connection, not the `-pooler` host.
+3. As `nestjs_migrator`, run `neon/2-default-privileges.sql`. It gives the app access to every table the migrations create.
+4. Point the backend at Neon: `DATABASE_HOST` (the direct host), `DATABASE_PORT=5432`, `DATABASE_NAME`, `DATABASE_SSL=true`, plus the role passwords as `MIGRATOR_PASSWORD`, `APP_PASSWORD` and the MCP server's password. The next start runs all migrations on the empty database.
 
 ## Testing
 
