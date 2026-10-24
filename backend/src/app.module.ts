@@ -66,6 +66,7 @@ import { AuthModule } from './auth/auth.module';
           username: configService.get<string>('db.databaseUser'),
           password: configService.get<string>('db.databasePassword'),
           database: configService.get<string>('db.databaseName'),
+          ssl: configService.get<boolean>('db.databaseSsl'),
           entities: [
             UserEntity,
             InventoryEntity,

@@ -23,6 +23,8 @@ export const MigrationDataSource = new DataSource({
   username: process.env.MIGRATOR_USER,
   password: process.env.MIGRATOR_PASSWORD,
   database: process.env.DATABASE_NAME,
+  // Same switch as the app's connection in db.config.ts: Neon only accepts TLS
+  ssl: (process.env.DATABASE_SSL || 'false') === 'true',
   migrations: [`${__dirname}/migrations/*.${ext}`],
   entities: [`${__dirname}/**/*.entity.${ext}`],
 });
