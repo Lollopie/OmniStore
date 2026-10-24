@@ -87,7 +87,8 @@ REDIS_URL=redis://localhost:6379
 RATE_LIMIT=10
 RATE_TIMEOUT=60000
 
-# App
+# App: the frontend's URL, including its path prefix if it has one (https://florian-piel.space/omnistore).
+# Emails and Stripe redirects link to it, and CORS allows its origin.
 FRONTEND_URL=http://localhost:5173
 
 # Email (MAIL_USER=resend sends through Resend instead of SMTP)
@@ -115,6 +116,8 @@ STRIPE_PORTAL_CONFIGURATION=       # optional
 
 ```env
 VITE_NESTJS_HOST_URL=http://localhost:3000
+# Optional: serve the app under a path prefix. The build then lands in dist/omnistore/.
+# VITE_BASE=/omnistore/
 ```
 
 ## Run locally

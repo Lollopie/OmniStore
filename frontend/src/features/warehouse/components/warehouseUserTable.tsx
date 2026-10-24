@@ -6,6 +6,7 @@ import { copyToClipboard } from '../../../utils/copyToClipboard.ts';
 import TableDataCell from '../../../components/TableDataCell.tsx';
 import { changeUserRole } from '../hooks/changeUserRole.ts';
 import { WarehouseRole } from '@shared';
+import { publicAsset } from '../../../utils/publicAsset.ts';
 interface WarehouseUserTableProps {
   users: WarehouseUser[];
   activeWarehouse: Warehouse;
@@ -46,7 +47,7 @@ export function WarehouseUserTable({ users, activeWarehouse, setUsers, setActive
                   size="sm"
                   children={
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <use href="/icons.svg#copy-icon" />
+                      <use href={publicAsset('icons.svg#copy-icon')} />
                     </svg>
                   }
                 />

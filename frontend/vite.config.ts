@@ -3,8 +3,15 @@ import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
 import * as path from 'node:path';
 
+// The path the app is served under: '/' locally, '/omnistore/' behind the florian-piel.space gateway.
+const base = (process.env.VITE_BASE ?? '/').replace(/\/?$/, '/');
+
 // https://vite.dev/config/
 export default defineConfig({
+  base,
+  // A prefixed build lands in dist/<prefix>/, so the static host serves the files at the same paths
+  // index.html references (/omnistore/assets/...), whether or not the gateway sits in front.
+  build: { outDir: `dist${base}` },
   plugins: [
     react({
       tsDecorators: true,

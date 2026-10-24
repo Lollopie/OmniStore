@@ -1,5 +1,6 @@
 import { HomeNavBar } from '../components/HomeNavBar.tsx';
 import { HomepageFooter } from '../components/HomepageFooter.tsx';
+import { publicAsset } from '../../../utils/publicAsset.ts';
 
 const Features = () => {
   return (
@@ -31,21 +32,21 @@ const Features = () => {
                        stroke="currentColor"
                        strokeWidth="20"
                        className="text-accent size-10 relative">
-                    <use href="/icons.svg#house.icon" />
+                    <use href={publicAsset('icons.svg#house.icon')} />
                   </svg>
                   <svg xmlns="http://www.w3.org/2000/svg"
                        fill="none"
                        stroke="currentColor"
                        strokeWidth="20"
                        className="text-accent size-10 relative right-5">
-                    <use href="/icons.svg#house.icon" />
+                    <use href={publicAsset('icons.svg#house.icon')} />
                   </svg>
                   <svg xmlns="http://www.w3.org/2000/svg"
                        fill="none"
                        stroke="currentColor"
                        strokeWidth="20"
                        className="text-accent size-10 relative bottom-10 left-5">
-                    <use href="/icons.svg#house.icon" />
+                    <use href={publicAsset('icons.svg#house.icon')} />
                   </svg>
                 </aside>
               </div>
@@ -64,7 +65,7 @@ const Features = () => {
                        stroke="currentColor"
                        strokeWidth="15"
                        className="text-accent size-15">
-                    <use href="/icons.svg#role.icon" />
+                    <use href={publicAsset('icons.svg#role.icon')} />
                   </svg>
                 </aside>
               </div>
@@ -86,7 +87,7 @@ const Features = () => {
                        stroke="currentColor"
                        strokeWidth="15"
                        className="text-accent size-15">
-                    <use href="/icons.svg#boxes.icon" />
+                    <use href={publicAsset('icons.svg#boxes.icon')} />
                   </svg>
                 </aside>
               </div>
@@ -105,7 +106,7 @@ const Features = () => {
                        stroke="currentColor"
                        strokeWidth="15"
                        className="text-accent size-15">
-                    <use href="/icons.svg#rls.icon" />
+                    <use href={publicAsset('icons.svg#rls.icon')} />
                   </svg>
                 </aside>
               </div>

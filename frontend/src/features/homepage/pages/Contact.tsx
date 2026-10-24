@@ -7,6 +7,7 @@ import { ContactDto } from '@shared/dto/contact.dto';
 import { useForm } from 'react-hook-form';
 import { sendContactMessage } from '../hooks/sendContactMessage.ts';
 import { useToast } from '../../toast';
+import { publicAsset } from '../../../utils/publicAsset.ts';
 
 const resolver = classValidatorResolver(ContactDto);
 const Contact = () => {
@@ -34,7 +35,7 @@ const Contact = () => {
         <div className="mx-5">
           <section
             className="card max-w-7xl lg:mx-auto bg-base-100 shadow-xl p-8 flex flex-col lg:flex-row gap-10">
-            <img src="/images/contact.jpg"
+            <img src={publicAsset('images/contact.jpg')}
                  className="block rounded-lg w-full lg:w-1/2"
             />
             <form className="flex flex-col gap-4 w-full lg:w-1/2"
@@ -80,7 +81,7 @@ const Contact = () => {
                    stroke="currentColor"
                    strokeWidth="20"
                    className="text-accent size-10">
-                <use href="/icons.svg#email.icon" />
+                <use href={publicAsset('icons.svg#email.icon')} />
               </svg>
               <p className="mt-4">
                 <span className="text-base-content/50">Email Us<br /></span>
@@ -94,7 +95,7 @@ const Contact = () => {
                    stroke="currentColor"
                    strokeWidth="20"
                    className="text-accent size-10">
-                <use href="/icons.svg#phone.icon" />
+                <use href={publicAsset('icons.svg#phone.icon')} />
               </svg>
               <p className="mt-4">
                 <span className="text-base-content/50">Call Us<br /></span>
@@ -108,7 +109,7 @@ const Contact = () => {
                    stroke="currentColor"
                    strokeWidth="20"
                    className="text-accent size-10">
-                <use href="/icons.svg#location.icon" />
+                <use href={publicAsset('icons.svg#location.icon')} />
               </svg>
               <p className="mt-4">
                 <span className="text-base-content/50">Visit HQ<br /></span>
@@ -122,7 +123,7 @@ const Contact = () => {
                    stroke="currentColor"
                    strokeWidth="20"
                    className="text-accent size-10">
-                <use href="/icons.svg#chat.icon" />
+                <use href={publicAsset('icons.svg#chat.icon')} />
               </svg>
               <p className="mt-4">
                 <span className="text-base-content/50">Live Chat<br /></span>

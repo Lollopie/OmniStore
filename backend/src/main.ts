@@ -12,7 +12,9 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.use(cookieParser());
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    // FRONTEND_URL can include a path (https://florian-piel.space/omnistore) for the links in emails and
+    // Stripe redirects, but a browser's Origin header never has one, so CORS compares the origin only.
+    origin: new URL(process.env.FRONTEND_URL || 'http://localhost:5173').origin,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
