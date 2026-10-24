@@ -1,3 +1,4 @@
+import { publicAsset } from '../../../utils/publicAsset.ts';
 interface FeatureBoxProps {
   svgName: string;
   text: string;
@@ -13,7 +14,7 @@ export default function FeatureBox({ svgName, text }: FeatureBoxProps) {
              stroke="currentColor"
              strokeWidth="15"
              className="text-accent size-15">
-          <use href={`/icons.svg#${svgName}`} />
+          <use href={publicAsset(`icons.svg#${svgName}`)} />
         </svg>
       </p>
       <p className="pt-5 rounded-lg p-5 text-lg text-center">

@@ -1,7 +1,8 @@
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import React, { useEffect, useRef } from 'react';
 import Logo from '../../../components/Logo.tsx';
 import Button from '../../../components/Button.tsx';
+import { publicAsset } from '../../../utils/publicAsset.ts';
 
 const PrimaryLinks = [
   { name: 'Home', href: '/' },
@@ -18,7 +19,8 @@ const inactiveLinkClassMobile = 'btn btn-ghost btn-lg w-full text-center';
 
 export function HomeNavBar() {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const currentSite = window.location.pathname;
+  // The router's path, without the /omnistore prefix the app may be served under
+  const currentSite = useLocation().pathname;
   const [isOpen, setIsOpen] = React.useState(false);
   useEffect(() => {
     const dialog: HTMLDialogElement | null = dialogRef.current;
@@ -64,7 +66,7 @@ export function HomeNavBar() {
               aria-label="Open navigation menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor">
-                <use href="/icons.svg#hamburger-menu-icon" />
+                <use href={publicAsset('icons.svg#hamburger-menu-icon')} />
               </svg>
             </Button>
           </div>

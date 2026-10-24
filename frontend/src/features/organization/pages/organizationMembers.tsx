@@ -18,6 +18,7 @@ import { Modal } from '../../../components/Modal.tsx';
 import { PageCard, SectionCard } from '../../../components/PageCard.tsx';
 import { useAuth } from '../../auth/authContext';
 import { removeOrganizationUser } from '../hooks/removeOrganizationUser.ts';
+import { publicAsset } from '../../../utils/publicAsset.ts';
 
 export interface OrganizationUser {
   userId: string;
@@ -116,7 +117,7 @@ const OrganizationMembers = () => {
                                                                     className="h-4 w-4"
                                                                     fill="none" viewBox="0 0 24 24"
                                                                     stroke="currentColor">
-                                                                 <use href="/icons.svg#copy-icon" />
+                                                                 <use href={publicAsset('icons.svg#copy-icon')} />
                                                                </svg>
                                                              }
                                                            />

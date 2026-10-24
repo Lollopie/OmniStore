@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import { publicAsset } from '../../../utils/publicAsset.ts';
 
 interface PricingCardProps {
   title: string;
@@ -31,7 +32,7 @@ export default function PricingCard({ title, subTitle, price, features, action }
                    fill="none"
                    stroke="currentColor"
                    className="size-4 me-2 inline-block text-success">
-                <use href="/icons.svg#check-mark.icon" />
+                <use href={publicAsset('icons.svg#check-mark.icon')} />
               </svg>
               {feature}
             </li>

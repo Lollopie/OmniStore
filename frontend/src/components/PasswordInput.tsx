@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from './Button.tsx';
+import { publicAsset } from '../utils/publicAsset.ts';
 
 interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -40,11 +41,11 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
           >
             {showPassword ? (
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <use href="/icons.svg#eye-off-icon" />
+                <use href={publicAsset('icons.svg#eye-off-icon')} />
               </svg>
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <use href="/icons.svg#eye-icon" />
+                <use href={publicAsset('icons.svg#eye-icon')} />
               </svg>
             )}
           </Button>

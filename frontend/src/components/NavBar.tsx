@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import Logo from './Logo.tsx';
 import { useAuth } from '../features/auth/authContext/';
 import Button from './Button.tsx';
+import { publicAsset } from '../utils/publicAsset.ts';
 // export interface NavBarProps {
 // }
 
@@ -133,7 +134,7 @@ export default function NavBar() {
             aria-label="Open navigation menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor">
-              <use href="/icons.svg#hamburger-menu-icon" />
+              <use href={publicAsset('icons.svg#hamburger-menu-icon')} />
             </svg>
           </Button>
         </div>

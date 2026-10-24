@@ -1,5 +1,6 @@
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import Logo from '../../../components/Logo.tsx';
+import { publicAsset } from '../../../utils/publicAsset.ts';
 
 const PrimaryLinks = [
   { name: 'Home', href: '/' },
@@ -9,7 +10,8 @@ const PrimaryLinks = [
 ];
 
 export function HomepageFooter() {
-  const currentSite = window.location.pathname;
+  // The router's path, without the /omnistore prefix the app may be served under
+  const currentSite = useLocation().pathname;
   return (
     <div className="w-full bg-base-100">
       <section className="w-full bg-base-100">
@@ -29,7 +31,7 @@ export function HomepageFooter() {
                   strokeWidth="15"
                   className="size-10 text-base-content"
                 >
-                  <use href="/icons.svg#github.icon" />
+                  <use href={publicAsset('icons.svg#github.icon')} />
                 </svg>
               </a>
               <a href="https://www.linkedin.com/in/florian-piel-629097404/" target="_blank" rel="noopener noreferrer"
@@ -41,7 +43,7 @@ export function HomepageFooter() {
                   strokeWidth="25"
                   className="size-10 text-base-content"
                 >
-                  <use href="/icons.svg#linkedIn.icon" />
+                  <use href={publicAsset('icons.svg#linkedIn.icon')} />
                 </svg>
               </a>
             </section>
@@ -68,7 +70,7 @@ export function HomepageFooter() {
                    stroke="currentColor"
                    strokeWidth="40"
                    className="text-accent size-5 inline">
-                <use href="/icons.svg#email.icon" />
+                <use href={publicAsset('icons.svg#email.icon')} />
               </svg>
               <a href="mailto:contact@florian-piel.space"
                  className="transition transform duration-200 hover:text-blue-600 text-sm text-base-content/80">
@@ -81,7 +83,7 @@ export function HomepageFooter() {
                    stroke="currentColor"
                    strokeWidth="40"
                    className="text-accent size-5 inline">
-                <use href="/icons.svg#phone.icon" />
+                <use href={publicAsset('icons.svg#phone.icon')} />
               </svg>
               <a href="tel:+15551234567"
                  className="transition transform duration-200 hover:text-blue-600 text-sm text-base-content/80">
@@ -94,7 +96,7 @@ export function HomepageFooter() {
                    stroke="currentColor"
                    strokeWidth="40"
                    className="text-accent size-5 inline">
-                <use href="/icons.svg#location.icon" />
+                <use href={publicAsset('icons.svg#location.icon')} />
               </svg>
               <p className="text-sm text-base-content/80">
                 123 Main Street, Suite 100
